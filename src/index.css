@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sora: 'Sora', sans-serif;
+    --font-space: 'Space Grotesk', sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #090a0f;
+  }
+}
+
+/* Primary Font System - Sora */
+.font-sora {
+  font-family: 'Sora', sans-serif;
+}
+
+/* Secondary Font System - Space Grotesk (HUD, numbers, tech metadata, coordinates) */
+.font-hud {
+  font-family: 'Space Grotesk', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.font-num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Silk-like Motion System */
+.transition-silk {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: 400ms;
+}
+
+.hover-silk-card {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-silk-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+}
+
+.btn-silk {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-silk:hover {
+  transform: translateY(-1px) scale(1.015);
+}
+.btn-silk:active {
+  transform: translateY(1px) scale(0.985);
+}
+

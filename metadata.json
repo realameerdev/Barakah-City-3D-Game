@@ -1,0 +1,6 @@
+{
+  "name": "Baraka City",
+  "description": "Live 3D Islamic multiplayer life-sim esports arena and metaverse platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
