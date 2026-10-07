@@ -14,6 +14,7 @@ import {
 import RabbitLogo from './components/RabbitLogo';
 import FriendsList from './components/FriendsList';
 import RealtimeWorldChat from './components/RealtimeWorldChat';
+import { AzanAudioController } from './components/AzanAudioController';
 import ThreeGameWorld from './game/ThreeGameWorld';
 import CinematicGameEntry from './game/CinematicGameEntry';
 import { useRealtimeSocket } from './game/useRealtimeSocket';
@@ -75,6 +76,8 @@ export default function App() {
     }
     return 'landing'; // Default root route "/" is the Public Landing Page
   });
+
+  const [isAzanFading, setIsAzanFading] = useState(false);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeRegion, setActiveRegion] = useState('Global');
@@ -200,6 +203,11 @@ export default function App() {
 
   // Silk-smooth programmatic navigation helper with cross-fade veil
   const navigateTo = (view: 'landing' | 'dashboard', targetWorld?: string) => {
+    if (view === 'dashboard') {
+      setIsAzanFading(true);
+    } else {
+      setIsAzanFading(false);
+    }
     if (targetWorld) {
       setSelectedWorld(targetWorld);
     }
@@ -262,12 +270,14 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090a0f] text-white flex flex-col font-sora selection:bg-emerald-500 selection:text-white overflow-hidden">
+    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#090a0f] text-white flex flex-col font-sora selection:bg-emerald-500 selection:text-white overflow-hidden">
+      <AzanAudioController activeView={activeView} isFading={isAzanFading} />
       
       {/* 3D CINEMATIC GAME ENTRY VIEW ("/") VS 3D PLAYABLE GAME WORLD ("/dashboard") */}
       {activeView === 'landing' ? (
-        <main className="relative w-full h-screen overflow-hidden bg-[#090a0f]">
+        <main className="relative w-full h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#090a0f]">
           <CinematicGameEntry
+            onStartTransition={() => setIsAzanFading(true)}
             onEnterWorld={(world) => navigateTo('dashboard', world)}
             onlineCount={onlineCount}
             initialWorld={selectedWorld}
@@ -306,6 +316,8 @@ export default function App() {
             websocketSocket={null}
             chatMessages={chatMessages}
             onlineCount={onlineCount}
+            onlineCitizens={onlineCitizens}
+            isConnected={isConnected}
           />
         </main>
       )}

@@ -10,6 +10,7 @@ import RabbitLogo from '../components/RabbitLogo';
 
 interface CinematicGameEntryProps {
   onEnterWorld: (worldName?: string) => void;
+  onStartTransition?: () => void;
   onlineCount?: number;
   initialWorld?: string;
 }
@@ -35,19 +36,94 @@ interface AutonomousAvatar {
   partner?: THREE.Group;
 }
 
+// Helper: Compute aspect-aware responsive FOV and camera framing
+const calculateAdaptiveCamera = (w: number, h: number) => {
+  const aspect = w / Math.max(1, h);
+  let fov = 50;
+
+  if (aspect >= 2.2) {
+    // Ultrawide (21:9, 32:9)
+    fov = 46;
+  } else if (aspect >= 1.6) {
+    // Standard desktop (16:9, 16:10)
+    fov = 50;
+  } else if (aspect >= 1.25) {
+    // Landscape tablets, 4:3, laptops
+    fov = 56;
+  } else if (aspect >= 0.9) {
+    // Square / squarish screens
+    fov = 64;
+  } else if (aspect >= 0.65) {
+    // Portrait tablets (iPad, Galaxy Tab portrait)
+    fov = 70;
+  } else if (aspect >= 0.48) {
+    // Standard portrait phones (Pixel, Galaxy, iPhone standard)
+    fov = 78;
+  } else {
+    // Very tall/narrow phones (iPhone Pro Max, Galaxy Ultra, aspect < 0.48)
+    fov = 84;
+  }
+
+  return { fov, aspect };
+};
+
 export default function CinematicGameEntry({
   onEnterWorld,
+  onStartTransition,
   onlineCount = 1420,
   initialWorld = 'Abuja Metropolis',
 }: CinematicGameEntryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Responsive Stepped Loading Sequence: 0% -> 45% -> 75% -> 100%
+  const [loadingTarget, setLoadingTarget] = useState<number>(0);
+  const [displayedProgress, setDisplayedProgress] = useState<number>(0);
+  const [isGameReady, setIsGameReady] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [selectedWorld, setSelectedWorld] = useState(initialWorld);
   const [currentFocalArea, setCurrentFocalArea] = useState('Grand Mosque & Central Boulevard');
   const [isInteractiveLook, setIsInteractiveLook] = useState(false);
+
+  // Stepped loading phase scheduler
+  useEffect(() => {
+    const t1 = setTimeout(() => setLoadingTarget(45), 200);
+    const t2 = setTimeout(() => setLoadingTarget(75), 900);
+    const t3 = setTimeout(() => setLoadingTarget(100), 1850);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
+  // Smooth number interpolation animation frame
+  useEffect(() => {
+    let animId: number;
+    const updateProgress = () => {
+      setDisplayedProgress((current) => {
+        if (current >= loadingTarget) {
+          if (current >= 100) {
+            setIsGameReady(true);
+          }
+          return current;
+        }
+        const diff = loadingTarget - current;
+        const step = Math.max(0.65, diff * 0.12);
+        const next = Math.min(loadingTarget, current + step);
+        if (next >= 100) {
+          setIsGameReady(true);
+        }
+        return next;
+      });
+      animId = requestAnimationFrame(updateProgress);
+    };
+
+    animId = requestAnimationFrame(updateProgress);
+    return () => cancelAnimationFrame(animId);
+  }, [loadingTarget]);
 
   // Audio synthesizer ref
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -98,29 +174,31 @@ export default function CinematicGameEntry({
     }
   }, []);
 
-  const handleEnterClick = () => {
-    if (isEntering) return;
+  const handleEnterClick = useCallback(() => {
+    if (isEntering || !isGameReady) return;
     setIsEntering(true);
+    onStartTransition?.();
     playEntranceChime();
 
     // Trigger smooth transition after cinematic fly-in
     setTimeout(() => {
       onEnterWorld(selectedWorld);
     }, 1200);
-  };
+  }, [isEntering, isGameReady, onEnterWorld, onStartTransition, playEntranceChime, selectedWorld]);
 
   // Keyboard shortcut: Press Enter or Space to enter
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Enter' || e.code === 'Space') {
-        if (!isEntering) {
+        if (!isEntering && isGameReady) {
           handleEnterClick();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEntering, selectedWorld]);
+  }, [isEntering, isGameReady, handleEnterClick]);
+
 
   // Mouse drag for interactive camera look
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -338,22 +416,25 @@ export default function CinematicGameEntry({
     }
     scene.add(skylineGroup);
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 450);
+    // Camera with aspect-aware adaptive FOV
+    const { fov, aspect } = calculateAdaptiveCamera(width, height);
+    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 450);
     cameraRef.current = camera;
     camera.position.set(0, 18, 55);
 
-    // Renderer
+    // Renderer (Performance-optimized for low-end to high-end devices)
+    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || width < 768;
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
-      antialias: true,
+      antialias: !isMobileDevice,
       alpha: false,
+      powerPreference: 'high-performance',
     });
     rendererRef.current = renderer;
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(width, height, false);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.5 : 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = isMobileDevice ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
 
     // Lighting
     const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x1e293b, 0.9);
@@ -365,8 +446,8 @@ export default function CinematicGameEntry({
     const sunLight = new THREE.DirectionalLight(0xfef3c7, 1.55);
     sunLight.position.set(65, 80, 50);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = isMobileDevice ? 1024 : 2048;
+    sunLight.shadow.mapSize.height = isMobileDevice ? 1024 : 2048;
     sunLight.shadow.bias = -0.0005;
     scene.add(sunLight);
 
@@ -659,21 +740,22 @@ export default function CinematicGameEntry({
     // 4 MOVING TRAFFIC VEHICLES
     const v1 = createVehicleMesh(0x0284c7);
     v1.position.set(-80, 0, -3.5);
+    v1.rotation.y = Math.PI / 2; // Face Eastbound (+X)
     scene.add(v1);
 
     const v2 = createVehicleMesh(0xd97706);
     v2.position.set(80, 0, 3.5);
-    v2.rotation.y = Math.PI;
+    v2.rotation.y = -Math.PI / 2; // Face Westbound (-X)
     scene.add(v2);
 
     const v3 = createVehicleMesh(0xf8fafc);
     v3.position.set(3.5, 0, -90);
-    v3.rotation.y = Math.PI / 2;
+    v3.rotation.y = 0; // Face Southbound (+Z)
     scene.add(v3);
 
     const v4 = createVehicleMesh(0x10b981);
     v4.position.set(-3.5, 0, 90);
-    v4.rotation.y = -Math.PI / 2;
+    v4.rotation.y = Math.PI; // Face Northbound (-Z)
     scene.add(v4);
 
     vehiclesRef.current = [
@@ -754,19 +836,36 @@ export default function CinematicGameEntry({
 
     avatarsRef.current = createdAvatars;
 
-    // Window Resize
+    // Responsive Window, Device Orientation & Container Resize
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
-      const w = containerRef.current.clientWidth;
-      const h = containerRef.current.clientHeight;
-      cameraRef.current.aspect = w / h;
+      const w = containerRef.current.clientWidth || window.innerWidth;
+      const h = containerRef.current.clientHeight || window.innerHeight;
+      
+      const { fov, aspect } = calculateAdaptiveCamera(w, h);
+      cameraRef.current.aspect = aspect;
+      cameraRef.current.fov = fov;
       cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(w, h);
+
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || w < 768;
+      rendererRef.current.setSize(w, h, false);
+      rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
     };
+
     window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      resizeObserver.disconnect();
       renderer.dispose();
     };
   }, []);
@@ -850,27 +949,35 @@ export default function CinematicGameEntry({
         }
       });
 
-      // 3. Cinematic Camera Drone Path
+      // 3. Cinematic Camera Drone Path (Aspect & Orientation Aware)
       if (cameraRef.current) {
+        const aspect = cameraRef.current.aspect || 1.6;
+        const isPortrait = aspect < 1.0;
+        const isUltrawide = aspect > 2.0;
+
         if (isEntering) {
           // Dynamic entrance rush: camera accelerates smoothly toward boulevard street level
-          cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, 3.2, 0.08);
-          cameraRef.current.position.z = THREE.MathUtils.lerp(cameraRef.current.position.z, 20.0, 0.08);
+          cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, isPortrait ? 4.0 : 3.2, 0.08);
+          cameraRef.current.position.z = THREE.MathUtils.lerp(cameraRef.current.position.z, isPortrait ? 23.0 : 20.0, 0.08);
           cameraRef.current.position.x = THREE.MathUtils.lerp(cameraRef.current.position.x, 0, 0.08);
-          cameraRef.current.lookAt(0, 2.0, -30);
+          cameraRef.current.lookAt(0, isPortrait ? 3.0 : 2.0, -30);
         } else {
           // Continuous, gentle cinematic glide through the city
-          cameraProgressRef.current += delta * 0.055;
+          cameraProgressRef.current += delta * 0.12;
           const t = cameraProgressRef.current;
 
-          // Figure-8 sweeping orbit path with smooth altitude breathing
-          const camX = Math.sin(t * 0.8) * 36;
-          const camZ = 35 + Math.cos(t * 0.6) * 22;
-          const camY = 14 + Math.sin(t * 0.4) * 6;
+          // Adaptive figure-8 sweeping orbit path with smooth altitude breathing
+          const orbitRadiusX = isPortrait ? 26 : isUltrawide ? 42 : 36;
+          const orbitBaseZ = isPortrait ? 42 : 35;
+          const orbitBaseY = isPortrait ? 18 : 14;
 
-          // Target focus transitions naturally based on camera position
+          const camX = Math.sin(t * 0.8) * orbitRadiusX;
+          const camZ = orbitBaseZ + Math.cos(t * 0.6) * 22;
+          const camY = orbitBaseY + Math.sin(t * 0.4) * 6;
+
+          // Target focus transitions naturally based on camera position and viewport
           let lookTargetX = 0;
-          let lookTargetY = 8;
+          let lookTargetY = isPortrait ? 11 : 8;
           let lookTargetZ = -45;
 
           // Determine current focal area label for HUD
@@ -878,28 +985,28 @@ export default function CinematicGameEntry({
           if (normPhase < Math.PI) {
             setCurrentFocalArea('Grand Mosque & Ceremonial Plaza');
             lookTargetX = 0;
-            lookTargetY = 10;
+            lookTargetY = isPortrait ? 13 : 10;
             lookTargetZ = -55;
           } else if (normPhase < Math.PI * 2) {
             setCurrentFocalArea('Souq Al-Baraka Marketplace & Promenade');
             lookTargetX = -20;
-            lookTargetY = 5;
+            lookTargetY = isPortrait ? 7 : 5;
             lookTargetZ = 15;
           } else if (normPhase < Math.PI * 3) {
             setCurrentFocalArea('Islamic University Campus & Colonnade');
             lookTargetX = -38;
-            lookTargetY = 8;
+            lookTargetY = isPortrait ? 10 : 8;
             lookTargetZ = -20;
           } else {
             setCurrentFocalArea('Central Boulevard & Residential District');
             lookTargetX = 22;
-            lookTargetY = 7;
+            lookTargetY = isPortrait ? 9 : 7;
             lookTargetZ = 5;
           }
 
-          // Apply gentle interactive look offset if user dragged
-          const finalCamX = camX + cameraLookOffsetRef.current.x * 12;
-          const finalCamY = Math.max(4, camY - cameraLookOffsetRef.current.y * 12);
+          // Apply gentle interactive look offset if user dragged or swiped
+          const finalCamX = camX + cameraLookOffsetRef.current.x * (isPortrait ? 8 : 12);
+          const finalCamY = Math.max(3.5, camY - cameraLookOffsetRef.current.y * (isPortrait ? 8 : 12));
 
           cameraRef.current.position.set(finalCamX, finalCamY, camZ);
           cameraRef.current.lookAt(lookTargetX, lookTargetY, lookTargetZ);
@@ -924,142 +1031,168 @@ export default function CinematicGameEntry({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full h-screen overflow-hidden bg-[#090a0f] select-none touch-none font-sora text-white"
+      className="relative w-full h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#090a0f] select-none touch-none font-sora text-white"
     >
       {/* 3D WebGL Canvas filling 100% of the screen */}
-      <canvas ref={canvasRef} className="w-full h-full block cursor-grab active:cursor-grabbing" />
+      <canvas ref={canvasRef} className="w-full h-full block cursor-grab active:cursor-grabbing touch-none" />
 
-      {/* Cinematic Vignette Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#090a0f]/90 via-transparent to-[#090a0f]/60" />
-      <div className="absolute inset-0 pointer-events-none bg-radial from-transparent via-transparent to-black/50" />
+      {/* Cinematic Vignette Overlay with dynamic depth */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#090a0f]/95 via-transparent to-[#090a0f]/70" />
+      <div className="absolute inset-0 pointer-events-none bg-radial from-transparent via-transparent to-black/60" />
 
-      {/* TOP HEADER: Extremely Minimal Game HUD */}
-      <div className="absolute top-4 sm:top-6 left-4 sm:left-8 right-4 sm:right-8 z-30 flex items-center justify-between pointer-events-none">
+      {/* TOP HEADER: Responsive Game HUD */}
+      <div className="absolute top-0 inset-x-0 z-30 pt-[max(env(safe-area-inset-top),0.75rem)] px-3 xs:px-4 sm:px-6 md:px-8 pb-2 flex items-center justify-between pointer-events-none">
         {/* Left: Baraka City Rabbit Emblem & Title */}
-        <div className="flex items-center gap-3 bg-black/60 border border-white/10 backdrop-blur-md px-3.5 sm:px-4 py-2 rounded-2xl pointer-events-auto shadow-2xl">
-          <div className="w-8 h-8 rounded-xl bg-white/10 p-0.5 flex items-center justify-center">
-            <RabbitLogo size={24} inverted={true} />
+        <div className="flex items-center gap-2 sm:gap-3 bg-black/70 border border-white/10 backdrop-blur-md px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl pointer-events-auto shadow-2xl">
+          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white/10 p-0.5 flex items-center justify-center shrink-0">
+            <RabbitLogo size={20} inverted={true} />
           </div>
           <div>
-            <span className="text-sm sm:text-base font-black tracking-wider uppercase bg-gradient-to-r from-white via-zinc-200 to-emerald-400 bg-clip-text text-transparent block">
+            <span className="text-xs sm:text-sm md:text-base font-black tracking-wider uppercase bg-gradient-to-r from-white via-zinc-200 to-emerald-400 bg-clip-text text-transparent block leading-tight">
               BARAKA CITY
             </span>
-            <span className="text-[9px] font-hud text-zinc-400 uppercase tracking-widest block -mt-0.5">
+            <span className="text-[8px] sm:text-[9px] font-hud text-zinc-400 uppercase tracking-widest block leading-none">
               LIVE 3D METROPOLIS
             </span>
           </div>
         </div>
 
         {/* Right: Live Server Cluster & Audio Toggle */}
-        <div className="flex items-center gap-2.5 sm:gap-3 pointer-events-auto">
-          {/* Realm Indicator */}
-          <div className="hidden sm:flex items-center gap-2 bg-black/60 border border-white/10 backdrop-blur-md px-3.5 py-2 rounded-2xl text-[11px] font-bold shadow-xl">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-zinc-300 font-hud uppercase">{selectedWorld.toUpperCase()}</span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-emerald-400 font-hud">{onlineCount.toLocaleString()} CITIZENS</span>
+        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto">
+          {/* Realm Indicator - Responsive badges */}
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-black/70 border border-white/10 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-[9px] xs:text-[10px] sm:text-[11px] font-bold shadow-xl">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+            <span className="text-zinc-200 font-hud uppercase max-w-[80px] xs:max-w-[120px] sm:max-w-none truncate">{selectedWorld.toUpperCase()}</span>
+            <span className="hidden xs:inline text-zinc-600">|</span>
+            <span className="hidden xs:inline text-emerald-400 font-hud">{onlineCount.toLocaleString()} CITIZENS</span>
           </div>
 
           {/* Sound Toggle */}
           <button
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className="p-2 sm:px-3 sm:py-2 bg-black/60 border border-white/10 backdrop-blur-md text-white rounded-xl hover:border-emerald-500 transition-colors cursor-pointer flex items-center gap-1.5 shadow-xl"
+            className="p-1.5 sm:px-3 sm:py-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl hover:border-emerald-500 transition-colors cursor-pointer flex items-center gap-1.5 shadow-xl shrink-0"
             title="Toggle Ambient Audio"
+            aria-label="Toggle Ambient Audio"
           >
-            {isAudioEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-zinc-400" />}
+            {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />}
             <span className="hidden md:inline text-[10px] font-bold uppercase">{isAudioEnabled ? 'AUDIO ON' : 'AUDIO OFF'}</span>
           </button>
         </div>
       </div>
 
-      {/* CURRENT LOCATION TELEMETRY: Top Left Sub-Badge */}
-      <div className="absolute top-20 sm:top-24 left-4 sm:left-8 z-20 pointer-events-none">
-        <div className="inline-flex items-center gap-2 bg-black/50 border border-emerald-500/30 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-hud text-zinc-300 shadow-xl">
-          <Compass className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          <span className="text-emerald-400 font-bold uppercase">VIEWPOINT:</span>
-          <span className="text-white font-medium uppercase tracking-wider">{currentFocalArea}</span>
+      {/* CURRENT LOCATION TELEMETRY: Top Left Sub-Badge (adaptive position, hidden on tiny landscape screens) */}
+      <div className="hidden xs:block absolute top-[calc(max(env(safe-area-inset-top),0.75rem)+3.25rem)] sm:top-[calc(max(env(safe-area-inset-top),0.75rem)+4.25rem)] left-3 xs:left-4 sm:left-6 md:left-8 z-20 pointer-events-none max-w-[85vw] sm:max-w-md">
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-black/60 border border-emerald-500/30 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-hud text-zinc-300 shadow-xl truncate">
+          <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 animate-pulse shrink-0" />
+          <span className="text-emerald-400 font-bold uppercase shrink-0">VIEW:</span>
+          <span className="text-white font-medium uppercase tracking-wider truncate">{currentFocalArea}</span>
         </div>
       </div>
 
-      {/* CENTERPIECE: Monumental Game Title & BISMILLAH Entrance Interaction */}
-      <div className="absolute inset-x-4 bottom-10 sm:bottom-16 z-30 flex flex-col items-center justify-center text-center pointer-events-none">
-        <div className="max-w-xl w-full pointer-events-auto flex flex-col items-center animate-fadeIn">
+      {/* CENTERPIECE: Monumental Game Title, Animated Loading & BISMILLAH Entrance */}
+      <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center justify-end text-center pointer-events-none pb-[max(env(safe-area-inset-bottom),1rem)] px-3 xs:px-4 sm:px-6">
+        <div className="max-w-lg md:max-w-xl w-full pointer-events-auto flex flex-col items-center animate-fadeIn">
           
           {/* Arabic Basmala / Divine Invocation */}
-          <div className="mb-2.5 sm:mb-3">
-            <span className="text-lg sm:text-2xl font-serif text-emerald-400/90 tracking-widest drop-shadow-[0_2px_12px_rgba(16,185,129,0.35)] block">
+          <div className="mb-1.5 sm:mb-2.5">
+            <span className="text-sm xs:text-base sm:text-xl md:text-2xl font-serif text-emerald-400/90 tracking-widest drop-shadow-[0_2px_12px_rgba(16,185,129,0.35)] block leading-tight">
               بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
             </span>
           </div>
 
           {/* Monumental Title */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight text-white mb-2 drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight text-white mb-1.5 sm:mb-2 drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)] leading-none">
             BARAKA CITY
           </h1>
 
-          {/* Cinematic Tagline */}
-          <p className="text-xs sm:text-sm md:text-base text-zinc-300 font-medium max-w-md mx-auto mb-6 sm:mb-8 leading-relaxed drop-shadow-md">
+          {/* Cinematic Tagline - Responsive text size, hidden on short mobile screens */}
+          <p className="text-[11px] xs:text-xs sm:text-sm md:text-base text-zinc-300 font-medium max-w-sm sm:max-w-md mx-auto mb-3 sm:mb-5 leading-relaxed drop-shadow-md hidden [min-height:480px]:block">
             A living Islamic metropolis of faith, culture, commerce, and multiplayer fellowship.
           </p>
 
-          {/* THE BISMILLAH ENTRANCE BUTTON */}
-          <button
-            onClick={handleEnterClick}
-            disabled={isEntering}
-            className={`group relative overflow-hidden px-8 sm:px-12 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 text-black font-black uppercase tracking-wider shadow-[0_0_40px_rgba(16,185,129,0.45)] hover:shadow-[0_0_60px_rgba(16,185,129,0.7)] transition-all duration-300 active:scale-95 cursor-pointer flex flex-col items-center justify-center border-2 border-white/80 ${
-              isEntering ? 'scale-105 opacity-90' : 'hover:scale-105'
-            }`}
-          >
-            {/* Soft inner shimmer */}
-            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-            
-            <span className="text-xs sm:text-sm font-serif text-black/80 font-bold tracking-widest block mb-0.5">
-              بِسْمِ الله
-            </span>
-            <span className="text-sm sm:text-base md:text-lg font-black tracking-widest flex items-center gap-2">
-              {isEntering ? (
-                <>
-                  ENTERING BARAKA CITY...
-                  <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
-                </>
-              ) : (
-                <>
-                  ENTER BARAKA CITY
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
-                </>
-              )}
-            </span>
-          </button>
+          {/* MINIMAL SLEEK LOADING INDICATOR */}
+          <div className="w-full max-w-[280px] xs:max-w-xs sm:max-w-sm mb-3 sm:mb-4 flex flex-col items-center">
+            <div className="w-full flex items-center justify-between text-[10px] sm:text-xs font-hud tracking-wider mb-1.5 px-1">
+              <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${displayedProgress >= 100 ? 'bg-emerald-400' : 'bg-emerald-400 animate-ping'}`} />
+                {displayedProgress < 45
+                  ? 'INITIALIZING'
+                  : displayedProgress < 75
+                  ? 'LOADING CITY'
+                  : displayedProgress < 100
+                  ? 'LOADING WORLD'
+                  : 'BARAKA CITY READY'}
+              </span>
+              <span className="font-mono font-bold text-white tracking-widest">{Math.round(displayedProgress)}%</span>
+            </div>
+
+            {/* Glowing Minimal Progress Track */}
+            <div className="w-full h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[0.5px]">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-150 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
+                style={{ width: `${Math.min(100, Math.max(2, displayedProgress))}%` }}
+              />
+            </div>
+          </div>
+
+          {/* BISMILLAH / ENTER BARAKA CITY ACTION BUTTON */}
+          <div className="w-full flex flex-col items-center justify-center pointer-events-auto">
+            <button
+              onClick={handleEnterClick}
+              disabled={isEntering || !isGameReady}
+              className={`group relative w-full sm:w-auto px-6 xs:px-8 sm:px-12 py-3 xs:py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs xs:text-sm sm:text-base tracking-wide uppercase transition-all duration-300 flex items-center justify-center gap-2.5 sm:gap-3 border overflow-hidden cursor-pointer shadow-2xl active:scale-95 ${
+                !isGameReady
+                  ? 'bg-zinc-800/80 border-white/10 text-zinc-400 cursor-wait'
+                  : 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white border-emerald-300/30 shadow-[0_0_35px_rgba(16,185,129,0.45)] hover:shadow-[0_0_55px_rgba(16,185,129,0.7)] hover:scale-105'
+              } disabled:opacity-75 disabled:pointer-events-none`}
+            >
+              <span className="relative z-10 font-bold flex items-center gap-2 sm:gap-3">
+                <span>
+                  {isEntering
+                    ? 'ENTERING BARAKA CITY...'
+                    : !isGameReady
+                    ? 'PREPARING WORLD...'
+                    : 'BISMILLAH / ENTER BARAKA CITY'}
+                </span>
+                <ArrowRight
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ${
+                    isEntering ? 'translate-x-3 opacity-0' : 'group-hover:translate-x-1.5'
+                  }`}
+                />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform" />
+            </button>
+          </div>
 
           {/* Desktop Keyboard Helper Prompt */}
-          <div className="mt-3.5 hidden sm:flex items-center gap-2 text-[10px] font-hud text-zinc-400 tracking-wider">
+          <div className="mt-2.5 sm:mt-3 hidden sm:flex items-center gap-2 text-[10px] font-hud text-zinc-400 tracking-wider">
             <span className="bg-white/10 px-2 py-0.5 rounded border border-white/10 text-white font-bold">ENTER</span>
             <span>or</span>
             <span className="bg-white/10 px-2 py-0.5 rounded border border-white/10 text-white font-bold">SPACE</span>
             <span>TO STEP INTO THE WORLD</span>
           </div>
 
-          {/* Explorable World Pillars Pills */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-semibold text-zinc-300">
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> 3D Open World
+          {/* Explorable World Pillars Pills (Adaptive Wrap) */}
+          <div className="mt-3 sm:mt-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 text-[9px] xs:text-[10px] sm:text-[11px] font-semibold text-zinc-300 hidden [min-height:540px]:flex">
+            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" /> 3D Open World
             </span>
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Living Trade & Souq
+            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" /> Living Trade & Souq
             </span>
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Grand Mosque & Madrasa
+            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" /> Grand Mosque & Madrasa
             </span>
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Multiplayer Arena
+            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" /> Multiplayer Arena
             </span>
           </div>
         </div>
       </div>
 
-      {/* Free Look Indicator (fades after interaction) */}
-      <div className="hidden sm:block absolute bottom-4 right-6 z-20 pointer-events-none">
-        <span className="text-[10px] font-hud text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+      {/* Free Look Indicator */}
+      <div className="hidden sm:block absolute bottom-3 right-4 sm:bottom-4 sm:right-6 z-20 pointer-events-none">
+        <span className="text-[9px] sm:text-[10px] font-hud text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
           <Eye className="w-3 h-3 text-zinc-400" /> DRAG TO LOOK AROUND CITY
         </span>
       </div>

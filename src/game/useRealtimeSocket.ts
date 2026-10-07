@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { AvatarCustomization, SpeechBubbleEvent } from './gameTypes';
 
 export interface ChatMessage {
   id: string;
@@ -23,6 +24,18 @@ export interface OnlineCitizen {
   city: string;
   world: string;
   outfit: string;
+  customization?: AvatarCustomization;
+}
+
+export interface RemotePlayerLiveState {
+  citizenId: string;
+  name: string;
+  position: [number, number, number];
+  rotation: number;
+  action: string;
+  outfit: string;
+  customization?: AvatarCustomization;
+  lastUpdated: number;
 }
 
 export interface SquadInviteEvent {
@@ -32,14 +45,32 @@ export interface SquadInviteEvent {
   timestamp: string;
 }
 
-export function useRealtimeSocket(userProfile: { name: string; citizenId: string; city: string; world: string; outfit: string }) {
+export function useRealtimeSocket(userProfile: { 
+  name: string; 
+  citizenId: string; 
+  city: string; 
+  world: string; 
+  outfit: string;
+  customization?: AvatarCustomization;
+}) {
   const [isConnected, setIsConnected] = useState(false);
   const [onlineCount, setOnlineCount] = useState(1);
   const [onlineCitizens, setOnlineCitizens] = useState<OnlineCitizen[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [incomingInvite, setIncomingInvite] = useState<SquadInviteEvent | null>(null);
+  const [remotePlayers, setRemotePlayers] = useState<Map<string, RemotePlayerLiveState>>(new Map());
+  const [speechBubbles, setSpeechBubbles] = useState<SpeechBubbleEvent[]>([]);
 
   const socketRef = useRef<WebSocket | null>(null);
+
+  // Clean up expired speech bubbles
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now();
+      setSpeechBubbles((prev) => prev.filter((bubble) => now - bubble.timestamp < 6000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     // Connect to WebSocket server on location host
@@ -62,6 +93,7 @@ export function useRealtimeSocket(userProfile: { name: string; citizenId: string
             city: userProfile.city,
             world: userProfile.world,
             outfit: userProfile.outfit,
+            customization: userProfile.customization,
           })
         );
       };
@@ -75,6 +107,30 @@ export function useRealtimeSocket(userProfile: { name: string; citizenId: string
             case 'auth:ok': {
               if (data.messages && Array.isArray(data.messages)) {
                 setChatMessages(data.messages);
+              }
+              break;
+            }
+
+            case 'world:existing_players': {
+              if (data.players && Array.isArray(data.players)) {
+                setRemotePlayers((prev) => {
+                  const updated = new Map(prev);
+                  data.players.forEach((p: any) => {
+                    if (p.citizenId !== userProfile.citizenId) {
+                      updated.set(p.citizenId, {
+                        citizenId: p.citizenId,
+                        name: p.name || 'Citizen',
+                        position: p.position || [0, 0, 0],
+                        rotation: p.rotation || 0,
+                        action: p.action || 'idle',
+                        outfit: p.outfit || 'classic_white',
+                        customization: p.customization,
+                        lastUpdated: Date.now(),
+                      });
+                    }
+                  });
+                  return updated;
+                });
               }
               break;
             }
@@ -95,6 +151,77 @@ export function useRealtimeSocket(userProfile: { name: string; citizenId: string
                   isSelf,
                 };
                 setChatMessages((prev) => [...prev, newMsg]);
+              }
+              break;
+            }
+
+            case 'world:player_moved': {
+              if (data.citizenId && data.citizenId !== userProfile.citizenId) {
+                setRemotePlayers((prev) => {
+                  const updated = new Map(prev);
+                  const existing = updated.get(data.citizenId);
+                  updated.set(data.citizenId, {
+                    citizenId: data.citizenId,
+                    name: data.name || existing?.name || 'Citizen',
+                    position: data.position || existing?.position || [0, 0, 0],
+                    rotation: typeof data.rotation === 'number' ? data.rotation : (existing?.rotation || 0),
+                    action: data.action || existing?.action || 'idle',
+                    outfit: data.outfit || existing?.outfit || 'classic_white',
+                    customization: data.customization || existing?.customization,
+                    lastUpdated: Date.now(),
+                  });
+                  return updated;
+                });
+              }
+              break;
+            }
+
+            case 'world:player_action': {
+              if (data.citizenId && data.citizenId !== userProfile.citizenId) {
+                setRemotePlayers((prev) => {
+                  const updated = new Map(prev);
+                  const existing = updated.get(data.citizenId);
+                  if (existing) {
+                    updated.set(data.citizenId, {
+                      ...existing,
+                      action: data.action,
+                      lastUpdated: Date.now(),
+                    });
+                  }
+                  return updated;
+                });
+              }
+              break;
+            }
+
+            case 'world:player_speech': {
+              if (data.text) {
+                const bubble: SpeechBubbleEvent = {
+                  id: 'sp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                  citizenId: data.citizenId,
+                  senderName: data.name,
+                  text: data.text,
+                  timestamp: data.timestamp || Date.now(),
+                };
+                setSpeechBubbles((prev) => [...prev.slice(-15), bubble]);
+              }
+              break;
+            }
+
+            case 'avatar:updated': {
+              if (data.citizenId && data.citizenId !== userProfile.citizenId) {
+                setRemotePlayers((prev) => {
+                  const updated = new Map(prev);
+                  const existing = updated.get(data.citizenId);
+                  if (existing) {
+                    updated.set(data.citizenId, {
+                      ...existing,
+                      customization: data.customization,
+                      outfit: data.outfit || existing.outfit,
+                    });
+                  }
+                  return updated;
+                });
               }
               break;
             }
@@ -202,6 +329,54 @@ export function useRealtimeSocket(userProfile: { name: string; citizenId: string
     }
   }, [userProfile.citizenId, userProfile.name, userProfile.city]);
 
+  const sendPlayerMove = useCallback((position: [number, number, number], rotation: number, action?: string) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'world:move',
+          position,
+          rotation,
+          action,
+        })
+      );
+    }
+  }, []);
+
+  const sendPlayerAction = useCallback((action: string) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'world:action',
+          action,
+        })
+      );
+    }
+  }, []);
+
+  const sendSpeechBubble = useCallback((text: string) => {
+    if (!text || !text.trim()) return;
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'world:speech',
+          text: text.trim(),
+        })
+      );
+    }
+  }, []);
+
+  const updateAvatarCustomization = useCallback((customization: AvatarCustomization) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'avatar:update',
+          customization,
+          outfit: customization.outfit,
+        })
+      );
+    }
+  }, []);
+
   const sendSquadInvite = useCallback((targetCitizenId: string, targetName: string) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(
@@ -223,6 +398,12 @@ export function useRealtimeSocket(userProfile: { name: string; citizenId: string
     onlineCount,
     onlineCitizens,
     chatMessages,
+    remotePlayers,
+    speechBubbles,
+    sendPlayerMove,
+    sendPlayerAction,
+    sendSpeechBubble,
+    updateAvatarCustomization,
     sendMessage,
     sendSquadInvite,
     incomingInvite,

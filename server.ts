@@ -26,7 +26,11 @@ interface ClientConnection {
   city: string;
   world: string;
   position: [number, number, number];
+  rotation?: number;
+  action?: string;
   outfit: string;
+  customization?: any;
+  lastSpeech?: { text: string; timestamp: number };
 }
 
 const activeClients = new Map<WebSocket, ClientConnection>();
@@ -122,6 +126,7 @@ wss.on('connection', (socket: WebSocket) => {
           clientData.city = data.city || clientData.city;
           clientData.world = data.world || clientData.world;
           clientData.outfit = data.outfit || clientData.outfit;
+          if (data.customization) clientData.customization = data.customization;
           activeClients.set(socket, clientData);
 
           socket.send(
@@ -132,7 +137,82 @@ wss.on('connection', (socket: WebSocket) => {
             })
           );
 
+          // Send current active citizens with their positions and customizations to the new client
+          const existingPlayers = Array.from(activeClients.values())
+            .filter((c) => c.citizenId !== clientData.citizenId)
+            .map((c) => ({
+              citizenId: c.citizenId,
+              name: c.name,
+              position: c.position,
+              rotation: c.rotation || 0,
+              action: c.action || 'idle',
+              outfit: c.outfit,
+              customization: c.customization,
+            }));
+
+          socket.send(
+            JSON.stringify({
+              type: 'world:existing_players',
+              players: existingPlayers,
+            })
+          );
+
           broadcastOnlineCitizens();
+          break;
+        }
+
+        case 'avatar:update': {
+          if (data.customization) {
+            clientData.customization = data.customization;
+          }
+          if (data.outfit) clientData.outfit = data.outfit;
+          activeClients.set(socket, clientData);
+
+          broadcast(
+            {
+              type: 'avatar:updated',
+              citizenId: clientData.citizenId,
+              name: clientData.name,
+              outfit: clientData.outfit,
+              customization: clientData.customization,
+            },
+            clientData.world,
+            socket
+          );
+          break;
+        }
+
+        case 'world:action': {
+          clientData.action = data.action || 'idle';
+          broadcast(
+            {
+              type: 'world:player_action',
+              citizenId: clientData.citizenId,
+              name: clientData.name,
+              action: clientData.action,
+              position: clientData.position,
+            },
+            clientData.world,
+            socket
+          );
+          break;
+        }
+
+        case 'world:speech': {
+          const text = data.text ? String(data.text).slice(0, 140) : '';
+          if (!text) return;
+          clientData.lastSpeech = { text, timestamp: Date.now() };
+
+          broadcast(
+            {
+              type: 'world:player_speech',
+              citizenId: clientData.citizenId,
+              name: clientData.name,
+              text,
+              timestamp: Date.now(),
+            },
+            clientData.world
+          );
           break;
         }
 
@@ -178,6 +258,15 @@ wss.on('connection', (socket: WebSocket) => {
               message: newMsg,
             });
           }
+
+          // Also trigger local 3D world speech bubble if nearby or global
+          broadcast({
+            type: 'world:player_speech',
+            citizenId: clientData.citizenId,
+            name: clientData.name,
+            text: newMsg.text,
+            timestamp: Date.now(),
+          });
           break;
         }
 
@@ -196,6 +285,8 @@ wss.on('connection', (socket: WebSocket) => {
         case 'world:move': {
           if (data.position && Array.isArray(data.position)) {
             clientData.position = data.position as [number, number, number];
+            if (typeof data.rotation === 'number') clientData.rotation = data.rotation;
+            if (data.action) clientData.action = data.action;
             clientData.world = data.world || clientData.world;
             
             broadcast(
@@ -204,6 +295,9 @@ wss.on('connection', (socket: WebSocket) => {
                 citizenId: clientData.citizenId,
                 name: clientData.name,
                 position: clientData.position,
+                rotation: clientData.rotation,
+                action: clientData.action,
+                customization: clientData.customization,
                 world: clientData.world,
               },
               clientData.world,

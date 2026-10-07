@@ -63,3 +63,36 @@
   transform: translateY(1px) scale(0.985);
 }
 
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0px) scale(1.05);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.9);
+  }
+}
+
+.animate-floatUp {
+  animation: floatUp 1.2s ease-out forwards;
+}
+
+@keyframes microShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-3px); }
+  40%, 80% { transform: translateX(3px); }
+}
+
+.animate-shake {
+  animation: microShake 0.35s ease-in-out;
+}
+
