@@ -9,7 +9,7 @@ import {
   Play, MessageSquare, MapPin, Users, Compass, Shield, Radio,
   User, Volume2, VolumeX, Maximize2, RotateCcw, Home, UserPlus,
   Settings, Menu, X, Check, Send, ChevronRight, Bed, Armchair, Sliders,
-  Footprints, Zap, UserCheck, Smile, Hand, Activity, ChevronUp, Layers,
+  Footprints, Zap, UserCheck, Smile, Hand, Activity, ChevronUp, ChevronDown, Layers,
   Coins, Award, Sparkles, Package, ListTodo, Map, Crosshair, CheckCircle2,
   ShoppingBag, BookOpen, Heart, Trophy, AlertTriangle, Gift, Briefcase,
   ArrowLeft, ChevronLeft, LogOut, Palette, RefreshCw, MessageCircle,
@@ -22,6 +22,8 @@ import {
   SpeechBubble, FootballPhysicsState
 } from './gameTypes';
 import { OnlineCitizen, ChatMessage as RealtimeChatMessage } from './useRealtimeSocket';
+import GtaRadarMinimap from '../components/GtaRadarMinimap';
+import ExpandedWorldMapModal from '../components/ExpandedWorldMapModal';
 
 export type PerformanceTier = 'high' | 'balanced' | 'performance';
 
@@ -88,8 +90,8 @@ export const CoinBalanceDisplay: React.FC<CoinBalanceDisplayProps> = ({ coins, c
 
   return (
     <div
-      className={`relative inline-flex items-center gap-1.5 backdrop-blur-md ${
-        compact ? 'px-2 py-0.5 rounded-xl text-xs' : 'px-3 py-1.5 rounded-2xl text-xs sm:text-sm'
+      className={`relative inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap backdrop-blur-md ${
+        compact ? 'px-2 py-0.5 rounded-xl text-xs' : 'px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm'
       } border transition-all duration-300 font-hud shadow-xl select-none pointer-events-auto ${
         isNegative
           ? 'bg-rose-950/85 border-rose-500/60 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.3)]'
@@ -537,6 +539,10 @@ export default function ThreeGameWorld({
 
   // Minimap full-screen expand modal
   const [isMinimapExpanded, setIsMinimapExpanded] = useState(false);
+  const [radarCoords, setRadarCoords] = useState<{ x: number; z: number; rot: number }>({ x: 0, z: 18, rot: 0 });
+  const [stamina, setStamina] = useState(100);
+  const staminaRef = useRef(100);
+  const lastRadarUpdateRef = useRef(0);
 
   // Performance Quality Tier
   const [performanceTier, setPerformanceTier] = useState<PerformanceTier>(() => {
@@ -570,6 +576,14 @@ export default function ThreeGameWorld({
     { id: 'inv4', name: 'Gold Dinar Pouch', type: 'Currency', count: 50, equipped: false },
     { id: 'inv5', name: 'Ajwa Dates Basket', type: 'Food', count: 12, equipped: false },
   ]);
+
+  // Player Status HUD collapsible on mobile
+  const [isPlayerHudMinimized, setIsPlayerHudMinimized] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 640;
+    }
+    return false;
+  });
 
   // Slide-over minimal hamburger menu state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -654,6 +668,7 @@ export default function ThreeGameWorld({
   const playerPositionRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 18));
   const playerRotationRef = useRef<number>(0);
   const cameraAngleRef = useRef<{ horizontal: number; vertical: number }>({ horizontal: 0, vertical: 0.3 });
+  const currentLookAtRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 1.5, 18));
   const vehiclesRef = useRef<MovingVehicle[]>([]);
 
   // Action State Ref for 60fps game loop
@@ -1556,6 +1571,12 @@ export default function ThreeGameWorld({
       }
       return next;
     });
+  };
+
+  const handleFastTravel = (targetX: number, targetZ: number, districtName: string) => {
+    playerPositionRef.current.set(targetX, 0, targetZ);
+    playChime(580, 'triangle', 0.25);
+    showToast(`Navigated to ${districtName}`);
   };
 
   const handleSelectExpression = (expr: ExpressionType) => {
@@ -2856,12 +2877,20 @@ export default function ThreeGameWorld({
         moveForward += 1;
       }
 
-      const isSprinting = isRunMode || state.toggleMovementMode === 'run' || keysRef.current['ShiftLeft'] || keysRef.current['ShiftRight'];
+      const wantsToSprint = isRunMode || state.toggleMovementMode === 'run' || keysRef.current['ShiftLeft'] || keysRef.current['ShiftRight'];
+      const isSprinting = wantsToSprint && staminaRef.current > 5;
       const hasSpeedBoost = speedBoostUntil > Date.now();
       const sprintMultiplier = hasSpeedBoost ? 1.45 : 1.0;
       const speed = (isSprinting ? 9.5 * sprintMultiplier : 4.8 * sprintMultiplier) * delta;
 
       const isMoving = (moveForward !== 0 || moveSide !== 0) && !isSitting && !isPraying && !isResting;
+
+      // GTA-style Stamina Drainage and Regeneration
+      if (isMoving && isSprinting) {
+        staminaRef.current = Math.max(0, staminaRef.current - delta * 18);
+      } else {
+        staminaRef.current = Math.min(100, staminaRef.current + delta * 24);
+      }
 
       if (isMoving) {
         const moveVector = new THREE.Vector3(moveSide, 0, -moveForward).normalize();
@@ -3120,27 +3149,70 @@ export default function ThreeGameWorld({
         playerGroupRef.current.rotation.y = playerRotationRef.current;
       }
 
-      // 3. Update Camera Following (Adaptive Perspective & Aspect Aware)
+      // Synchronize GTA Radar Minimap & Stamina telemetry at ~12fps
+      const nowMs = Date.now();
+      if (nowMs - lastRadarUpdateRef.current > 80) {
+        lastRadarUpdateRef.current = nowMs;
+        setRadarCoords({
+          x: Math.round(playerPositionRef.current.x * 10) / 10,
+          z: Math.round(playerPositionRef.current.z * 10) / 10,
+          rot: playerRotationRef.current,
+        });
+        setStamina(Math.round(staminaRef.current));
+      }
+
+      // 3. GTA-STYLE THIRD-PERSON CAMERA SYSTEM (Obstruction Avoidance, Weight & Damped Following)
       if (cameraRef.current) {
         const aspect = cameraRef.current.aspect || 1.6;
         const isPortrait = aspect < 1.0;
         const isCloseUp = cameraViewMode === 'close_up';
 
         const baseDistance = cameraDistanceRef.current;
-        const camDistance = isCloseUp ? 4.5 : baseDistance;
-        const heightRatio = isPortrait ? 0.52 : 0.45;
-        const camHeight = isCloseUp ? 2.2 : (camDistance * heightRatio);
+        let camDistance = isCloseUp ? 4.2 : baseDistance;
+        const heightRatio = isPortrait ? 0.50 : 0.42;
+        const camHeight = isCloseUp ? 2.0 : (camDistance * heightRatio);
 
         const horiz = cameraAngleRef.current.horizontal;
         const vert = cameraAngleRef.current.vertical;
 
-        const camX = playerPositionRef.current.x + camDistance * Math.sin(horiz) * Math.cos(vert);
-        const camY = playerPositionRef.current.y + camHeight + camDistance * Math.sin(vert);
-        const camZ = playerPositionRef.current.z + camDistance * Math.cos(horiz) * Math.cos(vert);
+        // Calculate ideal unconstrained camera position
+        let camX = playerPositionRef.current.x + camDistance * Math.sin(horiz) * Math.cos(vert);
+        let camY = Math.max(1.6, playerPositionRef.current.y + camHeight + camDistance * Math.sin(vert));
+        let camZ = playerPositionRef.current.z + camDistance * Math.cos(horiz) * Math.cos(vert);
 
-        cameraRef.current.position.set(camX, camY, camZ);
-        const lookTargetY = isPortrait ? 1.85 : 1.5;
-        cameraRef.current.lookAt(playerPositionRef.current.x, playerPositionRef.current.y + lookTargetY, playerPositionRef.current.z);
+        // Camera Obstruction & Collision Handling against City Buildings
+        for (let o = 0; o < SOLID_OBSTACLES.length; o++) {
+          const obs = SOLID_OBSTACLES[o];
+          if (obs.minX !== undefined && obs.maxX !== undefined && obs.minZ !== undefined && obs.maxZ !== undefined) {
+            // Buffer zone of 1.5m around building walls
+            if (camX >= obs.minX - 1.2 && camX <= obs.maxX + 1.2 && camZ >= obs.minZ - 1.2 && camZ <= obs.maxZ + 1.2) {
+              camDistance = Math.max(3.2, camDistance * 0.65);
+              camX = playerPositionRef.current.x + camDistance * Math.sin(horiz) * Math.cos(vert);
+              camY = Math.max(2.4, playerPositionRef.current.y + camDistance * heightRatio + camDistance * Math.sin(vert));
+              camZ = playerPositionRef.current.z + camDistance * Math.cos(horiz) * Math.cos(vert);
+              break;
+            }
+          }
+        }
+
+        // Apply smooth camera position spring interpolation (GTA camera weight)
+        const targetCamPos = new THREE.Vector3(camX, camY, camZ);
+        cameraRef.current.position.lerp(targetCamPos, 0.16);
+
+        // Dynamic FOV speed breathing when sprinting
+        const targetFov = isSprinting ? (isPortrait ? 82 : 62) : (isPortrait ? 76 : 56);
+        cameraRef.current.fov = THREE.MathUtils.lerp(cameraRef.current.fov, targetFov, 0.08);
+        cameraRef.current.updateProjectionMatrix();
+
+        // Smooth camera look target follow (focusing on character upper body/head)
+        const lookTargetY = isPortrait ? 1.75 : 1.45;
+        const targetLook = new THREE.Vector3(
+          playerPositionRef.current.x,
+          playerPositionRef.current.y + lookTargetY,
+          playerPositionRef.current.z
+        );
+        currentLookAtRef.current.lerp(targetLook, 0.22);
+        cameraRef.current.lookAt(currentLookAtRef.current);
       }
 
       // 3. PHYSICAL 3D INTERACTIVE FOOTBALL SIMULATION
@@ -3605,33 +3677,34 @@ export default function ThreeGameWorld({
       <canvas ref={canvasRef} className="w-full h-full block cursor-grab active:cursor-grabbing touch-none" />
 
       {/* Top Floating World Header Navigation */}
-      <div className="absolute top-[max(env(safe-area-inset-top),1rem)] left-[max(env(safe-area-inset-left),1rem)] right-[max(env(safe-area-inset-right),1rem)] z-20 flex items-center justify-between pointer-events-none gap-2">
+      <div className="absolute top-[max(env(safe-area-inset-top),0.75rem)] sm:top-[max(env(safe-area-inset-top),1rem)] left-[max(env(safe-area-inset-left),0.75rem)] sm:left-[max(env(safe-area-inset-left),1rem)] right-[max(env(safe-area-inset-right),0.75rem)] sm:right-[max(env(safe-area-inset-right),1rem)] z-20 flex items-center justify-between pointer-events-none gap-1.5 sm:gap-2">
         {/* Top Left: Return to First Page & Brand Title */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Prominent Back to First Page Button */}
+        <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto shrink-0">
+          {/* Prominent Back to First Page Button - Never wraps into multiple lines */}
           <button
             onClick={() => onExitToLanding && onExitToLanding()}
-            className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 active:scale-95 border border-emerald-500/40 text-emerald-300 hover:text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-2xl backdrop-blur-md group"
+            className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 active:scale-95 border border-emerald-500/40 text-emerald-300 hover:text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-2xl backdrop-blur-md group shrink-0 whitespace-nowrap"
             title="Return to First Page / Baraka City Homepage [Esc]"
           >
-            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
-            <span>BACK TO HOME</span>
+            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform shrink-0" />
+            <span className="hidden sm:inline">BACK TO HOME</span>
+            <span className="sm:hidden font-extrabold">HOME</span>
           </button>
 
           {/* Baraka City Brand Badge (Desktop / Tablet) */}
-          <div className="hidden sm:flex items-center gap-2 bg-black/70 border border-white/10 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-2xl">
+          <div className="hidden md:flex items-center gap-2 bg-black/70 border border-white/10 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-2xl shrink-0">
             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0"></span>
-            <span className="text-xs font-black uppercase tracking-wider text-white">BARAKA CITY</span>
+            <span className="text-xs font-black uppercase tracking-wider text-white whitespace-nowrap">BARAKA CITY</span>
           </div>
         </div>
 
         {/* Center: Dedicated Coin Balance Section & Qibla Compass HUD */}
-        <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto">
+        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto shrink-0">
           {/* Small, Dedicated Real-time Continuous Coin Balance Section */}
           <CoinBalanceDisplay coins={coins} />
 
           {/* Live World Status & Qibla Compass HUD (Desktop / Tablet) */}
-          <div className="hidden md:flex items-center gap-3 bg-black/70 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-2xl">
+          <div className="hidden lg:flex items-center gap-3 bg-black/70 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-2xl shrink-0">
             <div className="flex items-center gap-2">
               <Compass className="w-4 h-4 text-emerald-400 animate-spin-slow" />
               <span className="text-[10px] font-hud font-bold text-white uppercase tracking-wider">QIBLA: NORTH</span>
@@ -3645,7 +3718,7 @@ export default function ThreeGameWorld({
         </div>
 
         {/* Top Right: View Controls & Hamburger Drawer Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto">
+        <div className="flex items-center gap-1 sm:gap-2 pointer-events-auto shrink-0">
           {/* Quick Chat Open Toggle Button */}
           <button
             onClick={() => {
@@ -3653,15 +3726,15 @@ export default function ThreeGameWorld({
               setIsChatCardMinimized(false);
               setTimeout(() => chatInputRef.current?.focus(), 60);
             }}
-            className={`px-2.5 sm:px-3 py-1.5 sm:py-2 border backdrop-blur-md rounded-xl transition-all cursor-pointer shadow-lg flex items-center gap-1.5 active:scale-95 ${
+            className={`p-1.5 sm:px-3 sm:py-2 border backdrop-blur-md rounded-xl transition-all cursor-pointer shadow-lg flex items-center justify-center gap-1.5 active:scale-95 shrink-0 ${
               isChatCardOpen && !isChatCardMinimized
                 ? 'bg-emerald-500/25 border-emerald-400 text-emerald-300'
                 : 'bg-black/70 border-white/10 text-white hover:border-emerald-500'
             }`}
             title="Real-Time Citizens World & Proximity Chat [Key C]"
           >
-            <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
-            <span className="hidden xs:inline text-xs font-bold uppercase tracking-wider">CHAT</span>
+            <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+            <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">CHAT</span>
             {onlineCount > 0 && (
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse hidden sm:inline" />
             )}
@@ -3670,86 +3743,145 @@ export default function ThreeGameWorld({
           {/* Dedicated 3D Avatar Customization Studio Button */}
           <button
             onClick={() => setIsCustomizerOpen(true)}
-            className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-lg active:scale-95 border border-emerald-300/40"
+            className="p-1.5 sm:px-3.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg active:scale-95 border border-emerald-300/40 shrink-0"
             title="Open 3D Avatar Customizer Studio"
           >
-            <Palette className="w-3.5 h-3.5 text-black" />
-            <span className="hidden xs:inline">CUSTOMIZE</span>
+            <Palette className="w-3.5 h-3.5 text-black shrink-0" />
+            <span className="hidden sm:inline">CUSTOMIZE</span>
           </button>
 
-          {/* Camera View Switcher */}
+          {/* Camera View Switcher (Desktop & Tablet) */}
           <button
             onClick={() => setCameraViewMode(cameraViewMode === 'third_person' ? 'close_up' : 'third_person')}
-            className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl text-xs font-extrabold uppercase tracking-wider hover:border-emerald-500 transition-all cursor-pointer flex items-center gap-1.5 shadow-lg"
+            className="hidden sm:flex px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl text-xs font-extrabold uppercase tracking-wider hover:border-emerald-500 transition-all cursor-pointer items-center gap-1.5 shadow-lg shrink-0"
             title="Toggle Third Person / Close-up Camera View"
           >
-            <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">{cameraViewMode === 'third_person' ? '3RD PERSON' : 'CLOSE UP'}</span>
+            <Maximize2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>{cameraViewMode === 'third_person' ? '3RD PERSON' : 'CLOSE UP'}</span>
           </button>
 
           {/* Audio Switcher */}
           <button
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className="p-1.5 sm:p-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl hover:border-emerald-500 transition-all cursor-pointer shadow-lg"
+            className="p-1.5 sm:p-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl hover:border-emerald-500 transition-all cursor-pointer shadow-lg shrink-0 flex items-center justify-center"
             title="Toggle Ambient Sound"
           >
-            {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />}
+            {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />}
           </button>
 
           {/* Minimal Overlay Hamburger Menu Drawer Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-1.5 sm:p-2 bg-emerald-500 text-black font-bold rounded-xl hover:bg-emerald-400 transition-all cursor-pointer shadow-lg"
+            className="p-1.5 sm:p-2 bg-emerald-500 text-black font-bold rounded-xl hover:bg-emerald-400 transition-all cursor-pointer shadow-lg shrink-0 flex items-center justify-center"
             title="Character Control Drawer"
           >
-            <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Menu className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
           </button>
         </div>
       </div>
 
-      {/* RESPONSIVE PLAYER STATUS HUD (Player Name, Coins, District Location, Health/Vitality) */}
-      <div className="absolute top-[calc(max(env(safe-area-inset-top),1rem)+3.5rem)] left-[max(env(safe-area-inset-left),1rem)] z-20 pointer-events-none max-w-[calc(100vw-2rem)] sm:max-w-xs">
-        <div className="bg-black/75 border border-white/10 backdrop-blur-md px-3 py-2 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-1.5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 truncate">
+      {/* RESPONSIVE PLAYER STATUS HUD (Player Name, District Location, Health/Vitality, Tasks/Missions) */}
+      <div className="absolute top-[calc(max(env(safe-area-inset-top),0.75rem)+2.75rem)] sm:top-[calc(max(env(safe-area-inset-top),1rem)+3.5rem)] left-[max(env(safe-area-inset-left),0.75rem)] sm:left-[max(env(safe-area-inset-left),1rem)] z-20 pointer-events-none max-w-[calc(100vw-1.5rem)] sm:max-w-xs transition-all duration-300">
+        {isPlayerHudMinimized ? (
+          /* Sleek Collapsed HUD Pill for Clean Mobile Immersion */
+          <div className="bg-black/85 hover:bg-black/95 border border-emerald-500/40 backdrop-blur-xl px-2.5 py-1.5 rounded-2xl shadow-2xl pointer-events-auto flex items-center gap-2 animate-fadeIn transition-all">
+            <button
+              onClick={() => setIsPlayerHudMinimized(false)}
+              className="flex items-center gap-1.5 text-left cursor-pointer group"
+              title="Tap to Expand Citizen Status & Quests"
+            >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-              <span className="text-xs font-black uppercase text-white truncate tracking-wide">{userProfile.name}</span>
-            </div>
-            <CoinBalanceDisplay coins={coins} compact />
-          </div>
-          
-          <div className="flex items-center justify-between gap-2 text-[9px] font-hud text-zinc-300">
-            <div className="flex items-center gap-1 truncate">
-              <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-              <span className="truncate uppercase text-zinc-300">{currentDistrict}</span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <Activity className="w-3 h-3 text-emerald-400" />
-              <span className="text-[9px] text-emerald-400 font-bold">100% HEALTH</span>
-            </div>
-          </div>
-          
-          {/* Micro Health / Vitality Bar */}
-          <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
-          </div>
+              <span className="text-[11px] font-black uppercase text-white tracking-wide truncate max-w-[100px] xs:max-w-[130px]">
+                {userProfile.name}
+              </span>
+              <span className="text-[8px] font-hud text-emerald-400 bg-emerald-500/15 px-1 py-0.5 rounded font-bold uppercase shrink-0">
+                100% HP
+              </span>
+            </button>
 
-          {/* Quick Access Missions / Quests Pill Button */}
-          <button
-            onClick={() => setIsMissionsModalOpen(true)}
-            className="w-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center justify-between transition-all cursor-pointer shadow-lg active:scale-95"
-          >
-            <span className="flex items-center gap-1.5">
-              <Award className="w-3.5 h-3.5 text-emerald-400" />
-              <span>TASKS & MISSIONS</span>
-            </span>
-            <span className="bg-emerald-400 text-black px-1.5 py-0.5 rounded font-black text-[8px]">
-              {missions.filter((m) => m.completed && !m.claimed).length > 0
-                ? `${missions.filter((m) => m.completed && !m.claimed).length} CLAIMABLE`
-                : `${missions.filter((m) => m.completed).length}/${missions.length}`}
-            </span>
-          </button>
-        </div>
+            <span className="text-zinc-600">|</span>
+
+            <button
+              onClick={() => setIsMissionsModalOpen(true)}
+              className="flex items-center gap-1 text-[10px] text-zinc-300 hover:text-emerald-300 font-bold uppercase cursor-pointer"
+              title="Open Tasks & Missions"
+            >
+              <Award className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="text-[9px] font-hud bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1 py-0.2 rounded font-black">
+                {missions.filter((m) => m.completed && !m.claimed).length > 0
+                  ? `${missions.filter((m) => m.completed && !m.claimed).length} CLAIM`
+                  : `${missions.filter((m) => m.completed).length}/${missions.length}`}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setIsPlayerHudMinimized(false)}
+              className="p-0.5 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer"
+              title="Expand Player Card"
+            >
+              <ChevronDown className="w-3.5 h-3.5 text-zinc-300" />
+            </button>
+          </div>
+        ) : (
+          /* Full Responsive HUD Glass Card (Clean, Uncluttered, No Duplicate Coins) */
+          <div className="bg-black/85 border border-white/15 backdrop-blur-xl p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl shadow-2xl pointer-events-auto flex flex-col gap-1.5 sm:gap-2 w-72 xs:w-80 sm:w-full animate-fadeIn transition-all">
+            {/* Top Header: Player Name + Online Dot + Minimize/Collapse Button */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-xs font-black uppercase text-white truncate tracking-wide">
+                  {userProfile.name}
+                </span>
+                <span className="text-[8px] font-hud text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold shrink-0">
+                  ACTIVE
+                </span>
+              </div>
+              
+              {/* Collapse button for mobile comfort */}
+              <button
+                onClick={() => setIsPlayerHudMinimized(true)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1 text-[9px] font-bold uppercase shrink-0"
+                title="Minimize Player HUD to Pill"
+              >
+                <span className="text-[8px] hidden xs:inline text-zinc-400">MINIMIZE</span>
+                <ChevronUp className="w-3.5 h-3.5 text-zinc-300" />
+              </button>
+            </div>
+
+            {/* Location & Vitality Info */}
+            <div className="flex items-center justify-between gap-2 text-[9px] font-hud text-zinc-300">
+              <div className="flex items-center gap-1 truncate">
+                <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                <span className="truncate uppercase text-zinc-300 font-semibold">{currentDistrict}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Activity className="w-3 h-3 text-emerald-400" />
+                <span className="text-[9px] text-emerald-400 font-bold">100% HEALTH</span>
+              </div>
+            </div>
+
+            {/* Micro Health / Vitality Bar */}
+            <div className="w-full h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
+            </div>
+
+            {/* Quick Access Missions / Quests Pill Button */}
+            <button
+              onClick={() => setIsMissionsModalOpen(true)}
+              className="w-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 px-2.5 py-1.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-wider flex items-center justify-between transition-all cursor-pointer shadow-lg active:scale-95"
+            >
+              <span className="flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-emerald-400" />
+                <span>TASKS & MISSIONS</span>
+              </span>
+              <span className="bg-emerald-400 text-black px-1.5 py-0.5 rounded font-black text-[8px]">
+                {missions.filter((m) => m.completed && !m.claimed).length > 0
+                  ? `${missions.filter((m) => m.completed && !m.claimed).length} CLAIMABLE`
+                  : `${missions.filter((m) => m.completed).length}/${missions.length}`}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Floating Coin Feedback Notification Chip */}
@@ -4682,10 +4814,10 @@ export default function ThreeGameWorld({
 
       {/* Minimal Overlay Hamburger Menu Drawer */}
       {isMenuOpen && (
-        <div className="absolute top-16 right-4 z-50 bg-[#12151f]/95 border border-emerald-500/40 rounded-3xl max-w-sm w-full p-6 shadow-2xl backdrop-blur-xl animate-fadeIn space-y-6">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <h3 className="text-base font-black uppercase tracking-wider text-white">CHARACTER & GAME CONTROL</h3>
-            <button onClick={() => setIsMenuOpen(false)} className="text-zinc-400 hover:text-white">
+        <div className="absolute top-14 sm:top-16 right-2 sm:right-4 z-50 bg-[#12151f]/95 border border-emerald-500/40 rounded-3xl max-w-[calc(100vw-1rem)] sm:max-w-sm w-full p-4 sm:p-6 shadow-2xl backdrop-blur-xl animate-fadeIn space-y-5">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">CHARACTER & GAME CONTROL</h3>
+            <button onClick={() => setIsMenuOpen(false)} className="text-zinc-400 hover:text-white p-1 rounded-lg">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -4854,7 +4986,17 @@ export default function ThreeGameWorld({
           )}
 
           {menuTab === 'settings' && (
-            <div className="space-y-4 text-xs font-bold uppercase text-zinc-300">
+            <div className="space-y-3 text-xs font-bold uppercase text-zinc-300">
+              <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
+                <span className="flex items-center gap-1.5"><Maximize2 className="w-3.5 h-3.5 text-emerald-400" /> CAMERA VIEW</span>
+                <button
+                  onClick={() => setCameraViewMode(cameraViewMode === 'third_person' ? 'close_up' : 'third_person')}
+                  className="px-2.5 py-1 bg-white/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                >
+                  {cameraViewMode === 'third_person' ? '3RD PERSON' : 'CLOSE UP'}
+                </button>
+              </div>
+
               <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
                 <span>AMBIENT AUDIO</span>
                 <button onClick={() => setIsAudioEnabled(!isAudioEnabled)} className="text-emerald-400">
@@ -4893,34 +5035,79 @@ export default function ThreeGameWorld({
         </div>
       )}
 
-      {/* Desktop Keybind Helper Overlay (hidden on small/touch screens) */}
-      <div className="hidden lg:flex absolute bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)] z-20 items-center gap-2 bg-black/70 border border-white/10 backdrop-blur-md px-4 py-2 rounded-2xl text-[10px] font-bold uppercase tracking-wider text-zinc-300 shadow-2xl">
-        <span className="bg-white/10 px-2 py-0.5 rounded text-emerald-400 font-hud">ESC</span>
-        <span>Home</span>
-        <span className="text-zinc-600">·</span>
-        <span className="bg-white/10 px-2 py-0.5 rounded text-emerald-400 font-hud">WASD</span>
-        <span>Move</span>
-        <span className="text-zinc-600">·</span>
-        <span className="bg-white/10 px-2 py-0.5 rounded text-emerald-400 font-hud">R</span>
-        <span>Toggle Run</span>
-        <span className="text-zinc-600">·</span>
-        <span className="bg-white/10 px-2 py-0.5 rounded text-emerald-400 font-hud">F</span>
-        <span>Sit/Stand</span>
-        <span className="text-zinc-600">·</span>
-        <span className="bg-white/10 px-2 py-0.5 rounded text-emerald-400 font-hud">P</span>
-        <span>Pray</span>
-        <span className="text-zinc-600">·</span>
-        <span className="bg-white/10 px-2 py-0.5 rounded text-emerald-400 font-hud">E</span>
-        <span>Interact</span>
+      {/* GTA-Style Contextual Interaction Prompt (Center Bottom) */}
+      {contextPrompt && (
+        <div className="absolute bottom-[calc(max(env(safe-area-inset-bottom),1rem)+5.5rem)] sm:bottom-[calc(max(env(safe-area-inset-bottom),1.25rem)+4.25rem)] left-1/2 -translate-x-1/2 z-35 pointer-events-auto animate-fadeIn">
+          <button
+            onClick={contextPrompt.onExecute}
+            className="group flex items-center gap-2.5 bg-black/90 hover:bg-black border-2 border-emerald-400 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.9)] backdrop-blur-xl transition-all active:scale-95 cursor-pointer hover:border-emerald-300"
+          >
+            <span className="w-6 h-6 rounded-lg bg-emerald-500 text-black font-black text-xs flex items-center justify-center font-hud shadow group-hover:scale-110 transition-transform shrink-0">
+              {contextPrompt.actionKey}
+            </span>
+            <div className="flex flex-col text-left truncate max-w-[220px] sm:max-w-xs">
+              <span className="text-[11px] sm:text-xs font-black uppercase text-white tracking-wider font-sora truncate">
+                {contextPrompt.text}
+              </span>
+              {contextPrompt.subText && (
+                <span className="text-[9px] font-hud text-emerald-400 truncate">
+                  {contextPrompt.subText}
+                </span>
+              )}
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* GTA-Style Bottom-Left HUD: Radar Minimap, District Strip & Vitality/Stamina */}
+      <div className="absolute bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)] z-30 flex items-end gap-3 pointer-events-none">
+        {/* Radar Minimap Component */}
+        <GtaRadarMinimap
+          playerX={radarCoords.x}
+          playerZ={radarCoords.z}
+          playerRotation={radarCoords.rot}
+          currentDistrict={currentDistrict}
+          stamina={stamina}
+          health={100}
+          otherPlayers={otherAvatarsRef.current.map((a) => ({ id: a.id, name: a.name, x: a.position.x, z: a.position.z }))}
+          vehicles={vehiclesRef.current.map((v) => ({ id: v.id, x: v.mesh.position.x, z: v.mesh.position.z }))}
+          onExpandMap={() => setIsMinimapExpanded(true)}
+          isMobile={viewportProfile.isMobile}
+        />
+
+        {/* Desktop Keybind Helper Bar (alongside Radar) */}
+        <div className="hidden xl:flex items-center gap-2 bg-black/70 border border-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-wider text-zinc-300 shadow-2xl pointer-events-auto">
+          <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-hud">WASD</span>
+          <span>Move</span>
+          <span className="text-zinc-600">·</span>
+          <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-hud">SHIFT</span>
+          <span>Sprint</span>
+          <span className="text-zinc-600">·</span>
+          <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-hud">E</span>
+          <span>Interact</span>
+          <span className="text-zinc-600">·</span>
+          <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-hud">P</span>
+          <span>Pray</span>
+        </div>
       </div>
 
-      {/* Mobile & Tablet Touch Virtual Joystick */}
+      {/* Interactive Expanded Full-Screen World Map Modal */}
+      <ExpandedWorldMapModal
+        isOpen={isMinimapExpanded}
+        onClose={() => setIsMinimapExpanded(false)}
+        playerX={radarCoords.x}
+        playerZ={radarCoords.z}
+        currentDistrict={currentDistrict}
+        onFastTravel={handleFastTravel}
+      />
+
+      {/* Mobile & Tablet Touch Virtual Joystick (Floating in Left Safe Area) */}
       {(isMobileControlsVisible || viewportProfile.isMobile || viewportProfile.isTablet) && (
-        <div className="absolute bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-[max(env(safe-area-inset-left),1.5rem)] z-30 w-24 h-24 rounded-full border-2 border-emerald-500/50 bg-black/40 backdrop-blur-md flex items-center justify-center pointer-events-auto">
+        <div className="absolute bottom-[calc(max(env(safe-area-inset-bottom),1rem)+9rem)] sm:bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-[calc(max(env(safe-area-inset-left),1rem)+8.5rem)] sm:left-[max(env(safe-area-inset-left),10rem)] z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-emerald-500/40 bg-black/40 backdrop-blur-md flex items-center justify-center pointer-events-auto">
           <div
-            className="w-10 h-10 rounded-full bg-emerald-500 shadow-lg border border-white transition-transform"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 shadow-lg border border-white transition-transform"
             style={{
-              transform: `translate(${joystickVector.x * 30}px, ${joystickVector.y * 30}px)`,
+              transform: `translate(${joystickVector.x * 26}px, ${joystickVector.y * 26}px)`,
             }}
           />
         </div>

@@ -105,16 +105,38 @@ export default function CinematicGameEntry({
     const updateProgress = () => {
       setDisplayedProgress((current) => {
         if (current >= loadingTarget) {
-          if (current >= 100) {
+          if (current >= 100 && !isGameReady) {
             setIsGameReady(true);
+            // Automatic AAA Game Entry Transition at 100%
+            setTimeout(() => {
+              if (!isEntering) {
+                setIsEntering(true);
+                onStartTransition?.();
+                playEntranceChime();
+                setTimeout(() => {
+                  onEnterWorld(selectedWorld);
+                }, 1200);
+              }
+            }, 600);
           }
           return current;
         }
         const diff = loadingTarget - current;
         const step = Math.max(0.65, diff * 0.12);
         const next = Math.min(loadingTarget, current + step);
-        if (next >= 100) {
+        if (next >= 100 && !isGameReady) {
           setIsGameReady(true);
+          // Automatic AAA Game Entry Transition at 100%
+          setTimeout(() => {
+            if (!isEntering) {
+              setIsEntering(true);
+              onStartTransition?.();
+              playEntranceChime();
+              setTimeout(() => {
+                onEnterWorld(selectedWorld);
+              }, 1200);
+            }
+          }, 600);
         }
         return next;
       });
@@ -957,56 +979,69 @@ export default function CinematicGameEntry({
 
         if (isEntering) {
           // Dynamic entrance rush: camera accelerates smoothly toward boulevard street level
-          cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, isPortrait ? 4.0 : 3.2, 0.08);
-          cameraRef.current.position.z = THREE.MathUtils.lerp(cameraRef.current.position.z, isPortrait ? 23.0 : 20.0, 0.08);
-          cameraRef.current.position.x = THREE.MathUtils.lerp(cameraRef.current.position.x, 0, 0.08);
-          cameraRef.current.lookAt(0, isPortrait ? 3.0 : 2.0, -30);
+          cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, isPortrait ? 3.5 : 2.8, 0.1);
+          cameraRef.current.position.z = THREE.MathUtils.lerp(cameraRef.current.position.z, isPortrait ? 20.0 : 16.0, 0.1);
+          cameraRef.current.position.x = THREE.MathUtils.lerp(cameraRef.current.position.x, 0, 0.1);
+          cameraRef.current.lookAt(0, isPortrait ? 2.5 : 1.8, -35);
         } else {
-          // Continuous, gentle cinematic glide through the city
-          cameraProgressRef.current += delta * 0.12;
+          // Fast, continuous AAA open-world cinematic fly-through through Baraka City
+          cameraProgressRef.current += delta * 0.38;
           const t = cameraProgressRef.current;
 
-          // Adaptive figure-8 sweeping orbit path with smooth altitude breathing
-          const orbitRadiusX = isPortrait ? 26 : isUltrawide ? 42 : 36;
-          const orbitBaseZ = isPortrait ? 42 : 35;
-          const orbitBaseY = isPortrait ? 18 : 14;
-
-          const camX = Math.sin(t * 0.8) * orbitRadiusX;
-          const camZ = orbitBaseZ + Math.cos(t * 0.6) * 22;
-          const camY = orbitBaseY + Math.sin(t * 0.4) * 6;
-
-          // Target focus transitions naturally based on camera position and viewport
+          // Multi-district sweeping trajectory flying through streets, mosque, souq, campus & park
+          const routePhase = (t % (Math.PI * 4));
+          let camX = 0;
+          let camY = 8;
+          let camZ = 0;
           let lookTargetX = 0;
-          let lookTargetY = isPortrait ? 11 : 8;
-          let lookTargetZ = -45;
+          let lookTargetY = 5;
+          let lookTargetZ = -30;
 
-          // Determine current focal area label for HUD
-          const normPhase = (t % (Math.PI * 4));
-          if (normPhase < Math.PI) {
-            setCurrentFocalArea('Grand Mosque & Ceremonial Plaza');
+          if (routePhase < Math.PI) {
+            // Segment 1: Low flyover down Central Boulevard alongside moving traffic and pedestrians
+            const p = routePhase / Math.PI;
+            camX = THREE.MathUtils.lerp(-45, 35, p);
+            camY = 4.2 + Math.sin(p * Math.PI) * 2.5;
+            camZ = 12 + Math.cos(p * Math.PI) * 8;
+            lookTargetX = camX + 25;
+            lookTargetY = 3.2;
+            lookTargetZ = 0;
+            setCurrentFocalArea('Central Boulevard & City Traffic');
+          } else if (routePhase < Math.PI * 2) {
+            // Segment 2: Sweeping banking turn past Souq Al-Madina Marketplace & Enterable Stalls
+            const p = (routePhase - Math.PI) / Math.PI;
+            camX = -15 - Math.sin(p * Math.PI) * 25;
+            camY = 5.5 + Math.sin(p * Math.PI) * 3.0;
+            camZ = 10 + p * 20;
+            lookTargetX = -28;
+            lookTargetY = 3.5;
+            lookTargetZ = 24;
+            setCurrentFocalArea('Souq Al-Madina Marketplace & Trade');
+          } else if (routePhase < Math.PI * 3) {
+            // Segment 3: Grand ascent towards Grand Mosque Domes, Minarets & Esplanade
+            const p = (routePhase - Math.PI * 2) / Math.PI;
+            camX = Math.sin(p * Math.PI) * 30;
+            camY = 9.0 + Math.sin(p * Math.PI) * 9.5; // High cinematic aerial reveal
+            camZ = -20 - p * 30;
             lookTargetX = 0;
-            lookTargetY = isPortrait ? 13 : 10;
-            lookTargetZ = -55;
-          } else if (normPhase < Math.PI * 2) {
-            setCurrentFocalArea('Souq Al-Baraka Marketplace & Promenade');
-            lookTargetX = -20;
-            lookTargetY = isPortrait ? 7 : 5;
-            lookTargetZ = 15;
-          } else if (normPhase < Math.PI * 3) {
-            setCurrentFocalArea('Islamic University Campus & Colonnade');
-            lookTargetX = -38;
-            lookTargetY = isPortrait ? 10 : 8;
-            lookTargetZ = -20;
+            lookTargetY = 14;
+            lookTargetZ = -58;
+            setCurrentFocalArea('Grand Mosque & Islamic Sanctuary');
           } else {
-            setCurrentFocalArea('Central Boulevard & Residential District');
-            lookTargetX = 22;
-            lookTargetY = isPortrait ? 9 : 7;
-            lookTargetZ = 5;
+            // Segment 4: Fast swoop across Bayt Al-Hikma Campus, Madrasa & Public Park
+            const p = (routePhase - Math.PI * 3) / Math.PI;
+            camX = THREE.MathUtils.lerp(35, -25, p);
+            camY = 6.8 + Math.cos(p * Math.PI) * 2.5;
+            camZ = THREE.MathUtils.lerp(-35, 15, p);
+            lookTargetX = -35;
+            lookTargetY = 4.0;
+            lookTargetZ = -15;
+            setCurrentFocalArea('Bayt Al-Hikma Campus & Madrasa');
           }
 
-          // Apply gentle interactive look offset if user dragged or swiped
-          const finalCamX = camX + cameraLookOffsetRef.current.x * (isPortrait ? 8 : 12);
-          const finalCamY = Math.max(3.5, camY - cameraLookOffsetRef.current.y * (isPortrait ? 8 : 12));
+          // Apply gentle user interactive look offset
+          const finalCamX = camX + cameraLookOffsetRef.current.x * (isPortrait ? 6 : 10);
+          const finalCamY = Math.max(3.2, camY - cameraLookOffsetRef.current.y * (isPortrait ? 6 : 10));
 
           cameraRef.current.position.set(finalCamX, finalCamY, camZ);
           cameraRef.current.lookAt(lookTargetX, lookTargetY, lookTargetZ);
@@ -1089,103 +1124,61 @@ export default function CinematicGameEntry({
         </div>
       </div>
 
-      {/* CENTERPIECE: Monumental Game Title, Animated Loading & BISMILLAH Entrance */}
-      <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center justify-end text-center pointer-events-none pb-[max(env(safe-area-inset-bottom),1rem)] px-3 xs:px-4 sm:px-6">
-        <div className="max-w-lg md:max-w-xl w-full pointer-events-auto flex flex-col items-center animate-fadeIn">
+      {/* CENTERPIECE: Monumental GTA-Style Game Title & Automatic Stepped Loading Indicator */}
+      <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center justify-end text-center pointer-events-none pb-[max(env(safe-area-inset-bottom),1.5rem)] px-4 sm:px-6">
+        <div className="max-w-lg md:max-w-xl w-full pointer-events-auto flex flex-col items-center">
           
           {/* Arabic Basmala / Divine Invocation */}
-          <div className="mb-1.5 sm:mb-2.5">
-            <span className="text-sm xs:text-base sm:text-xl md:text-2xl font-serif text-emerald-400/90 tracking-widest drop-shadow-[0_2px_12px_rgba(16,185,129,0.35)] block leading-tight">
+          <div className="mb-2 sm:mb-3 animate-fadeIn">
+            <span className="text-base sm:text-xl md:text-2xl font-serif text-amber-300 tracking-widest drop-shadow-[0_2px_14px_rgba(245,158,11,0.5)] block leading-tight">
               بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
             </span>
           </div>
 
-          {/* Monumental Title */}
-          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight text-white mb-1.5 sm:mb-2 drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)] leading-none">
-            BARAKA CITY
-          </h1>
-
-          {/* Cinematic Tagline - Responsive text size, hidden on short mobile screens */}
-          <p className="text-[11px] xs:text-xs sm:text-sm md:text-base text-zinc-300 font-medium max-w-sm sm:max-w-md mx-auto mb-3 sm:mb-5 leading-relaxed drop-shadow-md hidden [min-height:480px]:block">
-            A living Islamic metropolis of faith, culture, commerce, and multiplayer fellowship.
-          </p>
-
-          {/* MINIMAL SLEEK LOADING INDICATOR */}
-          <div className="w-full max-w-[280px] xs:max-w-xs sm:max-w-sm mb-3 sm:mb-4 flex flex-col items-center">
-            <div className="w-full flex items-center justify-between text-[10px] sm:text-xs font-hud tracking-wider mb-1.5 px-1">
-              <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${displayedProgress >= 100 ? 'bg-emerald-400' : 'bg-emerald-400 animate-ping'}`} />
-                {displayedProgress < 45
-                  ? 'INITIALIZING'
-                  : displayedProgress < 75
-                  ? 'LOADING CITY'
-                  : displayedProgress < 100
-                  ? 'LOADING WORLD'
-                  : 'BARAKA CITY READY'}
+          {/* Monumental GTA-Style Stylized Title Card */}
+          <div className="relative mb-3 sm:mb-4 select-none">
+            <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight text-white drop-shadow-[0_6px_28px_rgba(0,0,0,0.95)] leading-none font-sora">
+              <span className="bg-gradient-to-b from-white via-amber-100 to-amber-400 bg-clip-text text-transparent filter drop-shadow-[0_4px_16px_rgba(245,158,11,0.35)]">
+                BARAKA CITY
               </span>
-              <span className="font-mono font-bold text-white tracking-widest">{Math.round(displayedProgress)}%</span>
+            </h1>
+            <div className="text-[10px] sm:text-xs font-hud text-emerald-400 tracking-[0.35em] uppercase font-bold mt-1 text-center drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]">
+              OPEN WORLD · ISLAMIC METROPOLIS
+            </div>
+          </div>
+
+          {/* AUTOMATIC CINEMATIC LOADING BAR (0% -> 45% -> 75% -> 100%) */}
+          <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center bg-black/60 border border-white/10 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-2xl">
+            <div className="w-full flex items-center justify-between text-[11px] sm:text-xs font-hud tracking-wider mb-2 px-0.5">
+              <span className="text-emerald-400 font-bold flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${displayedProgress >= 100 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-amber-400 animate-ping'}`} />
+                <span className="text-zinc-200">
+                  {displayedProgress < 45
+                    ? 'INITIALIZING BARAKA CITY'
+                    : displayedProgress < 75
+                    ? 'LOADING CITY'
+                    : displayedProgress < 100
+                    ? 'LOADING WORLD'
+                    : 'BARAKA CITY READY'}
+                </span>
+              </span>
+              <span className="font-mono font-bold text-amber-300 tracking-widest">{Math.round(displayedProgress)}%</span>
             </div>
 
             {/* Glowing Minimal Progress Track */}
-            <div className="w-full h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[0.5px]">
+            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[0.5px]">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-150 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
+                className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-300 rounded-full transition-all duration-150 shadow-[0_0_14px_rgba(16,185,129,0.9)]"
                 style={{ width: `${Math.min(100, Math.max(2, displayedProgress))}%` }}
               />
             </div>
-          </div>
 
-          {/* BISMILLAH / ENTER BARAKA CITY ACTION BUTTON */}
-          <div className="w-full flex flex-col items-center justify-center pointer-events-auto">
-            <button
-              onClick={handleEnterClick}
-              disabled={isEntering || !isGameReady}
-              className={`group relative w-full sm:w-auto px-6 xs:px-8 sm:px-12 py-3 xs:py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs xs:text-sm sm:text-base tracking-wide uppercase transition-all duration-300 flex items-center justify-center gap-2.5 sm:gap-3 border overflow-hidden cursor-pointer shadow-2xl active:scale-95 ${
-                !isGameReady
-                  ? 'bg-zinc-800/80 border-white/10 text-zinc-400 cursor-wait'
-                  : 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white border-emerald-300/30 shadow-[0_0_35px_rgba(16,185,129,0.45)] hover:shadow-[0_0_55px_rgba(16,185,129,0.7)] hover:scale-105'
-              } disabled:opacity-75 disabled:pointer-events-none`}
-            >
-              <span className="relative z-10 font-bold flex items-center gap-2 sm:gap-3">
-                <span>
-                  {isEntering
-                    ? 'ENTERING BARAKA CITY...'
-                    : !isGameReady
-                    ? 'PREPARING WORLD...'
-                    : 'BISMILLAH / ENTER BARAKA CITY'}
-                </span>
-                <ArrowRight
-                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ${
-                    isEntering ? 'translate-x-3 opacity-0' : 'group-hover:translate-x-1.5'
-                  }`}
-                />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform" />
-            </button>
-          </div>
-
-          {/* Desktop Keyboard Helper Prompt */}
-          <div className="mt-2.5 sm:mt-3 hidden sm:flex items-center gap-2 text-[10px] font-hud text-zinc-400 tracking-wider">
-            <span className="bg-white/10 px-2 py-0.5 rounded border border-white/10 text-white font-bold">ENTER</span>
-            <span>or</span>
-            <span className="bg-white/10 px-2 py-0.5 rounded border border-white/10 text-white font-bold">SPACE</span>
-            <span>TO STEP INTO THE WORLD</span>
-          </div>
-
-          {/* Explorable World Pillars Pills (Adaptive Wrap) */}
-          <div className="mt-3 sm:mt-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 text-[9px] xs:text-[10px] sm:text-[11px] font-semibold text-zinc-300 hidden [min-height:540px]:flex">
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" /> 3D Open World
-            </span>
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" /> Living Trade & Souq
-            </span>
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" /> Grand Mosque & Madrasa
-            </span>
-            <span className="bg-black/60 border border-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" /> Multiplayer Arena
-            </span>
+            {/* Cinematic Ready Transition State Prompt */}
+            {displayedProgress >= 100 && (
+              <div className="mt-2.5 text-[10px] sm:text-[11px] font-hud text-emerald-400 font-bold uppercase tracking-widest animate-pulse flex items-center gap-1.5">
+                <span>ENTERING 3D OPEN WORLD...</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

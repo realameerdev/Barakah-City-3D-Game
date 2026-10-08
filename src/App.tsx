@@ -19,6 +19,7 @@ import ThreeGameWorld from './game/ThreeGameWorld';
 import CinematicGameEntry from './game/CinematicGameEntry';
 import { useRealtimeSocket } from './game/useRealtimeSocket';
 import { SilkReveal } from './components/SilkReveal';
+import LandscapeOrientationGate from './components/LandscapeOrientationGate';
 
 // Photorealistic Islamic architectural & cultural imagery
 import heroImg from './assets/images/hero_avatar_mosque_1791286969661.jpg';
@@ -270,7 +271,8 @@ export default function App() {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#090a0f] text-white flex flex-col font-sora selection:bg-emerald-500 selection:text-white overflow-hidden">
+    <LandscapeOrientationGate>
+      <div className="h-[100dvh] min-h-[100dvh] w-full bg-[#090a0f] text-white flex flex-col font-sora selection:bg-emerald-500 selection:text-white overflow-hidden">
       <AzanAudioController activeView={activeView} isFading={isAzanFading} />
       
       {/* 3D CINEMATIC GAME ENTRY VIEW ("/") VS 3D PLAYABLE GAME WORLD ("/dashboard") */}
@@ -960,6 +962,7 @@ export default function App() {
         }`}
       />
 
-    </div>
+      </div>
+    </LandscapeOrientationGate>
   );
 }
