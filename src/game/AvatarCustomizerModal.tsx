@@ -6,8 +6,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { 
-  X, Check, RotateCcw, Sparkles, User, Palette, 
-  Smile, Shield, ChevronRight, Eye, RefreshCw
+  X, Check, RotateCcw, User, Palette, 
+  Smile, Shield, ChevronRight, Eye, RefreshCw, Glasses
 } from 'lucide-react';
 import { 
   AvatarCustomization, GenderType, SkinToneId, 
@@ -403,7 +403,7 @@ export default function AvatarCustomizerModal({
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-              <Sparkles className="w-5 h-5" />
+              <User className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black uppercase text-white tracking-wide flex items-center gap-2">
@@ -468,7 +468,7 @@ export default function AvatarCustomizerModal({
                 { id: 'headwear', label: 'Headwear & Hijab', icon: Shield },
                 { id: 'hair_beard', label: 'Hair & Beard', icon: Smile },
                 { id: 'outfit', label: 'Attire & Robes', icon: Palette },
-                { id: 'accessories', label: 'Accessories', icon: Sparkles },
+                { id: 'accessories', label: 'Accessories', icon: Glasses },
                 { id: 'colors', label: 'Colors', icon: Palette },
               ].map((tab) => {
                 const Icon = tab.icon;

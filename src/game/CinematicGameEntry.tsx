@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { Volume2, VolumeX, Compass, Users, Sparkles, ArrowRight, Eye, Play } from 'lucide-react';
+import { Volume2, VolumeX, Compass, Users, ArrowRight, Eye, Play } from 'lucide-react';
 import RabbitLogo from '../components/RabbitLogo';
 
 interface CinematicGameEntryProps {
@@ -88,11 +88,13 @@ export default function CinematicGameEntry({
 
   // Stepped loading phase scheduler
   useEffect(() => {
-    const t1 = setTimeout(() => setLoadingTarget(45), 200);
-    const t2 = setTimeout(() => setLoadingTarget(75), 900);
-    const t3 = setTimeout(() => setLoadingTarget(100), 1850);
+    const t0 = setTimeout(() => setLoadingTarget(15), 180);
+    const t1 = setTimeout(() => setLoadingTarget(45), 650);
+    const t2 = setTimeout(() => setLoadingTarget(75), 1250);
+    const t3 = setTimeout(() => setLoadingTarget(100), 1950);
 
     return () => {
+      clearTimeout(t0);
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
@@ -107,17 +109,7 @@ export default function CinematicGameEntry({
         if (current >= loadingTarget) {
           if (current >= 100 && !isGameReady) {
             setIsGameReady(true);
-            // Automatic AAA Game Entry Transition at 100%
-            setTimeout(() => {
-              if (!isEntering) {
-                setIsEntering(true);
-                onStartTransition?.();
-                playEntranceChime();
-                setTimeout(() => {
-                  onEnterWorld(selectedWorld);
-                }, 1200);
-              }
-            }, 600);
+            // STOPS HERE! User clicks Enter button themselves to proceed to dashboard.
           }
           return current;
         }
@@ -126,17 +118,7 @@ export default function CinematicGameEntry({
         const next = Math.min(loadingTarget, current + step);
         if (next >= 100 && !isGameReady) {
           setIsGameReady(true);
-          // Automatic AAA Game Entry Transition at 100%
-          setTimeout(() => {
-            if (!isEntering) {
-              setIsEntering(true);
-              onStartTransition?.();
-              playEntranceChime();
-              setTimeout(() => {
-                onEnterWorld(selectedWorld);
-              }, 1200);
-            }
-          }, 600);
+          // STOPS HERE! User clicks Enter button themselves to proceed to dashboard.
         }
         return next;
       });
@@ -145,7 +127,7 @@ export default function CinematicGameEntry({
 
     animId = requestAnimationFrame(updateProgress);
     return () => cancelAnimationFrame(animId);
-  }, [loadingTarget]);
+  }, [loadingTarget, isGameReady]);
 
   // Audio synthesizer ref
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -1147,39 +1129,89 @@ export default function CinematicGameEntry({
             </div>
           </div>
 
-          {/* AUTOMATIC CINEMATIC LOADING BAR (0% -> 45% -> 75% -> 100%) */}
-          <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center bg-black/60 border border-white/10 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-2xl">
-            <div className="w-full flex items-center justify-between text-[11px] sm:text-xs font-hud tracking-wider mb-2 px-0.5">
-              <span className="text-emerald-400 font-bold flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${displayedProgress >= 100 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-amber-400 animate-ping'}`} />
-                <span className="text-zinc-200">
-                  {displayedProgress < 45
-                    ? 'INITIALIZING BARAKA CITY'
-                    : displayedProgress < 75
-                    ? 'LOADING CITY'
-                    : displayedProgress < 100
-                    ? 'LOADING WORLD'
-                    : 'BARAKA CITY READY'}
+          {/* STEPPED LOADING PROGRESS OR FANCY SILK ENTER BUTTON */}
+          {!isGameReady ? (
+            /* AUTOMATIC CINEMATIC STEPPED LOADING BAR (0% -> 15% -> 45% -> 75% -> 100%) */
+            <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center bg-black/60 border border-white/10 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-2xl animate-fadeIn">
+              <div className="w-full flex items-center justify-between text-[11px] sm:text-xs font-hud tracking-wider mb-2 px-0.5">
+                <span className="text-emerald-400 font-bold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  <span className="text-zinc-200">
+                    {displayedProgress < 45
+                      ? 'INITIALIZING BARAKA CITY'
+                      : displayedProgress < 75
+                      ? 'LOADING CITY'
+                      : displayedProgress < 100
+                      ? 'LOADING WORLD'
+                      : 'BARAKA CITY READY'}
+                  </span>
                 </span>
-              </span>
-              <span className="font-mono font-bold text-amber-300 tracking-widest">{Math.round(displayedProgress)}%</span>
-            </div>
-
-            {/* Glowing Minimal Progress Track */}
-            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[0.5px]">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-300 rounded-full transition-all duration-150 shadow-[0_0_14px_rgba(16,185,129,0.9)]"
-                style={{ width: `${Math.min(100, Math.max(2, displayedProgress))}%` }}
-              />
-            </div>
-
-            {/* Cinematic Ready Transition State Prompt */}
-            {displayedProgress >= 100 && (
-              <div className="mt-2.5 text-[10px] sm:text-[11px] font-hud text-emerald-400 font-bold uppercase tracking-widest animate-pulse flex items-center gap-1.5">
-                <span>ENTERING 3D OPEN WORLD...</span>
+                <span className="font-mono font-bold text-amber-300 tracking-widest">{Math.round(displayedProgress)}%</span>
               </div>
-            )}
-          </div>
+
+              {/* Glowing Minimal Progress Track */}
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[0.5px]">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-300 rounded-full transition-all duration-150 shadow-[0_0_14px_rgba(16,185,129,0.9)]"
+                  style={{ width: `${Math.min(100, Math.max(2, displayedProgress))}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            /* FANCY, SILK ARCHITECTURAL ENTER BUTTON (Appears at 100% and halts until user clicks) */
+            <div className="w-full max-w-[340px] xs:max-w-[380px] sm:max-w-md flex flex-col items-center gap-2.5 animate-fadeIn">
+              {/* Ready Status Chip */}
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 border border-emerald-400/50 backdrop-blur-md shadow-lg text-[10px] font-hud text-emerald-300 uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)] animate-pulse" />
+                <span>BARAKA CITY READY · 100% LOADED</span>
+              </div>
+
+              {/* The Silk Architectural ENTER Button */}
+              <button
+                onClick={handleEnterClick}
+                disabled={isEntering}
+                className="w-full relative group overflow-hidden rounded-2xl sm:rounded-3xl p-[2px] bg-gradient-to-r from-emerald-400 via-amber-300 to-emerald-500 shadow-[0_0_35px_rgba(16,185,129,0.5),0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_55px_rgba(245,158,11,0.65),0_14px_45px_rgba(0,0,0,0.9)] transition-all duration-500 active:scale-95 cursor-pointer"
+                title="Enter Baraka City 3D Open World"
+              >
+                {/* Flowing Silk Sheen Shimmer Reflection */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+
+                {/* Inner Silk Architectural Surface */}
+                <div className="relative w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-[calc(1rem-2px)] sm:rounded-[calc(1.5rem-2px)] bg-gradient-to-r from-[#0d3829] via-[#09261b] to-[#0a3528] group-hover:from-[#114734] group-hover:via-[#0c3324] group-hover:to-[#0e4433] transition-all flex items-center justify-between gap-3 text-left">
+                  
+                  {/* Left Decorative Gold/Emerald Insignia */}
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 to-emerald-500 p-0.5 shadow-lg shrink-0 flex items-center justify-center">
+                    <div className="w-full h-full rounded-[10px] sm:rounded-[14px] bg-[#09261b] flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Compass className="w-5 h-5 text-amber-300" />
+                    </div>
+                  </div>
+
+                  {/* Center Text Column */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] sm:text-[11px] font-serif text-amber-300 font-bold tracking-widest block uppercase drop-shadow">
+                      بِسْمِ ٱللَّٰهِ · BISMILLAH
+                    </span>
+                    <span className="text-sm sm:text-base md:text-lg font-black uppercase text-white tracking-wider block font-sora drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                      {isEntering ? 'ENTERING BARAKA CITY...' : 'ENTER BARAKA CITY'}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] font-hud text-emerald-300 block tracking-wider uppercase font-semibold truncate">
+                      IMMERSIVE 3D METROPOLIS · {selectedWorld.toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Right Action Arrow Badge */}
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-emerald-500/20 border border-emerald-400/50 group-hover:bg-amber-400 group-hover:border-amber-300 flex items-center justify-center text-emerald-300 group-hover:text-black transition-all shrink-0 shadow-md">
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </div>
+              </button>
+
+              {/* Keyboard Helper */}
+              <span className="text-[9px] font-hud text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 opacity-80">
+                <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-mono">ENTER ↵</span> OR TAP TO PLAY
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

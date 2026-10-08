@@ -287,7 +287,7 @@ export default function App() {
         </main>
       ) : (
         /* PLAYER / GAME DASHBOARD ROUTE ("/dashboard") - 100% Immersive 3D World */
-        <main className="relative w-full h-screen overflow-hidden bg-black">
+        <main className="relative w-full h-[100dvh] min-h-[100dvh] overflow-hidden bg-black">
           <ThreeGameWorld
             userProfile={userProfile}
             onExitToLanding={() => navigateTo('landing')}

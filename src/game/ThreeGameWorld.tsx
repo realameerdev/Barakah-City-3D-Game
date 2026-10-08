@@ -10,10 +10,10 @@ import {
   User, Volume2, VolumeX, Maximize2, RotateCcw, Home, UserPlus,
   Settings, Menu, X, Check, Send, ChevronRight, Bed, Armchair, Sliders,
   Footprints, Zap, UserCheck, Smile, Hand, Activity, ChevronUp, ChevronDown, Layers,
-  Coins, Award, Sparkles, Package, ListTodo, Map, Crosshair, CheckCircle2,
+  Coins, Award, Package, ListTodo, Map, Crosshair, CheckCircle2,
   ShoppingBag, BookOpen, Heart, Trophy, AlertTriangle, Gift, Briefcase,
   ArrowLeft, ChevronLeft, LogOut, Palette, RefreshCw, MessageCircle,
-  Minimize2, Wifi, Globe2
+  Minimize2, Wifi, Globe2, Smartphone
 } from 'lucide-react';
 import AvatarCustomizerModal from './AvatarCustomizerModal';
 import { 
@@ -24,6 +24,8 @@ import {
 import { OnlineCitizen, ChatMessage as RealtimeChatMessage } from './useRealtimeSocket';
 import GtaRadarMinimap from '../components/GtaRadarMinimap';
 import ExpandedWorldMapModal from '../components/ExpandedWorldMapModal';
+import GtaActionControls from '../components/GtaActionControls';
+import { useOrientation } from '../components/LandscapeOrientationGate';
 
 export type PerformanceTier = 'high' | 'balanced' | 'performance';
 
@@ -34,25 +36,22 @@ interface CoinBalanceDisplayProps {
 
 export const CoinBalanceDisplay: React.FC<CoinBalanceDisplayProps> = ({ coins, compact = false }) => {
   const [displayValue, setDisplayValue] = useState(coins);
-  const [animDelta, setAnimDelta] = useState<number | null>(null);
   const [pulseType, setPulseType] = useState<'gain' | 'loss' | null>(null);
   const prevValueRef = useRef(coins);
 
   useEffect(() => {
     const diff = coins - prevValueRef.current;
     if (diff !== 0) {
-      setAnimDelta(diff);
       setPulseType(diff > 0 ? 'gain' : 'loss');
 
       const timeout = setTimeout(() => {
-        setAnimDelta(null);
         setPulseType(null);
-      }, 1400);
+      }, 1000);
 
-      // Smooth number animation / roll
+      // Smooth number animation / roll directly inside the balance display section
       const startValue = prevValueRef.current;
       const endValue = coins;
-      const duration = 350; // ms
+      const duration = 400; // ms
       const startTime = performance.now();
 
       const animateRoll = (now: number) => {
@@ -129,19 +128,6 @@ export const CoinBalanceDisplay: React.FC<CoinBalanceDisplayProps> = ({ coins, c
       >
         {formattedNumber}
       </span>
-
-      {/* Floating Delta Badge on Change (+5 or -10) */}
-      {animDelta !== null && (
-        <span
-          className={`absolute -top-3 right-0 text-[10px] font-black px-1.5 py-0.5 rounded-full pointer-events-none animate-floatUp z-30 ${
-            animDelta > 0
-              ? 'bg-emerald-500 text-black shadow-lg font-extrabold'
-              : 'bg-rose-500 text-white shadow-lg font-extrabold'
-          }`}
-        >
-          {animDelta > 0 ? `+${animDelta}` : `${animDelta}`}
-        </span>
-      )}
     </div>
   );
 };
@@ -248,12 +234,6 @@ export interface Mission {
   claimed: boolean;
 }
 
-export interface CoinFeedback {
-  amount: number;
-  reason: string;
-  timestamp: number;
-}
-
 export type ActionType = 'idle' | 'walk' | 'run' | 'sit' | 'stand' | 'laugh' | 'wave' | 'greet' | 'talk' | 'pray' | 'interact';
 export type ExpressionType = 'Neutral' | 'Happy' | 'Smile' | 'Laugh' | 'Sad' | 'Angry' | 'Surprised' | 'Calm';
 
@@ -281,11 +261,11 @@ interface ThreeGameWorldProps {
 const QUICK_CHAT_PHRASES = [
   'Assalamu Alaikum! 👋',
   'Heading to Grand Mosque 🕌',
-  'Let’s pray in congregation ✨',
+  'Let’s pray in congregation 🕌',
   'Meet me at Souq Al-Baraka 🏪',
   'Anyone up for football? ⚽',
   'Baraka Allahu Feek! 🤲',
-  'JazakAllah Khair! 💫',
+  'JazakAllah Khair! 🤲',
 ];
 
 export default function ThreeGameWorld({
@@ -301,6 +281,7 @@ export default function ThreeGameWorld({
   onlineCitizens = [],
   isConnected = true,
 }: ThreeGameWorldProps) {
+  const { toggleOrientation } = useOrientation();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -515,7 +496,6 @@ export default function ThreeGameWorld({
     }
   }, [coins]);
   const [hasClaimedDailyReward, setHasClaimedDailyReward] = useState(false);
-  const [coinFeedback, setCoinFeedback] = useState<CoinFeedback | null>(null);
 
   // Economy & Exploration Trackers
   const totalMetersWalkedRef = useRef<number>(0);
@@ -1310,11 +1290,6 @@ export default function ThreeGameWorld({
 
       setCoins((c) => c + 25);
       playCoinChime();
-      setCoinFeedback({
-        amount: 25,
-        reason: 'Sanctuary Prayer & Remembrance',
-        timestamp: Date.now(),
-      });
     }
   };
 
@@ -1356,11 +1331,6 @@ export default function ThreeGameWorld({
       if (distToPark < 14.0) {
         setCoins((c) => c + 15);
         playCoinChime();
-        setCoinFeedback({
-          amount: 15,
-          reason: 'Peaceful Reflection · Public Park',
-          timestamp: Date.now(),
-        });
       }
     }
   };
@@ -2964,11 +2934,6 @@ export default function ThreeGameWorld({
             setCoins((c) => c - penalty);
             playCollisionThud();
             cameraShakeRef.current = hitObstacle.type === 'car' ? 0.35 : 0.15;
-            setCoinFeedback({
-              amount: -penalty,
-              reason: hitObstacle.type === 'car' ? 'Vehicle Bump · Keep to Sidewalks' : `${hitObstacle.name} · Obstacle Collision`,
-              timestamp: now,
-            });
           }
         }
 
@@ -2982,11 +2947,6 @@ export default function ThreeGameWorld({
             nextExplorationBonusRef.current += 200;
             setCoins((c) => c + 10);
             playCoinChime();
-            setCoinFeedback({
-              amount: 10,
-              reason: 'City Exploration · 200m Milestone',
-              timestamp: Date.now(),
-            });
           }
           setMissions((prev) =>
             prev.map((m) => {
@@ -3342,8 +3302,7 @@ export default function ThreeGameWorld({
             onExecute: () => {
               playChime(660, 'sine', 0.4);
               setCoins((c) => c + 20);
-              showToast('Reciting Surah Al-Fatiha · +20 Baraka Coins');
-              setCoinFeedback({ amount: 20, reason: 'Quran Recitation in Sanctuary', timestamp: Date.now() });
+              showToast('Reciting Surah Al-Fatiha in Sanctuary');
             },
           };
         } else {
@@ -3364,8 +3323,7 @@ export default function ThreeGameWorld({
           onExecute: () => {
             playChime(520, 'sine', 0.35);
             setCoins((c) => c + 25);
-            showToast('Studied Hadith on Kindness · +25 Baraka Coins');
-            setCoinFeedback({ amount: 25, reason: 'Madrasa Study Session', timestamp: Date.now() });
+            showToast('Studied Hadith on Kindness in Madrasa');
           },
         };
       }
@@ -3470,8 +3428,7 @@ export default function ThreeGameWorld({
           onExecute: () => {
             playCoinChime();
             setCoins((c) => c + 30);
-            showToast('Civic Community Service Registered · +30 Baraka Coins');
-            setCoinFeedback({ amount: 30, reason: 'Municipal Civic Service', timestamp: Date.now() });
+            showToast('Civic Community Service Registered');
           },
         };
       }
@@ -3769,6 +3726,15 @@ export default function ThreeGameWorld({
             {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />}
           </button>
 
+          {/* Orientation Mode Switcher (Straight Phone vs Landscape) */}
+          <button
+            onClick={toggleOrientation}
+            className="p-1.5 sm:p-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl hover:border-emerald-500 transition-all cursor-pointer shadow-lg shrink-0 flex items-center justify-center group"
+            title={viewportProfile.isPortrait ? "Current: Straight Phone Mode · Tap to Rotate / Fullscreen" : "Current: Landscape Mode · Tap to Rotate / Fullscreen"}
+          >
+            <Smartphone className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0 ${viewportProfile.isPortrait ? '' : 'rotate-90'} transition-transform duration-300`} />
+          </button>
+
           {/* Minimal Overlay Hamburger Menu Drawer Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -3884,29 +3850,6 @@ export default function ThreeGameWorld({
         )}
       </div>
 
-      {/* Floating Coin Feedback Notification Chip */}
-      {coinFeedback && (
-        <div
-          className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl shadow-2xl backdrop-blur-md border flex items-center gap-2.5 animate-bounce font-hud text-xs font-black uppercase tracking-wider pointer-events-none ${
-            coinFeedback.amount > 0
-              ? 'bg-emerald-950/95 border-emerald-400 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.5)]'
-              : 'bg-rose-950/95 border-rose-400 text-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.5)]'
-          }`}
-        >
-          {coinFeedback.amount > 0 ? (
-            <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" />
-          ) : (
-            <AlertTriangle className="w-4 h-4 text-rose-400 animate-pulse" />
-          )}
-          <span>
-            {coinFeedback.amount > 0 ? `+${coinFeedback.amount} Coins` : `${coinFeedback.amount} Coins`}
-          </span>
-          <span className="text-zinc-300 text-[10px] font-medium lowercase">
-            · {coinFeedback.reason}
-          </span>
-        </div>
-      )}
-
       {/* Floating 3D Player Name Tags projected onto Screen */}
       {projectedTags.map((tag) => {
         if (!tag.visible) return null;
@@ -3940,99 +3883,28 @@ export default function ThreeGameWorld({
       )}
 
       {/* ========================================================================= */}
-      {/* MOBILE-FIRST RADIAL/CIRCULAR ACTION CONTROL SYSTEM                        */}
+      {/* CREATIVE, ORGANIZED & ERGONOMIC ACTION CONTROL SYSTEM (ANTI-CLUTTER)       */}
       {/* ========================================================================= */}
-      <div className="absolute bottom-[max(env(safe-area-inset-bottom),1.5rem)] right-[max(env(safe-area-inset-right),1.5rem)] z-30 pointer-events-auto">
-        {/* Floating Expression Picker Popup */}
-        {isExpressionPickerOpen && (
-          <div className="absolute bottom-44 right-0 mb-4 bg-[#12151f]/95 border border-emerald-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-fadeIn space-y-2 w-72">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <span className="text-[11px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
-                <Smile className="w-3.5 h-3.5" /> SELECT FACIAL EXPRESSION
-              </span>
-              <button onClick={() => setIsExpressionPickerOpen(false)} className="text-zinc-400 hover:text-white p-1 rounded hover:bg-white/5 cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(['Neutral', 'Happy', 'Smile', 'Laugh', 'Sad', 'Angry', 'Surprised', 'Calm'] as ExpressionType[]).map((expr) => (
-                <button
-                  key={expr}
-                  onClick={() => handleSelectExpression(expr)}
-                  className={`py-2 px-1 rounded-xl text-[9px] font-black uppercase tracking-wider text-center transition-all cursor-pointer ${
-                    currentExpression === expr
-                      ? 'bg-emerald-500 text-black font-extrabold shadow-md'
-                      : 'bg-black/60 border border-white/10 text-zinc-300 hover:text-white hover:border-white/30'
-                  }`}
-                >
-                  {expr}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Curved Radial Buttons Cluster */}
-        <div className="relative w-44 h-44 sm:w-56 sm:h-56">
-          {/* Main Larger INTERACT Button (The Centerpiece of the Radial Menu) */}
-          <button
-            onClick={handleActionInteract}
-            className="absolute bottom-0 right-0 w-14 h-14 sm:w-16 sm:h-16 bg-emerald-500 text-black rounded-full flex flex-col items-center justify-center shadow-2xl border-2 border-white hover:bg-emerald-400 active:scale-95 transition-all cursor-pointer z-20 group"
-            title="Interact with City landmarks, houses, vehicles, or players [Key E]"
-          >
-            <Sliders className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
-            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter mt-0.5">Interact</span>
-          </button>
-
-          {/* Curved radial action list */}
-          {[
-            // INNER ARC (Radius: 72px on mobile, 95px on desktop)
-            { id: 'walk', label: 'Walk', icon: Footprints, angle: 90, radiusMobile: 72, radiusDesktop: 95, handler: handleActionWalk, isActive: toggleMovementMode === 'walk' || currentAction === 'walk' },
-            { id: 'run', label: 'Run', icon: Zap, angle: 120, radiusMobile: 72, radiusDesktop: 95, handler: handleActionRun, isActive: toggleMovementMode === 'run' || isRunMode || currentAction === 'run' },
-            { id: 'sit', label: 'Sit', icon: Armchair, angle: 150, radiusMobile: 72, radiusDesktop: 95, handler: handleActionSit, isActive: isSitting },
-            { id: 'stand', label: 'Stand', icon: UserCheck, angle: 180, radiusMobile: 72, radiusDesktop: 95, handler: handleActionStand, isActive: !isSitting && !isPraying && toggleMovementMode === null && currentAction === 'idle' },
-
-            // OUTER ARC (Radius: 130px on mobile, 170px on desktop)
-            { id: 'pray', label: 'Pray', icon: Compass, angle: 90, radiusMobile: 130, radiusDesktop: 170, handler: handleActionPray, isActive: isPraying },
-            { id: 'wave', label: 'Wave', icon: Hand, angle: 108, radiusMobile: 130, radiusDesktop: 170, handler: handleActionWave, isActive: currentAction === 'wave' },
-            { id: 'greet', label: 'Greet', icon: User, angle: 126, radiusMobile: 130, radiusDesktop: 170, handler: handleActionGreet, isActive: currentAction === 'greet' },
-            { id: 'talk', label: 'Talk', icon: MessageSquare, angle: 144, radiusMobile: 130, radiusDesktop: 170, handler: handleActionTalk, isActive: currentAction === 'talk' },
-            { id: 'laugh', label: 'Laugh', icon: Smile, angle: 162, radiusMobile: 130, radiusDesktop: 170, handler: handleActionLaugh, isActive: currentAction === 'laugh' },
-            { id: 'expression', label: 'Face', icon: Smile, angle: 180, radiusMobile: 130, radiusDesktop: 170, handler: () => setIsExpressionPickerOpen(!isExpressionPickerOpen), isActive: isExpressionPickerOpen, badge: currentExpression },
-          ].map((act) => {
-            const Icon = act.icon;
-            
-            // Calculate dynamic radial positions
-            const angleRad = (act.angle * Math.PI) / 180;
-            const R = viewportProfile.isMobile ? act.radiusMobile : act.radiusDesktop;
-            
-            // Positions fanned out from the bottom-right corner (0,0)
-            const x = Math.cos(angleRad) * R;
-            const y = Math.sin(angleRad) * R;
-
-            return (
-              <button
-                key={act.id}
-                onClick={act.handler}
-                style={{
-                  transform: `translate(${x}px, ${-y}px)`,
-                }}
-                className={`absolute bottom-3 right-3 w-11 h-11 sm:w-12 sm:h-12 rounded-full flex flex-col items-center justify-center border shadow-xl backdrop-blur-md transition-all active:scale-90 cursor-pointer ${
-                  act.isActive
-                    ? 'bg-emerald-500 border-emerald-400 text-black font-black scale-105 z-10'
-                    : 'bg-[#12151f]/90 border-white/10 text-zinc-300 hover:text-white hover:border-white/30'
-                }`}
-                title={act.label}
-              >
-                <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-                <span className="text-[7.5px] sm:text-[8px] font-black uppercase mt-0.5 tracking-tight truncate max-w-[40px]">
-                  {act.id === 'expression' && act.badge ? act.badge : act.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <GtaActionControls
+        onInteract={handleActionInteract}
+        onWalk={handleActionWalk}
+        onRun={handleActionRun}
+        onSit={handleActionSit}
+        onStand={handleActionStand}
+        onPray={handleActionPray}
+        onWave={handleActionWave}
+        onGreet={handleActionGreet}
+        onTalk={handleActionTalk}
+        onLaugh={handleActionLaugh}
+        onSelectExpression={handleSelectExpression}
+        currentAction={currentAction}
+        isRunMode={isRunMode || toggleMovementMode === 'run'}
+        isSitting={isSitting}
+        isPraying={isPraying}
+        currentExpression={currentExpression}
+        isMobile={viewportProfile.isMobile}
+        isPortrait={viewportProfile.isPortrait}
+      />
 
       {/* Nearby Proximity Player Popup Card */}
       {nearbyPlayer && (
@@ -4354,7 +4226,7 @@ export default function ThreeGameWorld({
               <div>
                 <div className="flex items-center justify-between mb-2.5">
                   <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> DAILY MISSIONS
+                    <ListTodo className="w-3.5 h-3.5" /> DAILY MISSIONS
                   </span>
                   <span className="text-[10px] font-hud text-zinc-400">RESETS DAILY</span>
                 </div>
@@ -4390,11 +4262,6 @@ export default function ThreeGameWorld({
                                   );
                                   setCoins((c) => c + m.reward);
                                   playCoinChime();
-                                  setCoinFeedback({
-                                    amount: m.reward,
-                                    reason: `Claimed: ${m.title}`,
-                                    timestamp: Date.now(),
-                                  });
                                 }}
                                 className="mt-1.5 px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase rounded-lg shadow-lg active:scale-95 transition-all cursor-pointer"
                               >
@@ -4464,11 +4331,6 @@ export default function ThreeGameWorld({
                                   );
                                   setCoins((c) => c + m.reward);
                                   playCoinChime();
-                                  setCoinFeedback({
-                                    amount: m.reward,
-                                    reason: `Claimed: ${m.title}`,
-                                    timestamp: Date.now(),
-                                  });
                                 }}
                                 className="mt-1.5 px-3 py-1 bg-teal-500 hover:bg-teal-400 text-black text-[10px] font-black uppercase rounded-lg shadow-lg active:scale-95 transition-all cursor-pointer"
                               >
@@ -4549,11 +4411,6 @@ export default function ThreeGameWorld({
                         setMissions((prev) =>
                           prev.map((m) => (m.id === 'm_souq' ? { ...m, current: 1, completed: true } : m))
                         );
-                        setCoinFeedback({
-                          amount: 35,
-                          reason: 'Merchant Spice Logistics Task',
-                          timestamp: Date.now(),
-                        });
                         setIsSouqShopOpen(false);
                       }}
                       className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase rounded-xl transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer"
@@ -4574,11 +4431,6 @@ export default function ThreeGameWorld({
                         setMissions((prev) =>
                           prev.map((m) => (m.id === 'm_souq' ? { ...m, current: 1, completed: true } : m))
                         );
-                        setCoinFeedback({
-                          amount: 30,
-                          reason: 'Dates Delivery Task',
-                          timestamp: Date.now(),
-                        });
                         setIsSouqShopOpen(false);
                       }}
                       className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase rounded-xl transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer"
@@ -4606,11 +4458,6 @@ export default function ThreeGameWorld({
                         setCoins((c) => c - 15);
                         setSpeedBoostUntil(Date.now() + 45000);
                         playChime(659.25, 'triangle', 0.3);
-                        setCoinFeedback({
-                          amount: -15,
-                          reason: 'Purchased Zamzam Water (Speed Boost!)',
-                          timestamp: Date.now(),
-                        });
                         setIsSouqShopOpen(false);
                       }}
                       className="mt-2.5 w-full py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-[10px] font-black uppercase rounded-xl cursor-pointer"
@@ -4630,11 +4477,6 @@ export default function ThreeGameWorld({
                         setCoins((c) => c - 75);
                         if (onUpdateProfile) onUpdateProfile({ outfit: 'Royal Emerald Jalabiyya' });
                         playCoinChime();
-                        setCoinFeedback({
-                          amount: -75,
-                          reason: 'Purchased Royal Emerald Thobe',
-                          timestamp: Date.now(),
-                        });
                         setIsSouqShopOpen(false);
                       }}
                       className="mt-2.5 w-full py-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black text-[10px] font-black uppercase rounded-xl cursor-pointer"
@@ -4653,11 +4495,6 @@ export default function ThreeGameWorld({
                       onClick={() => {
                         setCoins((c) => c - 30);
                         playChime(523.25, 'sine', 0.3);
-                        setCoinFeedback({
-                          amount: -30,
-                          reason: 'Purchased Arabian Oud Essence',
-                          timestamp: Date.now(),
-                        });
                         setIsSouqShopOpen(false);
                       }}
                       className="mt-2.5 w-full py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-[10px] font-black uppercase rounded-xl cursor-pointer"
@@ -4676,11 +4513,6 @@ export default function ThreeGameWorld({
                       onClick={() => {
                         setCoins((c) => c - 20);
                         playCoinChime();
-                        setCoinFeedback({
-                          amount: -20,
-                          reason: 'Donated to Sadaqah Community Box (Baraka Blessing!)',
-                          timestamp: Date.now(),
-                        });
                         setMissions((prev) =>
                           prev.map((m) => (m.id === 'm_souq' ? { ...m, current: 1, completed: true } : m))
                         );
@@ -4751,11 +4583,6 @@ export default function ThreeGameWorld({
                         setMissions((prev) =>
                           prev.map((m) => (m.id === 'm_class' ? { ...m, current: 1, completed: true } : m))
                         );
-                        setCoinFeedback({
-                          amount: 25,
-                          reason: 'University Heritage Lecture Answered Correctly!',
-                          timestamp: Date.now(),
-                        });
                         setIsUniversityQuizOpen(false);
                       } else {
                         setQuizFeedback('Not quite! Review the lecture note and try again.');
@@ -4844,7 +4671,7 @@ export default function ThreeGameWorld({
               <div className="p-3.5 bg-gradient-to-br from-emerald-950/80 to-black/80 border border-emerald-500/40 rounded-2xl space-y-2.5 shadow-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <Palette className="w-4 h-4 text-emerald-400" />
                     <span className="text-xs font-black uppercase tracking-wider text-white">
                       3D AVATAR STUDIO
                     </span>
@@ -4998,6 +4825,16 @@ export default function ThreeGameWorld({
               </div>
 
               <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
+                <span className="flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5 text-emerald-400" /> ORIENTATION</span>
+                <button
+                  onClick={toggleOrientation}
+                  className="px-2.5 py-1 bg-white/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                >
+                  {viewportProfile.isPortrait ? 'STRAIGHT (PORTRAIT)' : 'LANDSCAPE'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
                 <span>AMBIENT AUDIO</span>
                 <button onClick={() => setIsAudioEnabled(!isAudioEnabled)} className="text-emerald-400">
                   {isAudioEnabled ? 'ON' : 'OFF'}
@@ -5059,8 +4896,12 @@ export default function ThreeGameWorld({
         </div>
       )}
 
-      {/* GTA-Style Bottom-Left HUD: Radar Minimap, District Strip & Vitality/Stamina */}
-      <div className="absolute bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)] z-30 flex items-end gap-3 pointer-events-none">
+      {/* GTA-Style Left HUD: Radar Minimap, District Strip & Vitality/Stamina (Adapts cleanly to straight portrait or landscape) */}
+      <div className={`absolute ${
+        viewportProfile.isPortrait
+          ? 'bottom-[calc(max(env(safe-area-inset-bottom),1rem)+5.75rem)] left-[max(env(safe-area-inset-left),1rem)]'
+          : 'bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)]'
+      } z-30 flex items-end gap-3 pointer-events-none transition-all duration-300`}>
         {/* Radar Minimap Component */}
         <GtaRadarMinimap
           playerX={radarCoords.x}
@@ -5101,9 +4942,13 @@ export default function ThreeGameWorld({
         onFastTravel={handleFastTravel}
       />
 
-      {/* Mobile & Tablet Touch Virtual Joystick (Floating in Left Safe Area) */}
+      {/* Mobile & Tablet Touch Virtual Joystick (Floating in Left Safe Area - Ergonomic in both straight portrait and landscape mode) */}
       {(isMobileControlsVisible || viewportProfile.isMobile || viewportProfile.isTablet) && (
-        <div className="absolute bottom-[calc(max(env(safe-area-inset-bottom),1rem)+9rem)] sm:bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-[calc(max(env(safe-area-inset-left),1rem)+8.5rem)] sm:left-[max(env(safe-area-inset-left),10rem)] z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-emerald-500/40 bg-black/40 backdrop-blur-md flex items-center justify-center pointer-events-auto">
+        <div className={`absolute ${
+          viewportProfile.isPortrait
+            ? 'bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)]'
+            : 'bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-[calc(max(env(safe-area-inset-left),1rem)+8.5rem)] sm:left-[max(env(safe-area-inset-left),10rem)]'
+        } z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-emerald-500/40 bg-black/40 backdrop-blur-md flex items-center justify-center pointer-events-auto transition-all duration-300`}>
           <div
             className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 shadow-lg border border-white transition-transform"
             style={{

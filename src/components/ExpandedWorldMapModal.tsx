@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { X, MapPin, Compass, Users, Sparkles, Navigation } from 'lucide-react';
+import { X, MapPin, Compass, Users, Navigation } from 'lucide-react';
 
 interface ExpandedWorldMapModalProps {
   isOpen: boolean;
@@ -130,7 +130,7 @@ export default function ExpandedWorldMapModal({
           {/* District Directory & Fast Wayfinding */}
           <div>
             <div className="text-xs font-black uppercase tracking-wider text-emerald-400 mb-2.5 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> DISTRICT DIRECTORY & FAST WAYFINDING
+              <Compass className="w-3.5 h-3.5" /> DISTRICT DIRECTORY & FAST WAYFINDING
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {DISTRICT_ZONES.map((dist) => (
