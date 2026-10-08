@@ -16,14 +16,29 @@ interface ExpandedWorldMapModalProps {
 }
 
 const DISTRICT_ZONES = [
+  // Masajids (Mosques)
   { name: 'Grand Mosque & Mihrab Sanctuary', x: 0, z: -58, color: '#10b981', desc: 'Central congregational prayer hall, four towering minarets, and courtyard terrace.' },
-  { name: 'Madrasa Quran Academy', x: -22, z: -42, color: '#14b8a6', desc: 'Historic manuscript library, low wooden study rihlas, and ethical debate colonnade.' },
+  { name: 'Al-Andalus East Grand Masjid', x: 130, z: -60, color: '#059669', desc: 'Historic Andalusian arched colonnades, turquoise tiled domes, and reflection pool.' },
+  { name: 'Al-Madinah Oasis Masjid', x: -130, z: 90, color: '#10b981', desc: 'Serene oasis sanctuary with emerald dome, date palm prayer garden, and fountain.' },
+  { name: 'Al-Qarawiyyin Historical Masjid', x: -110, z: -110, color: '#047857', desc: 'Ancient Moroccan horseshoe arches, cedar woodwork, and tranquil courtyard.' },
+  { name: 'Sultan Baybars South Grand Masjid', x: 110, z: 120, color: '#10b981', desc: 'Majestic marble mosque with soaring twin minarets and grand red prayer rugs.' },
+
+  // Schools, Academies & Universities
   { name: 'Bayt Al-Hikma University', x: -48, z: -25, color: '#3b82f6', desc: 'Higher learning lecture amphitheater, scholarship podium, and academic symposiums.' },
+  { name: 'Madrasa Quran Academy', x: -22, z: -42, color: '#14b8a6', desc: 'Historic manuscript library, low wooden study rihlas, and ethical debate colonnade.' },
+  { name: 'Ibn Sina Medical School & Research', x: 140, z: 40, color: '#2563eb', desc: 'Botanical research gardens, medicinal herb conservatory, and tiered lecture hall.' },
+  { name: 'Al-Khwarizmi Astronomy & STEM Academy', x: -140, z: -40, color: '#0284c7', desc: 'Observatory dome with giant bronze astrolabe, algebra hall, and science terrace.' },
+  { name: 'Al-Zahra Youth & International Academy', x: -70, z: 140, color: '#06b6d4', desc: 'Modern educational campus with open courtyards, library wings, and study lawns.' },
+  { name: 'Dar Al-Quran & Calligraphy Conservatory', x: 70, z: -130, color: '#0d9488', desc: 'Illuminated calligraphy exhibitions, gold-leaf manuscript desks, and Quranic arts.' },
+
+  // Civic, Sports & Waterfront
   { name: 'Souq Al-Madina Marketplace', x: -28, z: 24, color: '#f59e0b', desc: 'Living merchant bazaar, spice stalls, community jobs, and sadaqah donation counters.' },
   { name: 'Baraka Football Arena', x: -45, z: 52, color: '#10b981', desc: 'Full regulation soccer pitch with floodlights, goal nets, and dynamic dribbling physics.' },
   { name: 'Central Boulevard & Esplanade', x: 0, z: 0, color: '#e2e8f0', desc: 'Broad four-lane avenue with autonomous traffic, palm promenades, and civic streetlamps.' },
   { name: 'Residential Quarter & Private Homes', x: 18, z: 18, color: '#a855f7', desc: 'Comfortable citizen apartments with private Moroccan divans, bedrooms, and gardens.' },
   { name: 'Public Park & Central Fountain', x: 32, z: -28, color: '#06b6d4', desc: 'Lush green lawns, stone water fountain, peaceful shaded pergolas, and park benches.' },
+  { name: 'Oasis Botanical Palm Grove', x: 150, z: -130, color: '#10b981', desc: 'Expansive date palm grove with stone walking paths, waterways, and shaded pavilions.' },
+  { name: 'Grand Marina Harbor Waterfront', x: -160, z: 0, color: '#38bdf8', desc: 'Scenic waterfront wooden pier promenade overlooking the sunset bay.' },
 ];
 
 export default function ExpandedWorldMapModal({
@@ -79,9 +94,9 @@ export default function ExpandedWorldMapModal({
 
             {/* Landmark Markers on 2D map */}
             {DISTRICT_ZONES.map((dist) => {
-              // Map world coords [-90, 90] to percentage [5%, 95%]
-              const posX = 50 + (dist.x / 110) * 45;
-              const posZ = 50 + (dist.z / 110) * 45;
+              // Map expanded world coords [-180, 180] to percentage [5%, 95%]
+              const posX = 50 + (dist.x / 200) * 44;
+              const posZ = 50 + (dist.z / 200) * 44;
 
               return (
                 <div
@@ -108,8 +123,8 @@ export default function ExpandedWorldMapModal({
 
             {/* Current Player Indicator */}
             {(() => {
-              const pLeft = 50 + (playerX / 110) * 45;
-              const pTop = 50 + (playerZ / 110) * 45;
+              const pLeft = 50 + (playerX / 200) * 44;
+              const pTop = 50 + (playerZ / 200) * 44;
               return (
                 <div
                   style={{ left: `${pLeft}%`, top: `${pTop}%` }}

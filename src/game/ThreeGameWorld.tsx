@@ -13,7 +13,8 @@ import {
   Coins, Award, Package, ListTodo, Map, Crosshair, CheckCircle2,
   ShoppingBag, BookOpen, Heart, Trophy, AlertTriangle, Gift, Briefcase,
   ArrowLeft, ChevronLeft, LogOut, Palette, RefreshCw, MessageCircle,
-  Minimize2, Wifi, Globe2, Smartphone
+  Minimize2, Wifi, Globe2, Smartphone, GripHorizontal, LogIn, Car,
+  Lock, Unlock, Moon, Sun, ZoomIn, ZoomOut, Coffee, Sparkles, Move, Plus, Minus
 } from 'lucide-react';
 import AvatarCustomizerModal from './AvatarCustomizerModal';
 import { 
@@ -237,6 +238,256 @@ export interface Mission {
 export type ActionType = 'idle' | 'walk' | 'run' | 'sit' | 'stand' | 'laugh' | 'wave' | 'greet' | 'talk' | 'pray' | 'interact';
 export type ExpressionType = 'Neutral' | 'Happy' | 'Smile' | 'Laugh' | 'Sad' | 'Angry' | 'Surprised' | 'Calm';
 
+// GTA V-Style Enter / Exit Building and Vehicle System Definition
+export interface EnterTarget {
+  id: string;
+  name: string;
+  type: 'masjid' | 'madrasa' | 'school' | 'shop' | 'residence' | 'vehicle';
+  doorPos: { x: number; y: number; z: number };
+  insidePos: { x: number; y: number; z: number };
+  exitPos: { x: number; y: number; z: number };
+  actionKey: 'E' | 'F' | 'L';
+  enterLabel: string;
+  exitLabel: string;
+  vehicleIndex?: number;
+  ownerName?: string;
+  houseNumber?: number;
+  isLocked?: boolean;
+  isOwnerOnly?: boolean;
+}
+
+export interface ResidentHouse {
+  id: string;
+  houseNumber: number;
+  ownerName: string;
+  ownerTitle: string;
+  wallColorHex: number;
+  roofColorHex: number;
+  doorPos: { x: number; y: number; z: number };
+  insidePos: { x: number; y: number; z: number };
+  exitPos: { x: number; y: number; z: number };
+}
+
+export const RESIDENTIAL_HOUSES: ResidentHouse[] = [
+  {
+    id: 'house_1',
+    houseNumber: 1,
+    ownerName: 'YOU',
+    ownerTitle: 'Your Private Residence #1',
+    wallColorHex: 0x334155,
+    roofColorHex: 0x059669,
+    doorPos: { x: 18, y: 0, z: 24 },
+    insidePos: { x: 18, y: 0, z: 18 },
+    exitPos: { x: 18, y: 0, z: 26 },
+  },
+  {
+    id: 'house_2',
+    houseNumber: 2,
+    ownerName: 'Tariq_KSA',
+    ownerTitle: "Tariq's Private Villa #2",
+    wallColorHex: 0x1e293b,
+    roofColorHex: 0xd97706,
+    doorPos: { x: 38, y: 0, z: 24 },
+    insidePos: { x: 38, y: 0, z: 18 },
+    exitPos: { x: 38, y: 0, z: 26 },
+  },
+  {
+    id: 'house_3',
+    houseNumber: 3,
+    ownerName: 'Zainab_UAE',
+    ownerTitle: "Zainab's Private Villa #3",
+    wallColorHex: 0x0f172a,
+    roofColorHex: 0x0284c7,
+    doorPos: { x: 18, y: 0, z: 38 },
+    insidePos: { x: 18, y: 0, z: 32 },
+    exitPos: { x: 18, y: 0, z: 40 },
+  },
+  {
+    id: 'house_4',
+    houseNumber: 4,
+    ownerName: 'Amina_NGR',
+    ownerTitle: "Amina's Private Villa #4",
+    wallColorHex: 0x1e1b4b,
+    roofColorHex: 0x10b981,
+    doorPos: { x: 38, y: 0, z: 38 },
+    insidePos: { x: 38, y: 0, z: 32 },
+    exitPos: { x: 38, y: 0, z: 40 },
+  },
+  {
+    id: 'house_5',
+    houseNumber: 5,
+    ownerName: 'Yusuf_EGY',
+    ownerTitle: "Yusuf's Private Villa #5",
+    wallColorHex: 0x312e81,
+    roofColorHex: 0xb45309,
+    doorPos: { x: 18, y: 0, z: -20 },
+    insidePos: { x: 18, y: 0, z: -26 },
+    exitPos: { x: 18, y: 0, z: -18 },
+  },
+  {
+    id: 'house_6',
+    houseNumber: 6,
+    ownerName: 'Fatima_IDN',
+    ownerTitle: "Fatima's Private Villa #6",
+    wallColorHex: 0x1c1917,
+    roofColorHex: 0x059669,
+    doorPos: { x: 38, y: 0, z: -20 },
+    insidePos: { x: 38, y: 0, z: -26 },
+    exitPos: { x: 38, y: 0, z: -18 },
+  },
+];
+
+export const ENTERABLE_BUILDINGS: EnterTarget[] = [
+  // Masajids (Mosques)
+  {
+    id: 'bld_grand_mosque',
+    name: 'Grand Mosque & Mihrab Sanctuary',
+    type: 'masjid',
+    doorPos: { x: 0, y: 0, z: -46 },
+    insidePos: { x: 0, y: 0, z: -58 },
+    exitPos: { x: 0, y: 0, z: -43 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MASJID',
+    exitLabel: 'EXIT MASJID',
+  },
+  {
+    id: 'bld_andalus_masjid',
+    name: 'Al-Andalus East Grand Masjid',
+    type: 'masjid',
+    doorPos: { x: 116, y: 0, z: -60 },
+    insidePos: { x: 130, y: 0, z: -60 },
+    exitPos: { x: 112, y: 0, z: -60 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MASJID',
+    exitLabel: 'EXIT MASJID',
+  },
+  {
+    id: 'bld_madinah_masjid',
+    name: 'Al-Madinah Oasis Masjid',
+    type: 'masjid',
+    doorPos: { x: -116, y: 0, z: 90 },
+    insidePos: { x: -130, y: 0, z: 90 },
+    exitPos: { x: -112, y: 0, z: 90 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MASJID',
+    exitLabel: 'EXIT MASJID',
+  },
+  {
+    id: 'bld_qarawiyyin_masjid',
+    name: 'Al-Qarawiyyin Historical Masjid',
+    type: 'masjid',
+    doorPos: { x: -98, y: 0, z: -110 },
+    insidePos: { x: -110, y: 0, z: -110 },
+    exitPos: { x: -94, y: 0, z: -110 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MASJID',
+    exitLabel: 'EXIT MASJID',
+  },
+  {
+    id: 'bld_baybars_masjid',
+    name: 'Sultan Baybars South Grand Masjid',
+    type: 'masjid',
+    doorPos: { x: 98, y: 0, z: 120 },
+    insidePos: { x: 110, y: 0, z: 120 },
+    exitPos: { x: 94, y: 0, z: 120 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MASJID',
+    exitLabel: 'EXIT MASJID',
+  },
+  // Madrasas & Conservatories
+  {
+    id: 'bld_madrasa_quran',
+    name: 'Madrasa Quran Academy',
+    type: 'madrasa',
+    doorPos: { x: -22, y: 0, z: -36 },
+    insidePos: { x: -22, y: 0, z: -42 },
+    exitPos: { x: -22, y: 0, z: -33 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MADRASA',
+    exitLabel: 'EXIT MADRASA',
+  },
+  {
+    id: 'bld_dar_alquran',
+    name: 'Dar Al-Quran Conservatory',
+    type: 'madrasa',
+    doorPos: { x: 70, y: 0, z: -118 },
+    insidePos: { x: 70, y: 0, z: -130 },
+    exitPos: { x: 70, y: 0, z: -114 },
+    actionKey: 'E',
+    enterLabel: 'ENTER MADRASA',
+    exitLabel: 'EXIT MADRASA',
+  },
+  // Schools & Academies
+  {
+    id: 'bld_ibn_sina',
+    name: 'Ibn Sina Medical School',
+    type: 'school',
+    doorPos: { x: 126, y: 0, z: 40 },
+    insidePos: { x: 140, y: 0, z: 40 },
+    exitPos: { x: 122, y: 0, z: 40 },
+    actionKey: 'E',
+    enterLabel: 'ENTER SCHOOL',
+    exitLabel: 'EXIT SCHOOL',
+  },
+  {
+    id: 'bld_khwarizmi_academy',
+    name: 'Al-Khwarizmi Astronomy Academy',
+    type: 'school',
+    doorPos: { x: -126, y: 0, z: -40 },
+    insidePos: { x: -140, y: 0, z: -40 },
+    exitPos: { x: -122, y: 0, z: -40 },
+    actionKey: 'E',
+    enterLabel: 'ENTER SCHOOL',
+    exitLabel: 'EXIT SCHOOL',
+  },
+  {
+    id: 'bld_alzahra_academy',
+    name: 'Al-Zahra Youth Academy',
+    type: 'school',
+    doorPos: { x: -70, y: 0, z: 126 },
+    insidePos: { x: -70, y: 0, z: 140 },
+    exitPos: { x: -70, y: 0, z: 122 },
+    actionKey: 'E',
+    enterLabel: 'ENTER SCHOOL',
+    exitLabel: 'EXIT SCHOOL',
+  },
+  {
+    id: 'bld_bayt_alhikma',
+    name: 'Bayt Al-Hikma University',
+    type: 'school',
+    doorPos: { x: -38, y: 0, z: -25 },
+    insidePos: { x: -48, y: 0, z: -25 },
+    exitPos: { x: -34, y: 0, z: -25 },
+    actionKey: 'E',
+    enterLabel: 'ENTER SCHOOL',
+    exitLabel: 'EXIT SCHOOL',
+  },
+  // Souqs & Shops
+  {
+    id: 'bld_souq_bazaar',
+    name: 'Souq Al-Madina Bazaar & Shops',
+    type: 'shop',
+    doorPos: { x: -20, y: 0, z: 24 },
+    insidePos: { x: -28, y: 0, z: 24 },
+    exitPos: { x: -16, y: 0, z: 24 },
+    actionKey: 'E',
+    enterLabel: 'ENTER SHOP',
+    exitLabel: 'EXIT SHOP',
+  },
+  // Citizen Residence
+  {
+    id: 'bld_residence_home',
+    name: 'Citizen Residence',
+    type: 'residence',
+    doorPos: { x: 18, y: 0, z: 24 },
+    insidePos: { x: 18, y: 0, z: 18 },
+    exitPos: { x: 18, y: 0, z: 26 },
+    actionKey: 'E',
+    enterLabel: 'ENTER RESIDENCE',
+    exitLabel: 'EXIT RESIDENCE',
+  },
+];
+
 interface ThreeGameWorldProps {
   userProfile: {
     name: string;
@@ -419,6 +670,12 @@ export default function ThreeGameWorld({
   const [prayerPhase, setPrayerPhase] = useState<'qiyam' | 'ruku' | 'sujud' | 'tashahhud'>('qiyam');
   const [actionToast, setActionToast] = useState<string | null>(null);
 
+  // Toast Helper
+  const showToast = useCallback((msg: string) => {
+    setActionToast(msg);
+    setTimeout(() => setActionToast(null), 3000);
+  }, []);
+
   // HUD & Game World states
   const [nearbyPlayer, setNearbyPlayer] = useState<{ id: string; name: string; city: string; distance: number } | null>(null);
   const [isNearHome, setIsNearHome] = useState(false);
@@ -477,6 +734,23 @@ export default function ThreeGameWorld({
     subText?: string;
     onExecute: () => void;
   } | null>(null);
+
+  // GTA V-Style Enter / Exit System States & Distance Check
+  const [activeEnterTarget, setActiveEnterTarget] = useState<EnterTarget | null>(null);
+  const activeEnterTargetRef = useRef<EnterTarget | null>(null);
+  const [currentInsideLocation, setCurrentInsideLocation] = useState<EnterTarget | null>(null);
+  const currentInsideLocationRef = useRef<EnterTarget | null>(null);
+  const [drivingVehicleId, setDrivingVehicleId] = useState<string | null>(null);
+  const drivingVehicleRef = useRef<string | null>(null);
+  const [drivingVehicleSpeed, setDrivingVehicleSpeed] = useState<number>(0);
+  const [isFadeToBlack, setIsFadeToBlack] = useState<boolean>(false);
+  const [projectedEnterPromptPos, setProjectedEnterPromptPos] = useState<{ x: number; y: number; visible: boolean } | null>(null);
+
+  // Private House Security, In-Room Activities & Custom Commands
+  const [isHouseDoorLocked, setIsHouseDoorLocked] = useState<boolean>(false);
+  const [isSleepingInBed, setIsSleepingInBed] = useState<boolean>(false);
+  const [isPrayingOnMat, setIsPrayingOnMat] = useState<boolean>(false);
+  const [cameraZoomDistance, setCameraZoomDistance] = useState<number>(9.0);
 
   // Continuous Coins Economy & Real-time Balance State (Every new player starts with exactly 0 coins)
   const [coins, setCoins] = useState<number>(() => {
@@ -640,6 +914,266 @@ export default function ThreeGameWorld({
   // Controls Ref
   const keysRef = useRef<{ [key: string]: boolean }>({});
 
+  // User Drag & Reposition State for Radar Minimap and Virtual Moving Joystick
+  const [minimapOffset, setMinimapOffset] = useState<{ x: number; y: number }>(() => {
+    try {
+      const saved = localStorage.getItem('baraka_minimap_offset');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return { x: 0, y: 0 };
+  });
+
+  const [joystickOffset, setJoystickOffset] = useState<{ x: number; y: number }>(() => {
+    try {
+      const saved = localStorage.getItem('baraka_joystick_offset');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return { x: 0, y: 0 };
+  });
+
+  // Minimap Scale (Size) and Radar Terrain Zoom
+  const [minimapScale, setMinimapScale] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('baraka_minimap_scale');
+      if (saved) return parseFloat(saved);
+    } catch {
+      // fallback
+    }
+    return 1.0;
+  });
+
+  const [radarZoomLevel, setRadarZoomLevel] = useState<number>(1.0);
+
+  // Virtual Movement Stick Scale (Size) and Direct Long-Press Dragging
+  const [joystickScale, setJoystickScale] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('baraka_joystick_scale');
+      if (saved) return parseFloat(saved);
+    } catch {
+      // fallback
+    }
+    return 1.0;
+  });
+
+  const [isRepositioningStick, setIsRepositioningStick] = useState<boolean>(false);
+  const joystickLongPressTimerRef = useRef<number | null>(null);
+  const joystickPressStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const activeWidgetDragRef = useRef<{
+    widget: 'minimap' | 'joystick' | null;
+    startX: number;
+    startY: number;
+    initX: number;
+    initY: number;
+    touchId?: number;
+  }>({
+    widget: null,
+    startX: 0,
+    startY: 0,
+    initX: 0,
+    initY: 0,
+  });
+
+  const handleSetMinimapScale = useCallback((scale: number) => {
+    const clamped = Math.max(0.7, Math.min(1.6, Math.round(scale * 100) / 100));
+    setMinimapScale(clamped);
+    try {
+      localStorage.setItem('baraka_minimap_scale', String(clamped));
+    } catch {
+      // ignore
+    }
+    showToast(`Radar Map size: ${Math.round(clamped * 100)}%`);
+  }, [showToast]);
+
+  const handleSetJoystickScale = useCallback((scale: number) => {
+    const clamped = Math.max(0.7, Math.min(1.6, Math.round(scale * 100) / 100));
+    setJoystickScale(clamped);
+    try {
+      localStorage.setItem('baraka_joystick_scale', String(clamped));
+    } catch {
+      // ignore
+    }
+    showToast(`Movement Stick size: ${Math.round(clamped * 100)}%`);
+  }, [showToast]);
+
+  const resetMinimapPosition = useCallback(() => {
+    setMinimapOffset({ x: 0, y: 0 });
+    try {
+      localStorage.removeItem('baraka_minimap_offset');
+    } catch {
+      // ignore
+    }
+    showToast('Radar Map position reset');
+  }, [showToast]);
+
+  const resetJoystickPosition = useCallback(() => {
+    setJoystickOffset({ x: 0, y: 0 });
+    try {
+      localStorage.removeItem('baraka_joystick_offset');
+    } catch {
+      // ignore
+    }
+    showToast('Moving Joystick position reset');
+  }, [showToast]);
+
+  const handleStartMinimapDrag = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = isTouch ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const touchId = isTouch ? e.touches[0].identifier : undefined;
+
+    activeWidgetDragRef.current = {
+      widget: 'minimap',
+      startX: clientX,
+      startY: clientY,
+      initX: minimapOffset.x,
+      initY: minimapOffset.y,
+      touchId,
+    };
+  }, [minimapOffset]);
+
+  const handleStartJoystickDrag = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = isTouch ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const touchId = isTouch ? e.touches[0].identifier : undefined;
+
+    activeWidgetDragRef.current = {
+      widget: 'joystick',
+      startX: clientX,
+      startY: clientY,
+      initX: joystickOffset.x,
+      initY: joystickOffset.y,
+      touchId,
+    };
+  }, [joystickOffset]);
+
+  // Direct Long-Press on Joystick to drag and reposition anywhere
+  const handleJoystickPointerDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = isTouch ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    joystickPressStartRef.current = { x: clientX, y: clientY };
+
+    if (joystickLongPressTimerRef.current) clearTimeout(joystickLongPressTimerRef.current);
+
+    // 240ms hold on joystick initiates drag mode
+    joystickLongPressTimerRef.current = window.setTimeout(() => {
+      setIsRepositioningStick(true);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(35);
+      }
+      setJoystickVector({ x: 0, y: 0 }); // release character steering
+      handleStartJoystickDrag(e);
+      showToast('Repositioning Moving Stick · Drag & drop anywhere');
+    }, 240);
+  }, [handleStartJoystickDrag, showToast]);
+
+  const handleJoystickPointerMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = isTouch ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    const dist = Math.hypot(clientX - joystickPressStartRef.current.x, clientY - joystickPressStartRef.current.y);
+    if (dist > 12) {
+      // If moved quickly before 240ms, cancel the reposition timer so player steers smoothly
+      if (!isRepositioningStick && joystickLongPressTimerRef.current) {
+        clearTimeout(joystickLongPressTimerRef.current);
+        joystickLongPressTimerRef.current = null;
+      }
+    }
+  }, [isRepositioningStick]);
+
+  const handleJoystickPointerUp = useCallback(() => {
+    if (joystickLongPressTimerRef.current) {
+      clearTimeout(joystickLongPressTimerRef.current);
+      joystickLongPressTimerRef.current = null;
+    }
+    if (isRepositioningStick) {
+      setIsRepositioningStick(false);
+    }
+  }, [isRepositioningStick]);
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const active = activeWidgetDragRef.current;
+      if (!active.widget) return;
+
+      let clientX = 0;
+      let clientY = 0;
+      if ('touches' in e) {
+        let touch: Touch | undefined;
+        if (active.touchId !== undefined) {
+          for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === active.touchId) {
+              touch = e.touches[i];
+              break;
+            }
+          }
+        }
+        if (!touch && e.touches.length > 0) touch = e.touches[0];
+        if (!touch) return;
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const dx = clientX - active.startX;
+      const dy = clientY - active.startY;
+      const newX = active.initX + dx;
+      const newY = active.initY + dy;
+
+      if (active.widget === 'minimap') {
+        setMinimapOffset({ x: newX, y: newY });
+      } else if (active.widget === 'joystick') {
+        setJoystickOffset({ x: newX, y: newY });
+      }
+    };
+
+    const handleEnd = () => {
+      const active = activeWidgetDragRef.current;
+      if (!active.widget) return;
+
+      if (active.widget === 'minimap') {
+        try {
+          localStorage.setItem('baraka_minimap_offset', JSON.stringify(minimapOffset));
+        } catch {
+          // ignore
+        }
+      } else if (active.widget === 'joystick') {
+        try {
+          localStorage.setItem('baraka_joystick_offset', JSON.stringify(joystickOffset));
+        } catch {
+          // ignore
+        }
+      }
+      activeWidgetDragRef.current.widget = null;
+    };
+
+    window.addEventListener('mousemove', handleMove, { passive: true });
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
+    };
+  }, [minimapOffset, joystickOffset]);
+
   // 3D Scene Refs
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -777,15 +1311,185 @@ export default function ThreeGameWorld({
       isWalking: true,
       statusText: 'Campus Scholar',
     },
+    {
+      id: 'p10',
+      name: 'Zayd_Cordoba',
+      city: 'Cordoba',
+      outfitColor: 0x10b981,
+      position: new THREE.Vector3(75, 0, -55),
+      targetPosition: new THREE.Vector3(60, 0, -45),
+      rotation: 0,
+      isWalking: true,
+      statusText: 'Al-Andalus Historian',
+    },
+    {
+      id: 'p11',
+      name: 'Hafsa_Zanzibar',
+      city: 'Zanzibar',
+      outfitColor: 0x06b6d4,
+      position: new THREE.Vector3(80, 0, 50),
+      targetPosition: new THREE.Vector3(65, 0, 40),
+      rotation: Math.PI,
+      isWalking: true,
+      statusText: 'Maritime Explorer',
+    },
+    {
+      id: 'p12',
+      name: 'Ibrahim_Medina',
+      city: 'Medina',
+      outfitColor: 0x14b8a6,
+      position: new THREE.Vector3(-80, 0, 55),
+      targetPosition: new THREE.Vector3(-65, 0, 45),
+      rotation: -Math.PI / 3,
+      isWalking: true,
+      statusText: 'Qur’anic Dean',
+    },
+    {
+      id: 'p13',
+      name: 'Salma_KualaLumpur',
+      city: 'Kuala Lumpur',
+      outfitColor: 0xf59e0b,
+      position: new THREE.Vector3(-75, 0, -60),
+      targetPosition: new THREE.Vector3(-60, 0, -50),
+      rotation: Math.PI / 2,
+      isWalking: true,
+      statusText: 'Robotics Engineer',
+    },
+    {
+      id: 'p14',
+      name: 'Hamza_Nairobi',
+      city: 'Nairobi',
+      outfitColor: 0xa855f7,
+      position: new THREE.Vector3(45, 0, 80),
+      targetPosition: new THREE.Vector3(30, 0, 60),
+      rotation: -Math.PI / 2,
+      isWalking: true,
+      statusText: 'Youth Mentor',
+    },
+    {
+      id: 'p15',
+      name: 'Nadia_Algiers',
+      city: 'Algiers',
+      outfitColor: 0xec4899,
+      position: new THREE.Vector3(-40, 0, -85),
+      targetPosition: new THREE.Vector3(-25, 0, -70),
+      rotation: 0,
+      isWalking: true,
+      statusText: 'Calligraphy Master',
+    },
+    {
+      id: 'p16',
+      name: 'Mustafa_Samarkand',
+      city: 'Samarkand',
+      outfitColor: 0x3b82f6,
+      position: new THREE.Vector3(85, 0, -20),
+      targetPosition: new THREE.Vector3(70, 0, -10),
+      rotation: Math.PI / 4,
+      isWalking: true,
+      statusText: 'Silk Road Merchant',
+    },
+    {
+      id: 'p17',
+      name: 'Khadija_Muscat',
+      city: 'Muscat',
+      outfitColor: 0x10b981,
+      position: new THREE.Vector3(-85, 0, 15),
+      targetPosition: new THREE.Vector3(-70, 0, 25),
+      rotation: -Math.PI / 4,
+      isWalking: true,
+      statusText: 'Frankincense Trader',
+    },
+    {
+      id: 'p18',
+      name: 'Maryam_Fes',
+      city: 'Fez',
+      outfitColor: 0x10b981,
+      position: new THREE.Vector3(125, 0, -50),
+      targetPosition: new THREE.Vector3(135, 0, -70),
+      rotation: 0,
+      isWalking: true,
+      statusText: 'Andalusian Scholar',
+    },
+    {
+      id: 'p19',
+      name: 'Yusuf_Oasis',
+      city: 'Medina',
+      outfitColor: 0x059669,
+      position: new THREE.Vector3(-120, 0, 80),
+      targetPosition: new THREE.Vector3(-135, 0, 95),
+      rotation: Math.PI / 2,
+      isWalking: true,
+      statusText: 'Oasis Caretaker',
+    },
+    {
+      id: 'p20',
+      name: 'Hassan_Cairo',
+      city: 'Cairo',
+      outfitColor: 0xd97706,
+      position: new THREE.Vector3(105, 0, 110),
+      targetPosition: new THREE.Vector3(115, 0, 125),
+      rotation: -Math.PI / 3,
+      isWalking: true,
+      statusText: 'Mamluk Historian',
+    },
+    {
+      id: 'p21',
+      name: 'Dr_Zahra_Bukhara',
+      city: 'Bukhara',
+      outfitColor: 0x2563eb,
+      position: new THREE.Vector3(135, 0, 35),
+      targetPosition: new THREE.Vector3(145, 0, 45),
+      rotation: Math.PI,
+      isWalking: true,
+      statusText: 'Chief Physician',
+    },
+    {
+      id: 'p22',
+      name: 'Farhan_Baghdad',
+      city: 'Baghdad',
+      outfitColor: 0x0284c7,
+      position: new THREE.Vector3(-135, 0, -35),
+      targetPosition: new THREE.Vector3(-145, 0, -45),
+      rotation: Math.PI / 4,
+      isWalking: true,
+      statusText: 'Astrolabe Maker',
+    },
+    {
+      id: 'p23',
+      name: 'Leila_Tunis',
+      city: 'Tunis',
+      outfitColor: 0x06b6d4,
+      position: new THREE.Vector3(-65, 0, 130),
+      targetPosition: new THREE.Vector3(-75, 0, 145),
+      rotation: -Math.PI / 2,
+      isWalking: true,
+      statusText: 'Student Ambassador',
+    },
+    {
+      id: 'p24',
+      name: 'Sidi_Ahmed_Rabat',
+      city: 'Rabat',
+      outfitColor: 0x0d9488,
+      position: new THREE.Vector3(65, 0, -120),
+      targetPosition: new THREE.Vector3(75, 0, -135),
+      rotation: 0,
+      isWalking: true,
+      statusText: 'Master Calligrapher',
+    },
+    {
+      id: 'p25',
+      name: 'Captain_Sinbad_Sur',
+      city: 'Sur',
+      outfitColor: 0x38bdf8,
+      position: new THREE.Vector3(-150, 0, 5),
+      targetPosition: new THREE.Vector3(-165, 0, -10),
+      rotation: Math.PI / 6,
+      isWalking: true,
+      statusText: 'Dhow Sea Captain',
+    },
   ]);
 
   const [projectedTags, setProjectedTags] = useState<Array<{ id: string; name: string; city: string; x: number; y: number; visible: boolean; dist: number }>>([]);
-
-  // Toast Helper
-  const showToast = useCallback((msg: string) => {
-    setActionToast(msg);
-    setTimeout(() => setActionToast(null), 3000);
-  }, []);
 
   // Detect mobile
   useEffect(() => {
@@ -1543,6 +2247,131 @@ export default function ThreeGameWorld({
     });
   };
 
+  // GTA V-Style Enter / Exit Execution with 0.3s Fade to Black Transition
+  const executeEnterOrExit = useCallback((overrideTarget?: EnterTarget | null) => {
+    const target = overrideTarget || activeEnterTargetRef.current;
+    if (!target || isFadeToBlack) return;
+
+    // Strict Ownership Security: No user can enter another citizen's house!
+    if (target.isOwnerOnly && target.ownerName && target.ownerName !== userProfile.name && target.ownerName !== 'YOU') {
+      playChime(220, 'sawtooth', 0.25);
+      showToast(`🔒 Private Residence: This is ${target.ownerName}'s private house. Only the owner can enter.`);
+      return;
+    }
+
+    // 1. Fade screen to pure black for 0.3 seconds
+    setIsFadeToBlack(true);
+    playChime(320, 'triangle', 0.25);
+
+    setTimeout(() => {
+      // 2. Perform relocation or vehicle embarkation/disembarkation at 0.3s
+      if (currentInsideLocationRef.current) {
+        // Exiting building
+        const loc = currentInsideLocationRef.current;
+        playerPositionRef.current.set(loc.exitPos.x, loc.exitPos.y, loc.exitPos.z);
+        currentInsideLocationRef.current = null;
+        setCurrentInsideLocation(null);
+        setIsSleepingInBed(false);
+        setIsPrayingOnMat(false);
+        showToast(`Exited ${loc.name} to street`);
+      } else if (drivingVehicleRef.current) {
+        // Exiting vehicle
+        const curVeh = vehiclesRef.current.find((v) => v.id === drivingVehicleRef.current);
+        if (curVeh) {
+          playerPositionRef.current.set(
+            curVeh.mesh.position.x - 2.2,
+            0,
+            curVeh.mesh.position.z
+          );
+        }
+        drivingVehicleRef.current = null;
+        setDrivingVehicleId(null);
+        setDrivingVehicleSpeed(0);
+        showToast('Exited vehicle');
+      } else if (target.type === 'vehicle') {
+        // Entering vehicle
+        drivingVehicleRef.current = target.id;
+        setDrivingVehicleId(target.id);
+        showToast(`Entered ${target.name} · Drive with WASD / Joystick`);
+      } else {
+        // Entering building
+        playerPositionRef.current.set(target.insidePos.x, target.insidePos.y, target.insidePos.z);
+        currentInsideLocationRef.current = target;
+        setCurrentInsideLocation(target);
+        if (target.type === 'residence' || target.id === 'house_1' || target.id === 'bld_residence_home') {
+          showToast(`Welcome home to your private villa, ${userProfile.name}! 🏠`);
+        } else {
+          showToast(`Entered ${target.name}`);
+        }
+      }
+
+      // 3. Smooth fade back from black after 100ms
+      setTimeout(() => {
+        setIsFadeToBlack(false);
+      }, 100);
+    }, 300); // Exactly 0.3 seconds
+  }, [isFadeToBlack, playChime, showToast, userProfile.name]);
+
+  // In-Room Private House Activities & Custom Commands
+  const handleToggleHouseLock = useCallback(() => {
+    setIsHouseDoorLocked((prev) => {
+      const next = !prev;
+      playChime(next ? 580 : 720, 'triangle', 0.2);
+      showToast(next ? 'Front door locked with secure deadbolt 🔒' : 'Front door unlocked 🔓');
+      return next;
+    });
+  }, [playChime, showToast]);
+
+  const handleSleepInBed = useCallback(() => {
+    // Relocate to comfortable bed corner
+    playerPositionRef.current.set(21.8, 0.45, 14.8);
+    setIsSleepingInBed(true);
+    setIsResting(true);
+    playChime(290, 'sine', 0.6);
+    showToast('Sleeping peacefully in your bed · Energy 100% restored 🌙');
+  }, [playChime, showToast]);
+
+  const handleWakeUp = useCallback(() => {
+    // Stand up beside bed
+    playerPositionRef.current.set(20.5, 0, 16.5);
+    setIsSleepingInBed(false);
+    setIsResting(false);
+    playChime(580, 'triangle', 0.3);
+    showToast('Woke up fully refreshed and energized! ☀️');
+  }, [playChime, showToast]);
+
+  const handlePrayOnMat = useCallback(() => {
+    // Walk to the private velvet prayer mat facing Qibla
+    playerPositionRef.current.set(21.8, 0, 19.8);
+    playerRotationRef.current = Math.PI; // Face Qibla North
+    setIsPrayingOnMat(true);
+    handleActionPray();
+    playCoinChime();
+    setCoins((c) => c + 25);
+    showToast('Offering private prayer on your prayer mat (+25 Coins) 🤲');
+  }, [handleActionPray, playCoinChime, showToast]);
+
+  const handleFinishPrayer = useCallback(() => {
+    setIsPrayingOnMat(false);
+    handleActionStand();
+    showToast('Completed prayer with peace and tranquility 🤲');
+  }, [handleActionStand, showToast]);
+
+  const handleDrinkMintTea = useCallback(() => {
+    playerPositionRef.current.set(15.5, 0, 16.2);
+    playChime(640, 'sine', 0.35);
+    setSpeedBoostUntil(Date.now() + 60000);
+    showToast('Drank refreshing Moroccan Mint Tea · Speed Boost Active (60s) 🍵');
+  }, [playChime, showToast]);
+
+  // Ultra Zoom Helper (from 0.6m extreme eye close-up to 220m miniature city)
+  const handleSetCameraZoom = useCallback((targetDistance: number) => {
+    const clamped = Math.max(0.6, Math.min(220.0, targetDistance));
+    cameraDistanceRef.current = clamped;
+    setCameraZoomDistance(clamped);
+    playChime(480, 'sine', 0.12);
+  }, [playChime]);
+
   const handleFastTravel = (targetX: number, targetZ: number, districtName: string) => {
     playerPositionRef.current.set(targetX, 0, targetZ);
     playChime(580, 'triangle', 0.25);
@@ -1587,7 +2416,7 @@ export default function ThreeGameWorld({
       skyCtx.fillRect(0, 0, 512, 512);
     }
     const skyTexture = new THREE.CanvasTexture(skyCanvas);
-    const skyGeo = new THREE.SphereGeometry(220, 32, 16);
+    const skyGeo = new THREE.SphereGeometry(460, 32, 16);
     const skyMat = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide, depthWrite: false });
     const skyDome = new THREE.Mesh(skyGeo, skyMat);
     scene.add(skyDome);
@@ -1595,18 +2424,18 @@ export default function ThreeGameWorld({
     // Distant City Silhouette Horizon (Islamic city skyline of towers, arches and domes)
     const skylineGroup = new THREE.Group();
     const silMat = new THREE.MeshBasicMaterial({ color: 0x111625, fog: true });
-    for (let i = 0; i < 28; i++) {
-      const angle = (i / 28) * Math.PI * 2;
-      const dist = 180 + (i % 3) * 15;
-      const w = 12 + (i % 4) * 6;
-      const h = 25 + ((i * 7) % 35);
-      const d = 10;
+    for (let i = 0; i < 48; i++) {
+      const angle = (i / 48) * Math.PI * 2;
+      const dist = 320 + (i % 3) * 20;
+      const w = 16 + (i % 4) * 8;
+      const h = 35 + ((i * 7) % 45);
+      const d = 12;
       const tower = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silMat);
       tower.position.set(Math.cos(angle) * dist, h / 2, Math.sin(angle) * dist);
       tower.rotation.y = -angle;
       skylineGroup.add(tower);
 
-      if (i % 3 === 0) {
+      if (i % 2 === 0) {
         const dDome = new THREE.Mesh(new THREE.SphereGeometry(w * 0.45, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), silMat);
         dDome.position.set(Math.cos(angle) * dist, h, Math.sin(angle) * dist);
         skylineGroup.add(dDome);
@@ -1617,7 +2446,7 @@ export default function ThreeGameWorld({
     // Adaptive Perspective Camera with aspect-aware Field of View
     const { fov, aspect, baseDistance } = getAdaptiveCameraParams(width, height);
     cameraDistanceRef.current = baseDistance;
-    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 400);
+    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 800);
     cameraRef.current = camera;
     camera.position.set(0, 5, 26);
 
@@ -1647,14 +2476,14 @@ export default function ThreeGameWorld({
     scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xfef3c7, 1.5);
-    sunLight.position.set(60, 75, 45);
+    sunLight.position.set(80, 110, 60);
     sunLight.castShadow = performanceTier !== 'performance';
     const shadowRes = performanceTier === 'high' ? 2048 : 1024;
     sunLight.shadow.mapSize.width = shadowRes;
     sunLight.shadow.mapSize.height = shadowRes;
     sunLight.shadow.camera.near = 1;
-    sunLight.shadow.camera.far = 250;
-    const d = 75;
+    sunLight.shadow.camera.far = 400;
+    const d = 160;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
@@ -1662,8 +2491,8 @@ export default function ThreeGameWorld({
     sunLight.shadow.bias = -0.0005;
     scene.add(sunLight);
 
-    // Ground Paving / Base Grid
-    const groundGeo = new THREE.PlaneGeometry(300, 300);
+    // Ground Paving / Base Grid (Wide Metropolis Scale)
+    const groundGeo = new THREE.PlaneGeometry(750, 750);
     const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -1676,23 +2505,23 @@ export default function ThreeGameWorld({
     const lineYellowMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
     const lineWhiteMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
 
-    // Main East-West Road
-    const roadHGeo = new THREE.PlaneGeometry(280, 14);
+    // Main Central East-West Boulevard (x: -240 to +240, z = 0)
+    const roadHGeo = new THREE.PlaneGeometry(500, 14);
     const roadH = new THREE.Mesh(roadHGeo, roadMat);
     roadH.rotation.x = -Math.PI / 2;
     roadH.position.set(0, 0.02, 0);
     roadH.receiveShadow = true;
     scene.add(roadH);
 
-    // East-West Road Center Double Yellow Line
-    const centerLineH = new THREE.Mesh(new THREE.PlaneGeometry(280, 0.25), lineYellowMat);
+    // Central East-West Center Double Yellow Line
+    const centerLineH = new THREE.Mesh(new THREE.PlaneGeometry(500, 0.25), lineYellowMat);
     centerLineH.rotation.x = -Math.PI / 2;
     centerLineH.position.set(0, 0.03, 0);
     scene.add(centerLineH);
 
     // East-West Dashed White Lane Markings
-    for (let lx = -130; lx <= 130; lx += 8) {
-      if (Math.abs(lx) < 9) continue;
+    for (let lx = -230; lx <= 230; lx += 8) {
+      if (Math.abs(lx) < 9 || Math.abs(lx - 90) < 9 || Math.abs(lx + 90) < 9) continue;
       [-3.5, 3.5].forEach((lz) => {
         const dash = new THREE.Mesh(new THREE.PlaneGeometry(4, 0.2), lineWhiteMat);
         dash.rotation.x = -Math.PI / 2;
@@ -1701,19 +2530,47 @@ export default function ThreeGameWorld({
       });
     }
 
-    // Main North-South Road
-    const roadVGeo = new THREE.PlaneGeometry(14, 280);
+    // Main Central North-South Promenade (x = 0, z: -240 to +240)
+    const roadVGeo = new THREE.PlaneGeometry(14, 500);
     const roadV = new THREE.Mesh(roadVGeo, roadMat);
     roadV.rotation.x = -Math.PI / 2;
     roadV.position.set(0, 0.02, 0);
     roadV.receiveShadow = true;
     scene.add(roadV);
 
-    // North-South Center Yellow Line
-    const centerLineV = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 280), lineYellowMat);
+    // Central North-South Center Yellow Line
+    const centerLineV = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 500), lineYellowMat);
     centerLineV.rotation.x = -Math.PI / 2;
     centerLineV.position.set(0, 0.03, 0);
     scene.add(centerLineV);
+
+    // Secondary Cross Avenues: North Ring Road (z = -90) and South Ring Road (z = 90)
+    [-90, 90].forEach((rz) => {
+      const ringH = new THREE.Mesh(new THREE.PlaneGeometry(480, 11), roadMat);
+      ringH.rotation.x = -Math.PI / 2;
+      ringH.position.set(0, 0.02, rz);
+      ringH.receiveShadow = true;
+      scene.add(ringH);
+
+      const rHCenter = new THREE.Mesh(new THREE.PlaneGeometry(480, 0.22), lineYellowMat);
+      rHCenter.rotation.x = -Math.PI / 2;
+      rHCenter.position.set(0, 0.03, rz);
+      scene.add(rHCenter);
+    });
+
+    // Secondary Cross Avenues: East Ring Road (x = 90) and West Ring Road (x = -90)
+    [-90, 90].forEach((rx) => {
+      const ringV = new THREE.Mesh(new THREE.PlaneGeometry(11, 480), roadMat);
+      ringV.rotation.x = -Math.PI / 2;
+      ringV.position.set(rx, 0.02, 0);
+      ringV.receiveShadow = true;
+      scene.add(ringV);
+
+      const rVCenter = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 480), lineYellowMat);
+      rVCenter.rotation.x = -Math.PI / 2;
+      rVCenter.position.set(rx, 0.03, 0);
+      scene.add(rVCenter);
+    });
 
     // Grand Mosque Ceremonial Plaza (Wide decorative Islamic patterned marble promenade)
     const plazaCanvas = document.createElement('canvas');
@@ -1971,12 +2828,228 @@ export default function ThreeGameWorld({
       stoppedForPedestrian: false,
       stoppedForVehicle: false,
       waypoints: [
-        new THREE.Vector3(-3.5, 0, -110),
-        new THREE.Vector3(0, 0, -116),
-        new THREE.Vector3(3.5, 0, -110),
-        new THREE.Vector3(3.5, 0, 110),
-        new THREE.Vector3(0, 0, 116),
-        new THREE.Vector3(-3.5, 0, 110),
+        new THREE.Vector3(-3.5, 0, -180),
+        new THREE.Vector3(0, 0, -186),
+        new THREE.Vector3(3.5, 0, -180),
+        new THREE.Vector3(3.5, 0, 180),
+        new THREE.Vector3(0, 0, 186),
+        new THREE.Vector3(-3.5, 0, 180),
+      ],
+    });
+
+    // Vehicle 7: Al-Madinah Eco-Transit Shuttle (North Ring Avenue z = -90)
+    const v7Data = createVehicleMesh(0x10b981, 'van');
+    v7Data.carGroup.position.set(-160, 0, -90);
+    v7Data.carGroup.rotation.y = Math.PI / 2;
+    scene.add(v7Data.carGroup);
+    createdVehicles.push({
+      id: 'v7',
+      name: 'Eco-Transit Shuttle',
+      mesh: v7Data.carGroup,
+      colorHex: 0x10b981,
+      type: 'van',
+      cruiseSpeed: 14,
+      currentSpeed: 14,
+      waypointIndex: 0,
+      wheels: v7Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(180, 0, -90),
+        new THREE.Vector3(185, 0, -88),
+        new THREE.Vector3(180, 0, -86),
+        new THREE.Vector3(-180, 0, -86),
+        new THREE.Vector3(-185, 0, -88),
+        new THREE.Vector3(-180, 0, -90),
+      ],
+    });
+
+    // Vehicle 8: Golden Scholar Campus Transit (West Ring Avenue x = -90)
+    const v8Data = createVehicleMesh(0xd97706, 'taxi');
+    v8Data.carGroup.position.set(-90, 0, 140);
+    v8Data.carGroup.rotation.y = Math.PI;
+    scene.add(v8Data.carGroup);
+    createdVehicles.push({
+      id: 'v8',
+      name: 'Campus Scholar Transit',
+      mesh: v8Data.carGroup,
+      colorHex: 0xd97706,
+      type: 'taxi',
+      cruiseSpeed: 15,
+      currentSpeed: 15,
+      waypointIndex: 0,
+      wheels: v8Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(-90, 0, -180),
+        new THREE.Vector3(-88, 0, -185),
+        new THREE.Vector3(-86, 0, -180),
+        new THREE.Vector3(-86, 0, 180),
+        new THREE.Vector3(-88, 0, 185),
+        new THREE.Vector3(-90, 0, 180),
+      ],
+    });
+
+    // Vehicle 9: Andalus White Executive Sedan (East Ring Avenue x = 90)
+    const v9Data = createVehicleMesh(0xf1f5f9, 'sedan');
+    v9Data.carGroup.position.set(90, 0, -140);
+    v9Data.carGroup.rotation.y = 0;
+    scene.add(v9Data.carGroup);
+    createdVehicles.push({
+      id: 'v9',
+      name: 'Andalus Executive Sedan',
+      mesh: v9Data.carGroup,
+      colorHex: 0xf1f5f9,
+      type: 'sedan',
+      cruiseSpeed: 16,
+      currentSpeed: 16,
+      waypointIndex: 0,
+      wheels: v9Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(90, 0, 180),
+        new THREE.Vector3(92, 0, 185),
+        new THREE.Vector3(94, 0, 180),
+        new THREE.Vector3(94, 0, -180),
+        new THREE.Vector3(92, 0, -185),
+        new THREE.Vector3(90, 0, -180),
+      ],
+    });
+
+    // Vehicle 10: South Oasis Desert Cruiser SUV (South Ring Avenue z = 90)
+    const v10Data = createVehicleMesh(0x0284c7, 'suv');
+    v10Data.carGroup.position.set(150, 0, 90);
+    v10Data.carGroup.rotation.y = -Math.PI / 2;
+    scene.add(v10Data.carGroup);
+    createdVehicles.push({
+      id: 'v10',
+      name: 'Oasis Desert SUV',
+      mesh: v10Data.carGroup,
+      colorHex: 0x0284c7,
+      type: 'suv',
+      cruiseSpeed: 14,
+      currentSpeed: 14,
+      waypointIndex: 0,
+      wheels: v10Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(-180, 0, 90),
+        new THREE.Vector3(-185, 0, 92),
+        new THREE.Vector3(-180, 0, 94),
+        new THREE.Vector3(180, 0, 94),
+        new THREE.Vector3(185, 0, 92),
+        new THREE.Vector3(180, 0, 90),
+      ],
+    });
+
+    // Vehicle 11: Turquoise Souq Rapid Logistics Van
+    const v11Data = createVehicleMesh(0x14b8a6, 'van');
+    v11Data.carGroup.position.set(-140, 0, 3.5);
+    v11Data.carGroup.rotation.y = Math.PI / 2;
+    scene.add(v11Data.carGroup);
+    createdVehicles.push({
+      id: 'v11',
+      name: 'Souq Rapid Logistics',
+      mesh: v11Data.carGroup,
+      colorHex: 0x14b8a6,
+      type: 'van',
+      cruiseSpeed: 15,
+      currentSpeed: 15,
+      waypointIndex: 0,
+      wheels: v11Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(200, 0, 3.5),
+        new THREE.Vector3(206, 0, 0),
+        new THREE.Vector3(200, 0, -3.5),
+        new THREE.Vector3(-200, 0, -3.5),
+        new THREE.Vector3(-206, 0, 0),
+        new THREE.Vector3(-200, 0, 3.5),
+      ],
+    });
+
+    // Vehicle 12: Ruby Sunset Sports GT Cruiser
+    const v12Data = createVehicleMesh(0xbe123c, 'cruiser');
+    v12Data.carGroup.position.set(160, 0, -3.5);
+    v12Data.carGroup.rotation.y = -Math.PI / 2;
+    scene.add(v12Data.carGroup);
+    createdVehicles.push({
+      id: 'v12',
+      name: 'Sunset Sports GT',
+      mesh: v12Data.carGroup,
+      colorHex: 0xbe123c,
+      type: 'cruiser',
+      cruiseSpeed: 18,
+      currentSpeed: 18,
+      waypointIndex: 0,
+      wheels: v12Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(-210, 0, -3.5),
+        new THREE.Vector3(-216, 0, 0),
+        new THREE.Vector3(-210, 0, 3.5),
+        new THREE.Vector3(210, 0, 3.5),
+        new THREE.Vector3(216, 0, 0),
+        new THREE.Vector3(210, 0, -3.5),
+      ],
+    });
+
+    // Vehicle 13: Sultan Gold Grand Sedan
+    const v13Data = createVehicleMesh(0xeab308, 'sedan');
+    v13Data.carGroup.position.set(3.5, 0, 160);
+    v13Data.carGroup.rotation.y = Math.PI;
+    scene.add(v13Data.carGroup);
+    createdVehicles.push({
+      id: 'v13',
+      name: 'Sultan Gold Sedan',
+      mesh: v13Data.carGroup,
+      colorHex: 0xeab308,
+      type: 'sedan',
+      cruiseSpeed: 16,
+      currentSpeed: 16,
+      waypointIndex: 0,
+      wheels: v13Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(3.5, 0, -210),
+        new THREE.Vector3(0, 0, -216),
+        new THREE.Vector3(-3.5, 0, -210),
+        new THREE.Vector3(-3.5, 0, 210),
+        new THREE.Vector3(0, 0, 216),
+        new THREE.Vector3(3.5, 0, 210),
+      ],
+    });
+
+    // Vehicle 14: Sapphire Marina Courier Taxi
+    const v14Data = createVehicleMesh(0x3b82f6, 'taxi');
+    v14Data.carGroup.position.set(-3.5, 0, -160);
+    v14Data.carGroup.rotation.y = 0;
+    scene.add(v14Data.carGroup);
+    createdVehicles.push({
+      id: 'v14',
+      name: 'Marina Courier Taxi',
+      mesh: v14Data.carGroup,
+      colorHex: 0x3b82f6,
+      type: 'taxi',
+      cruiseSpeed: 15,
+      currentSpeed: 15,
+      waypointIndex: 0,
+      wheels: v14Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(-3.5, 0, 200),
+        new THREE.Vector3(0, 0, 206),
+        new THREE.Vector3(3.5, 0, 200),
+        new THREE.Vector3(3.5, 0, -200),
+        new THREE.Vector3(0, 0, -206),
+        new THREE.Vector3(-3.5, 0, -200),
       ],
     });
 
@@ -2074,6 +3147,51 @@ export default function ThreeGameWorld({
     pillow.position.set(3.8, 0.75, -4.4);
     homeGroup.add(pillow);
 
+    // Dedicated Moroccan Emerald Prayer Mat (Sajjadah) facing Qiblah North
+    const prayerMatGeo = new THREE.PlaneGeometry(1.6, 2.8);
+    const prayerMatMat = new THREE.MeshStandardMaterial({
+      color: 0x047857,
+      roughness: 0.6,
+      emissive: 0x065f46,
+      emissiveIntensity: 0.25,
+    });
+    const prayerMatMesh = new THREE.Mesh(prayerMatGeo, prayerMatMat);
+    prayerMatMesh.rotation.x = -Math.PI / 2;
+    prayerMatMesh.position.set(3.8, 0.07, 1.8);
+    homeGroup.add(prayerMatMesh);
+
+    // Mihrab Niche Arch on Prayer Mat
+    const mihrabArch = new THREE.Mesh(
+      new THREE.RingGeometry(0.35, 0.55, 16, 1, 0, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.3, metalness: 0.75 })
+    );
+    mihrabArch.rotation.x = -Math.PI / 2;
+    mihrabArch.position.set(3.8, 0.08, 0.8);
+    homeGroup.add(mihrabArch);
+
+    // Prayer Mat Tassels & Fringe
+    const fringeGeo = new THREE.BoxGeometry(1.6, 0.03, 0.15);
+    const fringeMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.8 });
+    const fringeTop = new THREE.Mesh(fringeGeo, fringeMat);
+    fringeTop.position.set(3.8, 0.08, 0.35);
+    homeGroup.add(fringeTop);
+    const fringeBottom = new THREE.Mesh(fringeGeo, fringeMat);
+    fringeBottom.position.set(3.8, 0.08, 3.25);
+    homeGroup.add(fringeBottom);
+
+    // Brass Plaque over Front Door: YOUR RESIDENCE #1
+    const homePlaque = new THREE.Mesh(
+      new THREE.BoxGeometry(3.0, 0.65, 0.15),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.25 })
+    );
+    homePlaque.position.set(0, 4.4, 6.2);
+    homeGroup.add(homePlaque);
+
+    // Front Porch Door Lock Status Light (Emerald = Unlocked, Ruby = Locked)
+    const homeLockLamp = new THREE.PointLight(0x10b981, 1.2, 6);
+    homeLockLamp.position.set(1.4, 3.2, 6.3);
+    homeGroup.add(homeLockLamp);
+
     // Warm Ambient Living Room Chandelier Light
     const homeLight = new THREE.PointLight(0xfef08a, 2.2, 14);
     homeLight.position.set(0, 4.2, 0);
@@ -2081,6 +3199,86 @@ export default function ThreeGameWorld({
 
     homeGroup.position.set(18, 0, 18);
     scene.add(homeGroup);
+
+    // Spawn Physical Villas for all other citizens in RESIDENTIAL_HOUSES (Single User Per House)
+    RESIDENTIAL_HOUSES.forEach((house) => {
+      if (house.id === 'house_1') return; // House 1 is the Player's House (homeGroup)
+
+      const villaGroup = new THREE.Group();
+
+      // House Floor
+      const vFloorGeo = new THREE.PlaneGeometry(12, 12);
+      const vFloorMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+      const vFloor = new THREE.Mesh(vFloorGeo, vFloorMat);
+      vFloor.rotation.x = -Math.PI / 2;
+      vFloor.position.set(0, 0.05, 0);
+      vFloor.receiveShadow = true;
+      villaGroup.add(vFloor);
+
+      // Exterior Walls with customized resident colors
+      const vWallMat = new THREE.MeshStandardMaterial({ color: house.wallColorHex, roughness: 0.6 });
+      const vBackWall = new THREE.Mesh(new THREE.BoxGeometry(12, 5.5, 0.4), vWallMat);
+      vBackWall.position.set(0, 2.75, -6);
+      villaGroup.add(vBackWall);
+
+      const vLeftWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.5, 12), vWallMat);
+      vLeftWall.position.set(-6, 2.75, 0);
+      villaGroup.add(vLeftWall);
+
+      const vRightWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5.5, 12), vWallMat);
+      vRightWall.position.set(6, 2.75, 0);
+      villaGroup.add(vRightWall);
+
+      // Front Walls flanking entrance
+      const vFrontLeft = new THREE.Mesh(new THREE.BoxGeometry(4.8, 5.5, 0.4), vWallMat);
+      vFrontLeft.position.set(-3.6, 2.75, 6);
+      villaGroup.add(vFrontLeft);
+
+      const vFrontRight = new THREE.Mesh(new THREE.BoxGeometry(4.8, 5.5, 0.4), vWallMat);
+      vFrontRight.position.set(3.6, 2.75, 6);
+      villaGroup.add(vFrontRight);
+
+      // Carved Wooden Front Double Door (Locked - Exclusive Single-User Access)
+      const vDoor = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 4.4, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.75 })
+      );
+      vDoor.position.set(0, 2.2, 6.05);
+      villaGroup.add(vDoor);
+
+      // Brass Identification Plaque with Citizen Owner Name
+      const vPlaque = new THREE.Mesh(
+        new THREE.BoxGeometry(2.8, 0.65, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.25 })
+      );
+      vPlaque.position.set(0, 4.4, 6.2);
+      villaGroup.add(vPlaque);
+
+      // Locked Padlock Security Ruby Lamp (Clearly signals Locked to others)
+      const vSecLight = new THREE.PointLight(0xef4444, 0.9, 5);
+      vSecLight.position.set(1.4, 3.2, 6.3);
+      villaGroup.add(vSecLight);
+
+      // Moroccan Peaked Roof
+      const vRoofGeo = new THREE.ConeGeometry(9.5, 3.4, 4);
+      const vRoofMat = new THREE.MeshStandardMaterial({ color: house.roofColorHex, roughness: 0.45 });
+      const vRoof = new THREE.Mesh(vRoofGeo, vRoofMat);
+      vRoof.position.set(0, 7.6, 0);
+      vRoof.rotation.y = Math.PI / 4;
+      villaGroup.add(vRoof);
+
+      // Entrance Welcome Mat
+      const vMat = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.2, 1.4),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 })
+      );
+      vMat.rotation.x = -Math.PI / 2;
+      vMat.position.set(0, 0.06, 7.2);
+      villaGroup.add(vMat);
+
+      villaGroup.position.set(house.insidePos.x, 0, house.insidePos.z);
+      scene.add(villaGroup);
+    });
 
     // B. GRAND MOSQUE (Location: [0, 0, -58]) - Physical Enterable Sanctuary
     const mosqueGroup = new THREE.Group();
@@ -2460,8 +3658,263 @@ export default function ThreeGameWorld({
       }
     }
 
-    officeGroup.position.set(50, 0, -18);
-    scene.add(officeGroup);
+    // I. AL-ANDALUS EAST GRAND MASJID (Location: [130, 0, -60])
+    const andalusGroup = new THREE.Group();
+    const andalusBase = new THREE.Mesh(new THREE.BoxGeometry(28, 10, 24), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 }));
+    andalusBase.position.set(0, 5, 0);
+    andalusBase.castShadow = true;
+    andalusBase.receiveShadow = true;
+    andalusGroup.add(andalusBase);
+
+    // Turquoise Ribbed Dome
+    const andalusDome = new THREE.Mesh(
+      new THREE.SphereGeometry(6.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.25, metalness: 0.15 })
+    );
+    andalusDome.position.set(0, 10, 0);
+    andalusDome.castShadow = true;
+    andalusGroup.add(andalusDome);
+
+    // Golden Crescent Finial
+    const andalusFinial = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3), new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9 }));
+    andalusFinial.position.set(0, 17.5, 0);
+    andalusGroup.add(andalusFinial);
+
+    // Towering Slender Minaret (Height: 32m)
+    const andalusMinaret = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.0, 32, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 }));
+    andalusMinaret.position.set(13, 16, 11);
+    andalusMinaret.castShadow = true;
+    andalusGroup.add(andalusMinaret);
+    const andalusMinaretSpire = new THREE.Mesh(new THREE.ConeGeometry(1.8, 5, 12), new THREE.MeshStandardMaterial({ color: 0x059669 }));
+    andalusMinaretSpire.position.set(13, 34.5, 11);
+    andalusGroup.add(andalusMinaretSpire);
+
+    // Courtyard Prayer Rugs
+    const andalusRugs = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), new THREE.MeshStandardMaterial({ color: 0x047857, roughness: 0.9 }));
+    andalusRugs.rotation.x = -Math.PI / 2;
+    andalusRugs.position.set(0, 0.06, 15);
+    andalusGroup.add(andalusRugs);
+
+    andalusGroup.position.set(130, 0, -60);
+    scene.add(andalusGroup);
+
+    // J. AL-MADINAH OASIS MASJID (Location: [-130, 0, 90])
+    const oasisMasjidGroup = new THREE.Group();
+    const oasisMasjidBase = new THREE.Mesh(new THREE.BoxGeometry(26, 9, 22), new THREE.MeshStandardMaterial({ color: 0xfefce8, roughness: 0.5 }));
+    oasisMasjidBase.position.set(0, 4.5, 0);
+    oasisMasjidBase.castShadow = true;
+    oasisMasjidGroup.add(oasisMasjidBase);
+
+    // Emerald Green Ribbed Dome
+    const oasisDome = new THREE.Mesh(
+      new THREE.SphereGeometry(6.0, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3 })
+    );
+    oasisDome.position.set(0, 9, 0);
+    oasisDome.castShadow = true;
+    oasisMasjidGroup.add(oasisDome);
+
+    // Oasis Minaret
+    const oasisMinaret = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 28, 12), new THREE.MeshStandardMaterial({ color: 0xfefce8 }));
+    oasisMinaret.position.set(-12, 14, -10);
+    oasisMasjidGroup.add(oasisMinaret);
+    const oasisMinSpire = new THREE.Mesh(new THREE.ConeGeometry(1.6, 4.5, 12), new THREE.MeshStandardMaterial({ color: 0x10b981 }));
+    oasisMinSpire.position.set(-12, 30.2, -10);
+    oasisMasjidGroup.add(oasisMinSpire);
+
+    // Shaded Prayer Terrace
+    const oasisPrayerTerrace = new THREE.Mesh(new THREE.PlaneGeometry(18, 12), new THREE.MeshStandardMaterial({ color: 0x065f46 }));
+    oasisPrayerTerrace.rotation.x = -Math.PI / 2;
+    oasisPrayerTerrace.position.set(0, 0.06, -14);
+    oasisMasjidGroup.add(oasisPrayerTerrace);
+
+    oasisMasjidGroup.position.set(-130, 0, 90);
+    scene.add(oasisMasjidGroup);
+
+    // K. AL-QARAWIYYIN HISTORICAL MASJID (Location: [-110, 0, -110])
+    const qarawiyyinGroup = new THREE.Group();
+    const qarawiyyinBase = new THREE.Mesh(new THREE.BoxGeometry(24, 8, 22), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 }));
+    qarawiyyinBase.position.set(0, 4, 0);
+    qarawiyyinGroup.add(qarawiyyinBase);
+
+    // Green Pitched Glazed Roof
+    const qarawiyyinRoof = new THREE.Mesh(new THREE.ConeGeometry(14, 5, 4), new THREE.MeshStandardMaterial({ color: 0x047857, roughness: 0.4 }));
+    qarawiyyinRoof.rotation.y = Math.PI / 4;
+    qarawiyyinRoof.position.set(0, 10.5, 0);
+    qarawiyyinGroup.add(qarawiyyinRoof);
+
+    // Traditional Square Moroccan Minaret
+    const qarawiyyinMinaret = new THREE.Mesh(new THREE.BoxGeometry(3.6, 26, 3.6), new THREE.MeshStandardMaterial({ color: 0xcfd8dc, roughness: 0.5 }));
+    qarawiyyinMinaret.position.set(11, 13, -9);
+    qarawiyyinGroup.add(qarawiyyinMinaret);
+
+    qarawiyyinGroup.position.set(-110, 0, -110);
+    scene.add(qarawiyyinGroup);
+
+    // L. SULTAN BAYBARS SOUTH GRAND MASJID (Location: [110, 0, 120])
+    const baybarsGroup = new THREE.Group();
+    const baybarsBase = new THREE.Mesh(new THREE.BoxGeometry(30, 11, 26), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }));
+    baybarsBase.position.set(0, 5.5, 0);
+    baybarsBase.castShadow = true;
+    baybarsGroup.add(baybarsBase);
+
+    // White Central Monumental Dome
+    const baybarsDome = new THREE.Mesh(
+      new THREE.SphereGeometry(7.2, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25 })
+    );
+    baybarsDome.position.set(0, 11, 0);
+    baybarsGroup.add(baybarsDome);
+
+    // Twin Soaring Minarets
+    [-13, 13].forEach((mx) => {
+      const bMin = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.0, 32, 12), new THREE.MeshStandardMaterial({ color: 0xf1f5f9 }));
+      bMin.position.set(mx, 16, 12);
+      baybarsGroup.add(bMin);
+      const bSpire = new THREE.Mesh(new THREE.ConeGeometry(1.8, 5, 12), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+      bSpire.position.set(mx, 34.5, 12);
+      baybarsGroup.add(bSpire);
+    });
+
+    // Red Woolen Prayer Rugs
+    const baybarsRugs = new THREE.Mesh(new THREE.PlaneGeometry(20, 14), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.9 }));
+    baybarsRugs.rotation.x = -Math.PI / 2;
+    baybarsRugs.position.set(0, 0.06, -16);
+    baybarsGroup.add(baybarsRugs);
+
+    baybarsGroup.position.set(110, 0, 120);
+    scene.add(baybarsGroup);
+
+    // M. IBN SINA MEDICAL SCHOOL & RESEARCH HALL (Location: [140, 0, 40])
+    const ibnSinaGroup = new THREE.Group();
+    const ibnSinaBuilding = new THREE.Mesh(new THREE.BoxGeometry(26, 9, 20), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 }));
+    ibnSinaBuilding.position.set(0, 4.5, 0);
+    ibnSinaGroup.add(ibnSinaBuilding);
+
+    // Glass Botanical Skylight
+    const glassDome = new THREE.Mesh(
+      new THREE.SphereGeometry(5.0, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.8 })
+    );
+    glassDome.position.set(0, 9, 0);
+    ibnSinaGroup.add(glassDome);
+
+    ibnSinaGroup.position.set(140, 0, 40);
+    scene.add(ibnSinaGroup);
+
+    // N. AL-KHWARIZMI STEM & ASTRONOMY ACADEMY (Location: [-140, 0, -40])
+    const stemGroup = new THREE.Group();
+    const stemHall = new THREE.Mesh(new THREE.BoxGeometry(26, 8.5, 20), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 }));
+    stemHall.position.set(0, 4.25, 0);
+    stemGroup.add(stemHall);
+
+    // Astronomy Observatory Dome with Telescope Slit
+    const obsDome = new THREE.Mesh(
+      new THREE.SphereGeometry(5.8, 20, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3, metalness: 0.7 })
+    );
+    obsDome.position.set(0, 8.5, 0);
+    stemGroup.add(obsDome);
+
+    // Giant Bronze Astrolabe Monument
+    const astrolabe = new THREE.Mesh(
+      new THREE.TorusGeometry(2.4, 0.25, 12, 32),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.2 })
+    );
+    astrolabe.position.set(0, 3, 14);
+    astrolabe.rotation.y = Math.PI / 4;
+    stemGroup.add(astrolabe);
+
+    stemGroup.position.set(-140, 0, -40);
+    scene.add(stemGroup);
+
+    // O. AL-ZAHRA YOUTH & INTERNATIONAL ACADEMY (Location: [-70, 0, 140])
+    const zahraGroup = new THREE.Group();
+    const zahraWing1 = new THREE.Mesh(new THREE.BoxGeometry(14, 7.5, 22), new THREE.MeshStandardMaterial({ color: 0x0f766e, roughness: 0.4 }));
+    zahraWing1.position.set(-8, 3.75, 0);
+    zahraGroup.add(zahraWing1);
+
+    const zahraWing2 = new THREE.Mesh(new THREE.BoxGeometry(14, 7.5, 22), new THREE.MeshStandardMaterial({ color: 0x0f766e, roughness: 0.4 }));
+    zahraWing2.position.set(8, 3.75, 0);
+    zahraGroup.add(zahraWing2);
+
+    const zahraCourtyard = new THREE.Mesh(new THREE.PlaneGeometry(16, 18), new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.8 }));
+    zahraCourtyard.rotation.x = -Math.PI / 2;
+    zahraCourtyard.position.set(0, 0.05, 0);
+    zahraGroup.add(zahraCourtyard);
+
+    zahraGroup.position.set(-70, 0, 140);
+    scene.add(zahraGroup);
+
+    // P. DAR AL-QURAN & CALLIGRAPHY CONSERVATORY (Location: [70, 0, -130])
+    const quranHallGroup = new THREE.Group();
+    const quranBuilding = new THREE.Mesh(new THREE.BoxGeometry(22, 8, 18), new THREE.MeshStandardMaterial({ color: 0x134e4a, roughness: 0.4 }));
+    quranBuilding.position.set(0, 4, 0);
+    quranHallGroup.add(quranBuilding);
+
+    // Gold Calligraphy Portal Facade
+    const quranPortal = new THREE.Mesh(new THREE.BoxGeometry(7, 6, 0.5), new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3, metalness: 0.8 }));
+    quranPortal.position.set(0, 3, 9.2);
+    quranHallGroup.add(quranPortal);
+
+    quranHallGroup.position.set(70, 0, -130);
+    scene.add(quranHallGroup);
+
+    // Q. OASIS BOTANICAL PALM GROVE (Location: [150, 0, -130])
+    const oasisGroveGroup = new THREE.Group();
+    const groveLawn = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.9 }));
+    groveLawn.rotation.x = -Math.PI / 2;
+    groveLawn.position.set(0, 0.04, 0);
+    oasisGroveGroup.add(groveLawn);
+
+    // Water Canal
+    const canal = new THREE.Mesh(new THREE.PlaneGeometry(5, 36), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, metalness: 0.8 }));
+    canal.rotation.x = -Math.PI / 2;
+    canal.position.set(0, 0.05, 0);
+    oasisGroveGroup.add(canal);
+
+    // Palm Clusters in Grove
+    [[-12, -12], [12, -12], [-12, 12], [12, 12], [-6, 0], [6, 0]].forEach(([gx, gz]) => {
+      const gTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 8, 8), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 }));
+      gTrunk.position.set(gx, 4, gz);
+      oasisGroveGroup.add(gTrunk);
+
+      const gFronds = new THREE.Mesh(new THREE.ConeGeometry(2.5, 4.0, 6), new THREE.MeshStandardMaterial({ color: 0x15803d }));
+      gFronds.position.set(gx, 8.5, gz);
+      oasisGroveGroup.add(gFronds);
+    });
+
+    oasisGroveGroup.position.set(150, 0, -130);
+    scene.add(oasisGroveGroup);
+
+    // R. GRAND MARINA HARBOR WATERFRONT (Location: [-160, 0, 0])
+    const marinaGroup = new THREE.Group();
+    const pier = new THREE.Mesh(new THREE.BoxGeometry(16, 0.4, 48), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 }));
+    pier.position.set(0, 0.2, 0);
+    marinaGroup.add(pier);
+
+    // Waterfront Water Pool
+    const marinaWater = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0x0369a1, roughness: 0.1, metalness: 0.9 }));
+    marinaWater.rotation.x = -Math.PI / 2;
+    marinaWater.position.set(-18, 0.04, 0);
+    marinaGroup.add(marinaWater);
+
+    marinaGroup.position.set(-160, 0, 0);
+    scene.add(marinaGroup);
+
+    // S. METROPOLIS PERIMETER BOUNDARY PYLONS (Marking city edge at x: ±230, z: ±230)
+    [
+      [-230, -230], [230, -230], [-230, 230], [230, 230],
+      [0, -230], [0, 230], [-230, 0], [230, 0]
+    ].forEach(([bx, bz]) => {
+      const pylon = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.8, 18, 8), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 }));
+      pylon.position.set(bx, 9, bz);
+      scene.add(pylon);
+
+      const pLight = new THREE.PointLight(0x10b981, 1.5, 25);
+      pLight.position.set(bx, 18.5, bz);
+      scene.add(pLight);
+    });
 
     // Palm trees surrounding streets
     [
@@ -2486,6 +3939,32 @@ export default function ThreeGameWorld({
       }
       frondGroup.position.set(px, 0, pz);
       scene.add(frondGroup);
+    });
+
+    // Illuminated Entrance Door Mats & Lanterns for Enterable Buildings
+    ENTERABLE_BUILDINGS.forEach((target) => {
+      const isMasjid = target.type === 'masjid';
+      const isSchool = target.type === 'school' || target.type === 'madrasa';
+      const matColor = isMasjid ? 0x10b981 : isSchool ? 0x06b6d4 : 0xf59e0b;
+      
+      const matGeo = new THREE.PlaneGeometry(3.6, 1.4);
+      const matMesh = new THREE.Mesh(
+        matGeo,
+        new THREE.MeshStandardMaterial({
+          color: matColor,
+          roughness: 0.3,
+          emissive: matColor,
+          emissiveIntensity: 0.35,
+        })
+      );
+      matMesh.rotation.x = -Math.PI / 2;
+      matMesh.position.set(target.doorPos.x, 0.04, target.doorPos.z);
+      matMesh.receiveShadow = true;
+      scene.add(matMesh);
+
+      const doorLight = new THREE.PointLight(matColor, 1.0, 9);
+      doorLight.position.set(target.doorPos.x, 2.8, target.doorPos.z);
+      scene.add(doorLight);
     });
 
     // Create Main Player Avatar
@@ -2562,11 +4041,24 @@ export default function ThreeGameWorld({
         else if (isExpressionPickerOpen) setIsExpressionPickerOpen(false);
         else if (onExitToLanding) onExitToLanding();
       }
-      if (e.code === 'KeyE' || e.code === 'Space') {
-        if (e.code === 'Space') e.preventDefault();
+      if (e.code === 'KeyE') {
+        if (activeEnterTargetRef.current && (activeEnterTargetRef.current.actionKey === 'E' || currentInsideLocationRef.current)) {
+          e.preventDefault();
+          executeEnterOrExit(activeEnterTargetRef.current);
+          return;
+        }
+        handleActionInteract();
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
         handleActionInteract();
       }
       if (e.code === 'KeyF') {
+        if (activeEnterTargetRef.current && (activeEnterTargetRef.current.actionKey === 'F' || drivingVehicleRef.current)) {
+          e.preventDefault();
+          executeEnterOrExit(activeEnterTargetRef.current);
+          return;
+        }
         if (isSitting) handleActionStand();
         else handleActionSit();
       }
@@ -2575,7 +4067,23 @@ export default function ThreeGameWorld({
         else handleActionRun();
       }
       if (e.code === 'KeyP') {
-        handleActionPray();
+        if (isInPlayerHome || currentInsideLocationRef.current?.type === 'residence') {
+          handlePrayOnMat();
+        } else {
+          handleActionPray();
+        }
+      }
+      if (e.code === 'KeyL') {
+        e.preventDefault();
+        handleToggleHouseLock();
+      }
+      if (e.code === 'KeyZ') {
+        e.preventDefault();
+        if (isSleepingInBed) {
+          handleWakeUp();
+        } else {
+          handleSleepInBed();
+        }
       }
       if (e.code === 'KeyC' || e.code === 'Enter') {
         e.preventDefault();
@@ -2604,7 +4112,7 @@ export default function ThreeGameWorld({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isSitting, isRunMode, toggleMovementMode]);
+  }, [isSitting, isRunMode, toggleMovementMode, isInPlayerHome, isSleepingInBed, handleToggleHouseLock, handlePrayOnMat, handleSleepInBed, handleWakeUp]);
 
   // Mouse Drag Camera Look Controls
   const isDraggingMouseRef = useRef(false);
@@ -2621,7 +4129,7 @@ export default function ThreeGameWorld({
     const deltaY = e.clientY - previousMouseRef.current.y;
 
     cameraAngleRef.current.horizontal -= deltaX * 0.005;
-    cameraAngleRef.current.vertical = Math.max(0.05, Math.min(1.2, cameraAngleRef.current.vertical + deltaY * 0.005));
+    cameraAngleRef.current.vertical = Math.max(0.04, Math.min(1.35, cameraAngleRef.current.vertical + deltaY * 0.005));
 
     previousMouseRef.current = { x: e.clientX, y: e.clientY };
   };
@@ -2631,7 +4139,12 @@ export default function ThreeGameWorld({
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-    cameraDistanceRef.current = Math.max(4.0, Math.min(14.0, cameraDistanceRef.current + e.deltaY * 0.01));
+    // Dynamic smooth scaling: fine-tuned near eyes (0.45m) to broad scaling at high altitude (260m)
+    const current = cameraDistanceRef.current;
+    const rate = current > 40 ? e.deltaY * 0.12 : (current < 2.5 ? e.deltaY * 0.008 : e.deltaY * 0.035);
+    const newDist = Math.max(0.45, Math.min(260.0, current + rate));
+    cameraDistanceRef.current = newDist;
+    setCameraZoomDistance(newDist);
   };
 
   // Mobile & Tablet Touch Controls: Virtual Joystick (Left) and Camera Pan/Pinch (Right)
@@ -2680,7 +4193,11 @@ export default function ThreeGameWorld({
         const dy = nonJoystickTouches[0].clientY - nonJoystickTouches[1].clientY;
         const currentDist = Math.hypot(dx, dy);
         const delta = currentDist - pinchDistanceRef.current;
-        cameraDistanceRef.current = Math.max(4.0, Math.min(14.0, cameraDistanceRef.current - delta * 0.02));
+        const current = cameraDistanceRef.current;
+        const rate = current > 40 ? 0.25 : (current < 2.5 ? 0.02 : 0.08);
+        const newDist = Math.max(0.45, Math.min(260.0, current - delta * rate));
+        cameraDistanceRef.current = newDist;
+        setCameraZoomDistance(newDist);
         pinchDistanceRef.current = currentDist;
       }
     }
@@ -2692,7 +4209,7 @@ export default function ThreeGameWorld({
         const dx = touch.clientX - joystickCenterRef.current.x;
         const dy = touch.clientY - joystickCenterRef.current.y;
         const dist = Math.hypot(dx, dy);
-        const maxRadius = 45;
+        const maxRadius = 45 * joystickScale;
         const clampedDist = Math.min(dist, maxRadius);
         const angle = Math.atan2(dy, dx);
 
@@ -2746,6 +4263,17 @@ export default function ThreeGameWorld({
       { id: 'obs_bazaar', name: 'Souq Bazaar Stalls', type: 'furniture', penalty: 5, minX: -46.0, maxX: -6.0, minZ: 22.0, maxZ: 30.0 },
       { id: 'obs_apt', name: 'Residential Apartments', type: 'building', penalty: 5, minX: 43.0, maxX: 61.0, minZ: 7.0, maxZ: 23.0 },
       { id: 'obs_fountain', name: 'Central Stone Fountain', type: 'furniture', penalty: 5, centerX: 32.0, centerZ: -28.0, radius: 4.8 },
+      // New Masajids
+      { id: 'obs_andalus', name: 'Al-Andalus East Grand Masjid', type: 'building', penalty: 5, minX: 114.0, maxX: 146.0, minZ: -74.0, maxZ: -46.0 },
+      { id: 'obs_oasis_m', name: 'Al-Madinah Oasis Masjid', type: 'building', penalty: 5, minX: -145.0, maxX: -115.0, minZ: 77.0, maxZ: 103.0 },
+      { id: 'obs_qarawiyyin', name: 'Al-Qarawiyyin Historical Masjid', type: 'building', penalty: 5, minX: -124.0, maxX: -96.0, minZ: -123.0, maxZ: -97.0 },
+      { id: 'obs_baybars', name: 'Sultan Baybars South Grand Masjid', type: 'building', penalty: 5, minX: 93.0, maxX: 127.0, minZ: 105.0, maxZ: 135.0 },
+      // New Schools & Academies
+      { id: 'obs_ibnsina', name: 'Ibn Sina Medical School', type: 'building', penalty: 5, minX: 125.0, maxX: 155.0, minZ: 28.0, maxZ: 52.0 },
+      { id: 'obs_stem', name: 'Al-Khwarizmi Astronomy Academy', type: 'building', penalty: 5, minX: -155.0, maxX: -125.0, minZ: -52.0, maxZ: -28.0 },
+      { id: 'obs_zahra', name: 'Al-Zahra Youth Academy', type: 'building', penalty: 5, minX: -85.0, maxX: -55.0, minZ: 127.0, maxZ: 153.0 },
+      { id: 'obs_quran', name: 'Dar Al-Quran Conservatory', type: 'building', penalty: 5, minX: 57.0, maxX: 83.0, minZ: -141.0, maxZ: -119.0 },
+      { id: 'obs_marina', name: 'Grand Marina Waterfront Pier', type: 'building', penalty: 5, minX: -172.0, maxX: -148.0, minZ: -26.0, maxZ: 26.0 },
     ];
 
     const animate = () => {
@@ -2756,6 +4284,11 @@ export default function ThreeGameWorld({
 
       // 1. UPDATE MOVING VEHICLES & REALISTIC ROAD TRAFFIC
       vehiclesRef.current.forEach((veh, vIdx) => {
+        // If this vehicle is currently being driven by the player, skip autonomous traffic AI
+        if (drivingVehicleRef.current === veh.id) {
+          return;
+        }
+
         const currentPos = veh.mesh.position;
         const targetWp = veh.waypoints[veh.waypointIndex];
         const toWp = new THREE.Vector3(targetWp.x - currentPos.x, 0, targetWp.z - currentPos.z);
@@ -2840,6 +4373,56 @@ export default function ThreeGameWorld({
       if (Math.abs(joystickVector.y) > 0.1) moveForward -= joystickVector.y;
       if (Math.abs(joystickVector.x) > 0.1) moveSide += joystickVector.x;
 
+      let isSprinting = false;
+
+      if (drivingVehicleRef.current) {
+        // PLAYER IS DRIVING A VEHICLE!
+        const drivenVeh = vehiclesRef.current.find((v) => v.id === drivingVehicleRef.current);
+        if (drivenVeh) {
+          // Steer car rotation smoothly
+          if (Math.abs(moveSide) > 0.05) {
+            const turnDir = (drivenVeh.currentSpeed >= -0.5 ? 1 : -1);
+            drivenVeh.mesh.rotation.y -= moveSide * turnDir * 2.5 * delta;
+          }
+
+          // Accelerate or brake
+          const maxForwardSpeed = 24.0; // ~86 km/h
+          const maxReverseSpeed = -7.5;
+          if (moveForward > 0.1) {
+            drivenVeh.currentSpeed = Math.min(maxForwardSpeed, drivenVeh.currentSpeed + 16.0 * delta * moveForward);
+          } else if (moveForward < -0.1) {
+            drivenVeh.currentSpeed = Math.max(maxReverseSpeed, drivenVeh.currentSpeed + 22.0 * delta * moveForward);
+          } else {
+            drivenVeh.currentSpeed *= Math.pow(0.93, delta * 60);
+            if (Math.abs(drivenVeh.currentSpeed) < 0.1) drivenVeh.currentSpeed = 0;
+          }
+
+          // Move along vehicle forward heading
+          const carForward = new THREE.Vector3(Math.sin(drivenVeh.mesh.rotation.y), 0, Math.cos(drivenVeh.mesh.rotation.y));
+          drivenVeh.mesh.position.addScaledVector(carForward, drivenVeh.currentSpeed * delta);
+
+          // Clamping inside city perimeter [-235, 235]
+          drivenVeh.mesh.position.x = Math.max(-235, Math.min(235, drivenVeh.mesh.position.x));
+          drivenVeh.mesh.position.z = Math.max(-235, Math.min(235, drivenVeh.mesh.position.z));
+
+          // Spin wheels
+          if (drivenVeh.wheels) {
+            drivenVeh.wheels.forEach((w) => {
+              w.rotation.x += drivenVeh.currentSpeed * delta * 2.8;
+            });
+          }
+
+          // Sync player position to driver seat
+          playerPositionRef.current.copy(drivenVeh.mesh.position);
+          if (playerGroupRef.current) {
+            playerGroupRef.current.position.copy(drivenVeh.mesh.position);
+            playerGroupRef.current.rotation.y = drivenVeh.mesh.rotation.y;
+            playerGroupRef.current.position.y = 0.2;
+          }
+
+          setDrivingVehicleSpeed(Math.round(Math.abs(drivenVeh.currentSpeed) * 3.6));
+        }
+      } else {
       const state = actionStateRef.current;
       if (state.toggleMovementMode === 'walk' && moveForward === 0 && moveSide === 0) {
         moveForward += 1;
@@ -2848,7 +4431,7 @@ export default function ThreeGameWorld({
       }
 
       const wantsToSprint = isRunMode || state.toggleMovementMode === 'run' || keysRef.current['ShiftLeft'] || keysRef.current['ShiftRight'];
-      const isSprinting = wantsToSprint && staminaRef.current > 5;
+      isSprinting = wantsToSprint && staminaRef.current > 5;
       const hasSpeedBoost = speedBoostUntil > Date.now();
       const sprintMultiplier = hasSpeedBoost ? 1.45 : 1.0;
       const speed = (isSprinting ? 9.5 * sprintMultiplier : 4.8 * sprintMultiplier) * delta;
@@ -2912,16 +4495,16 @@ export default function ThreeGameWorld({
           }
         }
 
-        // Outer City Perimeter Walls
-        if (!hitObstacle && (Math.abs(intendedPos.x) > 96 || Math.abs(intendedPos.z) > 96)) {
+        // Outer City Perimeter Walls (Broad 470m x 470m Metropolis)
+        if (!hitObstacle && (Math.abs(intendedPos.x) > 235 || Math.abs(intendedPos.z) > 235)) {
           hitObstacle = {
             id: 'obs_perimeter_wall',
-            name: 'City Perimeter Wall',
+            name: 'City Perimeter Boundary',
             type: 'wall',
             penalty: 5,
           };
-          intendedPos.x = Math.max(-96, Math.min(96, intendedPos.x));
-          intendedPos.z = Math.max(-96, Math.min(96, intendedPos.z));
+          intendedPos.x = Math.max(-235, Math.min(235, intendedPos.x));
+          intendedPos.z = Math.max(-235, Math.min(235, intendedPos.z));
         }
 
         // Apply Coin Penalty with Non-Spam Cooldown
@@ -3101,6 +4684,7 @@ export default function ThreeGameWorld({
           if (playerGroupRef.current) playerGroupRef.current.position.y = 0;
         }
       }
+      }
 
       // Update Player Mesh Position & Rotation in Scene
       if (playerGroupRef.current) {
@@ -3122,35 +4706,72 @@ export default function ThreeGameWorld({
       }
 
       // 3. GTA-STYLE THIRD-PERSON CAMERA SYSTEM (Obstruction Avoidance, Weight & Damped Following)
-      if (cameraRef.current) {
+      if (cameraRef.current && drivingVehicleRef.current) {
+        // Dynamic GTA Vehicle Chase Camera
+        const drivenVeh = vehiclesRef.current.find((v) => v.id === drivingVehicleRef.current);
+        if (drivenVeh) {
+          const carRot = drivenVeh.mesh.rotation.y;
+          const chaseCamOffset = new THREE.Vector3(-Math.sin(carRot) * 7.5, 3.2, -Math.cos(carRot) * 7.5);
+          const targetCamPos = drivenVeh.mesh.position.clone().add(chaseCamOffset);
+          cameraRef.current.position.lerp(targetCamPos, 0.18);
+
+          const lookAtTarget = drivenVeh.mesh.position.clone().add(new THREE.Vector3(0, 1.3, 0));
+          currentLookAtRef.current.lerp(lookAtTarget, 0.25);
+          cameraRef.current.lookAt(currentLookAtRef.current);
+        }
+      } else if (cameraRef.current) {
         const aspect = cameraRef.current.aspect || 1.6;
         const isPortrait = aspect < 1.0;
         const isCloseUp = cameraViewMode === 'close_up';
 
         const baseDistance = cameraDistanceRef.current;
         let camDistance = isCloseUp ? 4.2 : baseDistance;
-        const heightRatio = isPortrait ? 0.50 : 0.42;
-        const camHeight = isCloseUp ? 2.0 : (camDistance * heightRatio);
+        
+        // Multi-tier height ratio and target look height for full spectrum zoom (0.45m eyes to 260m miniature city)
+        let camHeight = 0;
+        let lookTargetY = 1.45;
+        if (camDistance < 1.6) {
+          // EXTREME CLOSE-UP: Direct focus on character's eyes, face, smile, and expression!
+          lookTargetY = 1.65; // Head/eye level
+          camHeight = Math.max(0.04, camDistance * 0.12); // Keep camera straight at eye level
+        } else if (camDistance < 4.0) {
+          // FULL BODY VIEW: Inspect entire avatar body and outfit
+          lookTargetY = 1.25;
+          camHeight = (camDistance - 1.6) * 0.35 + 0.3;
+        } else if (camDistance < 35.0) {
+          // STANDARD GTA THIRD-PERSON STREET VIEW
+          const heightRatio = isPortrait ? 0.50 : 0.40;
+          camHeight = camDistance * heightRatio;
+          lookTargetY = isPortrait ? 1.70 : 1.45;
+        } else {
+          // MINIATURE CITY / SATELLITE PANORAMA VIEW:
+          // Camera ascends high into the sky and pitches down to frame the entire city as a miniature model!
+          const miniatureAltitude = Math.pow(camDistance, 1.05) * 0.72;
+          camHeight = miniatureAltitude;
+          lookTargetY = 0.5;
+        }
 
         const horiz = cameraAngleRef.current.horizontal;
         const vert = cameraAngleRef.current.vertical;
 
         // Calculate ideal unconstrained camera position
         let camX = playerPositionRef.current.x + camDistance * Math.sin(horiz) * Math.cos(vert);
-        let camY = Math.max(1.6, playerPositionRef.current.y + camHeight + camDistance * Math.sin(vert));
+        let camY = Math.max(0.5, playerPositionRef.current.y + camHeight + (camDistance < 30 ? camDistance * Math.sin(vert) : 0));
         let camZ = playerPositionRef.current.z + camDistance * Math.cos(horiz) * Math.cos(vert);
 
-        // Camera Obstruction & Collision Handling against City Buildings
-        for (let o = 0; o < SOLID_OBSTACLES.length; o++) {
-          const obs = SOLID_OBSTACLES[o];
-          if (obs.minX !== undefined && obs.maxX !== undefined && obs.minZ !== undefined && obs.maxZ !== undefined) {
-            // Buffer zone of 1.5m around building walls
-            if (camX >= obs.minX - 1.2 && camX <= obs.maxX + 1.2 && camZ >= obs.minZ - 1.2 && camZ <= obs.maxZ + 1.2) {
-              camDistance = Math.max(3.2, camDistance * 0.65);
-              camX = playerPositionRef.current.x + camDistance * Math.sin(horiz) * Math.cos(vert);
-              camY = Math.max(2.4, playerPositionRef.current.y + camDistance * heightRatio + camDistance * Math.sin(vert));
-              camZ = playerPositionRef.current.z + camDistance * Math.cos(horiz) * Math.cos(vert);
-              break;
+        // Camera Obstruction & Collision Handling against City Buildings:
+        // Only check obstacle collision if camera is at building height (camY < 14) and NOT in close-up or miniature view!
+        if (camDistance >= 3.0 && camDistance <= 35.0 && camY < 14.0) {
+          for (let o = 0; o < SOLID_OBSTACLES.length; o++) {
+            const obs = SOLID_OBSTACLES[o];
+            if (obs.minX !== undefined && obs.maxX !== undefined && obs.minZ !== undefined && obs.maxZ !== undefined) {
+              if (camX >= obs.minX - 1.2 && camX <= obs.maxX + 1.2 && camZ >= obs.minZ - 1.2 && camZ <= obs.maxZ + 1.2) {
+                camDistance = Math.max(3.2, camDistance * 0.7);
+                camX = playerPositionRef.current.x + camDistance * Math.sin(horiz) * Math.cos(vert);
+                camY = Math.max(2.4, playerPositionRef.current.y + camDistance * 0.42 + camDistance * Math.sin(vert));
+                camZ = playerPositionRef.current.z + camDistance * Math.cos(horiz) * Math.cos(vert);
+                break;
+              }
             }
           }
         }
@@ -3164,8 +4785,7 @@ export default function ThreeGameWorld({
         cameraRef.current.fov = THREE.MathUtils.lerp(cameraRef.current.fov, targetFov, 0.08);
         cameraRef.current.updateProjectionMatrix();
 
-        // Smooth camera look target follow (focusing on character upper body/head)
-        const lookTargetY = isPortrait ? 1.75 : 1.45;
+        // Smooth camera look target follow (focusing on character eyes/body)
         const targetLook = new THREE.Vector3(
           playerPositionRef.current.x,
           playerPositionRef.current.y + lookTargetY,
@@ -3256,23 +4876,44 @@ export default function ThreeGameWorld({
         footballMeshRef.current.rotation.z -= fb.vx * delta * 4;
       }
 
-      // District Telemetry Detection
+      // District Telemetry Detection across Expanded Metropolis
       const px = playerPositionRef.current.x;
+      const py = playerPositionRef.current.y;
       const pz = playerPositionRef.current.z;
       let newDist = 'Central Boulevard';
-      if (pz < -45) {
+      if (Math.hypot(px - 130, pz - (-60)) < 26) {
+        newDist = 'Al-Andalus East Grand Masjid';
+      } else if (Math.hypot(px - (-130), pz - 90) < 26) {
+        newDist = 'Al-Madinah Oasis Masjid';
+      } else if (Math.hypot(px - (-110), pz - (-110)) < 26) {
+        newDist = 'Al-Qarawiyyin Historical Masjid';
+      } else if (Math.hypot(px - 110, pz - 120) < 26) {
+        newDist = 'Sultan Baybars South Masjid';
+      } else if (Math.hypot(px - 140, pz - 40) < 24) {
+        newDist = 'Ibn Sina Medical School';
+      } else if (Math.hypot(px - (-140), pz - (-40)) < 24) {
+        newDist = 'Al-Khwarizmi Astronomy Academy';
+      } else if (Math.hypot(px - (-70), pz - 140) < 24) {
+        newDist = 'Al-Zahra Youth Academy';
+      } else if (Math.hypot(px - 70, pz - (-130)) < 24) {
+        newDist = 'Dar Al-Quran Conservatory';
+      } else if (Math.hypot(px - 150, pz - (-130)) < 28) {
+        newDist = 'Oasis Botanical Palm Grove';
+      } else if (Math.hypot(px - (-160), pz) < 28) {
+        newDist = 'Grand Marina Harbor Waterfront';
+      } else if (pz < -45 && Math.abs(px) < 24) {
         newDist = 'Grand Mosque Sanctuary';
-      } else if (px < -35 && pz > 38) {
+      } else if (px < -35 && pz > 38 && px > -65 && pz < 65) {
         newDist = 'Baraka Football Arena';
-      } else if (px < -14 && pz > 10) {
+      } else if (px < -14 && pz > 10 && px > -45 && pz < 35) {
         newDist = 'Souq Al-Madina Bazaar';
-      } else if (px < -15 && pz < -30) {
+      } else if (px < -15 && pz < -30 && px > -35 && pz > -50) {
         newDist = 'Madrasa Quran Academy';
-      } else if (px < -35 && pz < -10) {
+      } else if (px < -35 && pz < -10 && px > -65 && pz > -38) {
         newDist = 'Bayt Al-Hikma University';
-      } else if (px > 12 && pz > 10) {
+      } else if (px > 12 && pz > 10 && px < 40 && pz < 35) {
         newDist = 'Residential Quarter';
-      } else if (px > 20 && pz < -15) {
+      } else if (px > 20 && pz < -15 && px < 48 && pz > -40) {
         newDist = 'Public Park & Fountain';
       } else {
         newDist = 'Central Boulevard';
@@ -3285,8 +4926,109 @@ export default function ThreeGameWorld({
       // 4. DYNAMIC CONTEXT-AWARE IN-WORLD INTERACTION DETECTION
       let detectedPrompt: { text: string; actionKey: string; subText?: string; onExecute: () => void } | null = null;
 
-      // A. Mosque Sanctuary (Near Mihrab or Prayer Carpets)
-      if (pz < -45 && Math.abs(px) < 14) {
+      // New Masjid A: Al-Andalus East Grand Masjid
+      if (Math.hypot(px - 130, pz - (-60)) < 18) {
+        detectedPrompt = {
+          text: 'PRAY SALAH AT AL-ANDALUS GRAND MASJID',
+          subText: 'Join congregation in Andalusian courtyard (+25 Coins)',
+          actionKey: 'P',
+          onExecute: handleActionPray,
+        };
+      }
+      // New Masjid B: Al-Madinah Oasis Masjid
+      else if (Math.hypot(px - (-130), pz - 90) < 18) {
+        detectedPrompt = {
+          text: 'PRAY SALAH AT AL-MADINAH OASIS MASJID',
+          subText: 'Sanctuary prayer in shaded date palm garden (+25 Coins)',
+          actionKey: 'P',
+          onExecute: handleActionPray,
+        };
+      }
+      // New Masjid C: Al-Qarawiyyin Historical Masjid
+      else if (Math.hypot(px - (-110), pz - (-110)) < 18) {
+        detectedPrompt = {
+          text: 'PRAY SALAH AT AL-QARAWIYYIN HISTORIC MASJID',
+          subText: 'Ancient Moroccan sanctuary prayer & dhikr (+25 Coins)',
+          actionKey: 'P',
+          onExecute: handleActionPray,
+        };
+      }
+      // New Masjid D: Sultan Baybars South Grand Masjid
+      else if (Math.hypot(px - 110, pz - 120) < 18) {
+        detectedPrompt = {
+          text: 'PRAY SALAH AT SULTAN BAYBARS SOUTH MASJID',
+          subText: 'Congregational prayer on grand red rugs (+25 Coins)',
+          actionKey: 'P',
+          onExecute: handleActionPray,
+        };
+      }
+      // New School A: Ibn Sina Medical School & Botany Hall
+      else if (Math.hypot(px - 140, pz - 40) < 16) {
+        detectedPrompt = {
+          text: 'STUDY HERBAL MEDICINE & BOTANY',
+          subText: 'Review Ibn Sina medicinal research texts (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(560, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Studied Healing Arts at Ibn Sina Medical School');
+          },
+        };
+      }
+      // New School B: Al-Khwarizmi Astronomy Academy & Astrolabe
+      else if (Math.hypot(px - (-140), pz - (-40)) < 16) {
+        detectedPrompt = {
+          text: 'OBSERVE CELESTIAL STARS AT ASTROLABE',
+          subText: 'Study algebra & astronomy in observatory (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(620, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Contemplated the Stars with Al-Khwarizmi Astrolabe');
+          },
+        };
+      }
+      // New School C: Al-Zahra Youth & International Academy
+      else if (Math.hypot(px - (-70), pz - 140) < 16) {
+        detectedPrompt = {
+          text: 'STUDY AT AL-ZAHRA ACADEMY QUAD',
+          subText: 'Join ethical leadership and youth workshop (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(580, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Participated in Al-Zahra Leadership Seminar');
+          },
+        };
+      }
+      // New School D: Dar Al-Quran Conservatory
+      else if (Math.hypot(px - 70, pz - (-130)) < 16) {
+        detectedPrompt = {
+          text: 'INSPECT GOLD-LEAF CALLIGRAPHY MANUSCRIPTS',
+          subText: 'Admire Quranic illumination art (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(680, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Inspected Sacred Manuscript Gallery at Dar Al-Quran');
+          },
+        };
+      }
+      // Waterfront Marina
+      else if (Math.hypot(px - (-160), pz) < 18) {
+        detectedPrompt = {
+          text: 'RELAX ON WATERFRONT PIER',
+          subText: 'Gaze out across the sunset horizon (+15 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(480, 'sine', 0.3);
+            setCoins((c) => c + 15);
+            showToast('Enjoyed the Peaceful Ocean Breeze at Grand Marina');
+          },
+        };
+      }
+      // A. Central Mosque Sanctuary (Near Mihrab or Prayer Carpets)
+      else if (pz < -45 && Math.abs(px) < 14) {
         if (Math.hypot(px, pz - (-68)) < 5.0) {
           detectedPrompt = {
             text: 'PRAY SALAH IN MIHRAB SANCTUARY',
@@ -3435,6 +5177,138 @@ export default function ThreeGameWorld({
 
       setContextPrompt(detectedPrompt);
 
+      // 4.5. GTA V-STYLE ENTER & EXIT DETECTION WITH EXACT 2.5m DISTANCE CHECK
+      let detectedEnterTarget: EnterTarget | null = null;
+      let minEnterDist = 2.5; // strictly within 2.5 meters
+
+      if (currentInsideLocationRef.current) {
+        // Player is currently inside building: prompt is EXIT [E]
+        detectedEnterTarget = {
+          ...currentInsideLocationRef.current,
+          actionKey: 'E',
+          enterLabel: 'EXIT',
+          exitLabel: 'EXIT',
+        };
+      } else if (drivingVehicleRef.current) {
+        // Player is currently driving vehicle: prompt is EXIT [F]
+        const curVeh = vehiclesRef.current.find((v) => v.id === drivingVehicleRef.current);
+        detectedEnterTarget = {
+          id: drivingVehicleRef.current,
+          name: curVeh ? curVeh.name : 'Vehicle',
+          type: 'vehicle',
+          doorPos: { x: px, y: py, z: pz },
+          insidePos: { x: px, y: py, z: pz },
+          exitPos: { x: px - 2.0, y: py, z: pz },
+          actionKey: 'F',
+          enterLabel: 'EXIT VEHICLE',
+          exitLabel: 'EXIT VEHICLE',
+        };
+      } else {
+        // Check doors (Masjid, Madrasa, School, Shop)
+        for (let b = 0; b < ENTERABLE_BUILDINGS.length; b++) {
+          const bld = ENTERABLE_BUILDINGS[b];
+          if (bld.id === 'bld_residence_home') continue; // Handled dynamically per citizen house below
+          const distToDoor = Math.hypot(px - bld.doorPos.x, pz - bld.doorPos.z);
+          if (distToDoor <= 2.5 && distToDoor < minEnterDist) {
+            minEnterDist = distToDoor;
+            detectedEnterTarget = bld;
+          }
+        }
+
+        // Check residential houses (Strict Single-User Per House System)
+        for (let h = 0; h < RESIDENTIAL_HOUSES.length; h++) {
+          const house = RESIDENTIAL_HOUSES[h];
+          const distToHouse = Math.hypot(px - house.doorPos.x, pz - house.doorPos.z);
+          if (distToHouse <= 2.5 && distToHouse < minEnterDist) {
+            minEnterDist = distToHouse;
+            const isMyHouse = house.id === 'house_1' || house.ownerName === 'YOU' || house.ownerName === userProfile.name;
+            if (isMyHouse) {
+              detectedEnterTarget = {
+                id: house.id,
+                name: 'My Private Residence #1',
+                type: 'residence',
+                doorPos: house.doorPos,
+                insidePos: house.insidePos,
+                exitPos: house.exitPos,
+                actionKey: isHouseDoorLocked ? 'L' : 'E',
+                enterLabel: isHouseDoorLocked ? 'LOCKED [PRESS L]' : 'ENTER MY HOUSE',
+                exitLabel: 'EXIT HOUSE',
+                ownerName: userProfile.name,
+                isLocked: isHouseDoorLocked,
+                isOwnerOnly: true,
+              };
+            } else {
+              detectedEnterTarget = {
+                id: house.id,
+                name: `${house.ownerName}'s Residence`,
+                type: 'residence',
+                doorPos: house.doorPos,
+                insidePos: house.insidePos,
+                exitPos: house.exitPos,
+                actionKey: 'E',
+                enterLabel: `[LOCKED] ${house.ownerName.toUpperCase()}'S HOUSE`,
+                exitLabel: 'EXIT HOUSE',
+                ownerName: house.ownerName,
+                isLocked: true,
+                isOwnerOnly: true,
+              };
+            }
+          }
+        }
+
+        // Check vehicles
+        for (let v = 0; v < vehiclesRef.current.length; v++) {
+          const veh = vehiclesRef.current[v];
+          const distToVeh = playerPositionRef.current.distanceTo(veh.mesh.position);
+          if (distToVeh <= 2.5 && distToVeh < minEnterDist) {
+            minEnterDist = distToVeh;
+            detectedEnterTarget = {
+              id: veh.id,
+              name: veh.name,
+              type: 'vehicle',
+              doorPos: { x: veh.mesh.position.x, y: veh.mesh.position.y, z: veh.mesh.position.z },
+              insidePos: { x: veh.mesh.position.x, y: veh.mesh.position.y, z: veh.mesh.position.z },
+              exitPos: { x: veh.mesh.position.x - 2.0, y: veh.mesh.position.y, z: veh.mesh.position.z },
+              actionKey: 'F',
+              enterLabel: 'ENTER VEHICLE',
+              exitLabel: 'EXIT VEHICLE',
+            };
+          }
+        }
+      }
+
+      if (detectedEnterTarget?.id !== activeEnterTargetRef.current?.id || detectedEnterTarget?.enterLabel !== activeEnterTargetRef.current?.enterLabel) {
+        activeEnterTargetRef.current = detectedEnterTarget;
+        setActiveEnterTarget(detectedEnterTarget);
+      }
+
+      // Calculate 3D projected screen coordinates above object for desktop prompt
+      if (detectedEnterTarget && cameraRef.current) {
+        const target3D = new THREE.Vector3(
+          detectedEnterTarget.doorPos.x,
+          detectedEnterTarget.doorPos.y + (detectedEnterTarget.type === 'vehicle' ? 1.6 : 2.5),
+          detectedEnterTarget.doorPos.z
+        );
+        const projected = target3D.project(cameraRef.current);
+        if (projected.z < 1) {
+          const sx = (projected.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(projected.y * 0.5) + 0.5) * window.innerHeight;
+          setProjectedEnterPromptPos({
+            x: Math.max(90, Math.min(window.innerWidth - 90, sx)),
+            y: Math.max(70, Math.min(window.innerHeight - 80, sy)),
+            visible: true,
+          });
+        } else {
+          setProjectedEnterPromptPos({
+            x: window.innerWidth / 2,
+            y: window.innerHeight * 0.25,
+            visible: true,
+          });
+        }
+      } else {
+        setProjectedEnterPromptPos(null);
+      }
+
       // 4. Check Proximity to Player Home ([18, 0, 18])
       const distToHome = playerPositionRef.current.distanceTo(new THREE.Vector3(18, 0, 18));
       setIsNearHome(distToHome < 6.0);
@@ -3451,7 +5325,7 @@ export default function ThreeGameWorld({
           const distToTarget = dir.length();
 
           if (distToTarget < 1.0) {
-            avatar.targetPosition.set((Math.random() - 0.5) * 80, 0, (Math.random() - 0.5) * 80);
+            avatar.targetPosition.set((Math.random() - 0.5) * 260, 0, (Math.random() - 0.5) * 260);
           } else {
             dir.normalize();
             avatar.position.addScaledVector(dir, 2.8 * delta);
@@ -3949,48 +5823,307 @@ export default function ThreeGameWorld({
         </div>
       )}
 
-      {/* Player Home Entrance / Interior Controls */}
-      {isNearHome && !nearbyPlayer && (
-        <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-30 bg-[#12151f]/95 border-2 border-emerald-400 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 backdrop-blur-xl animate-fadeIn w-[calc(100vw-2rem)] max-w-sm sm:max-w-md pointer-events-auto">
-          <div className="flex items-center gap-2.5 text-center sm:text-left">
-            <Home className="w-5 h-5 text-emerald-400 shrink-0 hidden sm:block" />
-            <div>
-              <span className="text-xs sm:text-sm font-black uppercase text-white block">
-                {isInPlayerHome ? 'PRIVATE RESIDENCE (INTERIOR)' : 'YOUR RESIDENCE HOME'}
-              </span>
-              <span className="text-[10px] text-zinc-400 font-hud">
-                {isInPlayerHome ? 'Relax on divan or rest on bed' : 'Press E to step into private home'}
+      {/* ========================================================================= */}
+      {/* FULL SPECTRUM 3D CAMERA ZOOM CONTROL SYSTEM (0.45m Eyes to 260m Miniature) */}
+      {/* ========================================================================= */}
+      <div className="fixed top-16 sm:top-20 right-2 sm:right-4 z-30 flex flex-col items-end gap-1.5 pointer-events-auto select-none">
+        <div className="bg-[#0b101e]/90 border border-white/15 backdrop-blur-md rounded-2xl p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.7)] flex flex-col items-center gap-1">
+          {/* Zoom In Button */}
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(cameraDistanceRef.current - (cameraDistanceRef.current > 30 ? 25 : (cameraDistanceRef.current < 2 ? 0.3 : 2)))}
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-emerald-500 hover:text-black text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            title="Zoom In towards character eyes and face"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+
+          {/* Current Zoom Distance Display */}
+          <div className="px-1 text-center py-0.5">
+            <span className="text-[8.5px] font-mono font-black text-emerald-400 block leading-tight">
+              {cameraDistanceRef.current < 2.0 
+                ? `${cameraDistanceRef.current.toFixed(1)}m` 
+                : `${Math.round(cameraDistanceRef.current)}m`}
+            </span>
+            <span className="text-[6.5px] font-hud uppercase tracking-wider text-zinc-400 block">
+              {cameraDistanceRef.current < 1.6 ? 'EYES' : cameraDistanceRef.current < 4.0 ? 'BODY' : cameraDistanceRef.current < 35 ? 'STREET' : 'MINI'}
+            </span>
+          </div>
+
+          {/* Zoom Out Button */}
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(cameraDistanceRef.current + (cameraDistanceRef.current > 30 ? 35 : (cameraDistanceRef.current < 2 ? 0.6 : 3)))}
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-emerald-500 hover:text-black text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            title="Zoom Out towards miniature city overview"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Quick Zoom Presets Strip */}
+        <div className="hidden md:flex items-center gap-1 bg-[#0b101e]/85 border border-white/10 rounded-xl p-1 shadow-lg backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(0.6)}
+            className={`px-1.5 py-0.5 rounded text-[8px] font-hud font-bold uppercase transition-all cursor-pointer ${
+              cameraDistanceRef.current < 1.6 ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Zoom into character eyes & face"
+          >
+            EYES
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(2.2)}
+            className={`px-1.5 py-0.5 rounded text-[8px] font-hud font-bold uppercase transition-all cursor-pointer ${
+              cameraDistanceRef.current >= 1.6 && cameraDistanceRef.current < 4.0 ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Inspect full character body"
+          >
+            BODY
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(8.5)}
+            className={`px-1.5 py-0.5 rounded text-[8px] font-hud font-bold uppercase transition-all cursor-pointer ${
+              cameraDistanceRef.current >= 4.0 && cameraDistanceRef.current < 30 ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Standard street third-person view"
+          >
+            STREET
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(45.0)}
+            className={`px-1.5 py-0.5 rounded text-[8px] font-hud font-bold uppercase transition-all cursor-pointer ${
+              cameraDistanceRef.current >= 30 && cameraDistanceRef.current < 120 ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+            }`}
+            title="High altitude aerial skyline"
+          >
+            AERIAL
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetCameraZoom(200.0)}
+            className={`px-1.5 py-0.5 rounded text-[8px] font-hud font-bold uppercase transition-all cursor-pointer ${
+              cameraDistanceRef.current >= 120 ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Zoom out until the entire city is tiny and miniature"
+          >
+            MINIATURE
+          </button>
+        </div>
+      </div>
+
+      {/* Player Home Entrance & Luxury In-Room Activity Pop-Out Controls */}
+      {(isInPlayerHome || (isNearHome && !nearbyPlayer)) && (
+        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-40 bg-[#0d121f]/95 border-2 border-emerald-400 text-white p-3 sm:px-5 sm:py-3.5 rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 backdrop-blur-xl animate-fadeIn w-[calc(100vw-2rem)] max-w-lg md:max-w-2xl pointer-events-auto">
+          <div className="flex items-center gap-3 text-center sm:text-left w-full md:w-auto">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0 text-emerald-400">
+              <Home className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-black uppercase text-white tracking-wide truncate">
+                  {isInPlayerHome ? `${userProfile.name}'s Residence (Interior)` : 'Your Private Residence #1'}
+                </span>
+                <span className={`text-[8.5px] px-1.5 py-0.5 rounded font-hud font-bold tracking-wider uppercase border ${
+                  isHouseDoorLocked 
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' 
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                }`}>
+                  {isHouseDoorLocked ? 'DOOR LOCKED' : 'DOOR UNLOCKED'}
+                </span>
+              </div>
+              <span className="text-[10px] text-zinc-300 font-hud block truncate mt-0.5">
+                {isInPlayerHome 
+                  ? 'Private room · Sleep on bed, pray on mat, or relax on divan' 
+                  : 'Exclusive single-user residence · Only you can enter'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
-            {isInPlayerHome && (
+          <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 w-full md:w-auto justify-center sm:justify-end">
+            {isInPlayerHome ? (
               <>
+                {/* Sleep on Bed Command */}
                 <button
-                  onClick={handleActionSit}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer ${
-                    isSitting ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-black/60 border-white/20 text-white hover:bg-white/10'
+                  type="button"
+                  onClick={isSleepingInBed ? handleWakeUp : handleSleepInBed}
+                  className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                    isSleepingInBed
+                      ? 'bg-amber-400 text-black border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.6)] font-black'
+                      : 'bg-black/60 border-white/20 text-white hover:bg-white/10'
                   }`}
+                  title="Sleep on comfortable bed to fully restore energy and vitality (Key Z)"
                 >
-                  <Armchair className="w-3.5 h-3.5" /> {isSitting ? 'SEATED' : 'DIVAN'}
+                  <Bed className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{isSleepingInBed ? 'WAKE UP [Z]' : 'SLEEP ON BED [Z]'}</span>
                 </button>
+
+                {/* Pray on Mat Command */}
                 <button
-                  onClick={handleActionStand}
-                  className="px-3 py-1.5 rounded-xl border border-white/20 bg-black/60 text-white hover:bg-white/10 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                  type="button"
+                  onClick={isPrayingOnMat ? handleFinishPrayer : handlePrayOnMat}
+                  className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                    isPrayingOnMat
+                      ? 'bg-emerald-500 text-black border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)] font-black'
+                      : 'bg-black/60 border-white/20 text-white hover:bg-white/10'
+                  }`}
+                  title="Perform private prayer on the ornate Sajjadah prayer mat (Key P)"
                 >
-                  <UserCheck className="w-3.5 h-3.5" /> STAND
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isPrayingOnMat ? 'FINISH PRAYER' : 'PRAY ON MAT [P]'}</span>
+                </button>
+
+                {/* Relax on Divan Command */}
+                <button
+                  type="button"
+                  onClick={isSitting ? handleActionStand : handleActionSit}
+                  className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                    isSitting
+                      ? 'bg-teal-500 text-black border-teal-400 font-black'
+                      : 'bg-black/60 border-white/20 text-white hover:bg-white/10'
+                  }`}
+                  title="Sit back on the Moroccan divan and sip mint tea"
+                >
+                  <Armchair className="w-3.5 h-3.5 text-teal-300" />
+                  <span>{isSitting ? 'STAND' : 'DIVAN'}</span>
+                </button>
+
+                {/* Toggle Door Lock Command */}
+                <button
+                  type="button"
+                  onClick={handleToggleHouseLock}
+                  className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                    isHouseDoorLocked
+                      ? 'bg-rose-500/30 border-rose-400 text-rose-300'
+                      : 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/30'
+                  }`}
+                  title="Lock or unlock your front door deadbolt (Key L)"
+                >
+                  {isHouseDoorLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                  <span>{isHouseDoorLocked ? 'LOCK [L]' : 'UNLOCK [L]'}</span>
+                </button>
+
+                {/* Exit House Command */}
+                <button
+                  type="button"
+                  onClick={() => executeEnterOrExit({
+                    id: 'house_1',
+                    name: 'Your Residence',
+                    type: 'residence',
+                    doorPos: { x: 18, y: 0, z: 24 },
+                    insidePos: { x: 18, y: 0, z: 18 },
+                    exitPos: { x: 18, y: 0, z: 26 },
+                    actionKey: 'E',
+                    enterLabel: 'ENTER MY HOUSE',
+                    exitLabel: 'EXIT HOUSE',
+                  })}
+                  className="px-3.5 py-1.5 bg-neutral-200 text-black hover:bg-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-md active:scale-95 flex items-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>EXIT [E]</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Outside: Lock/Unlock front door with personal key */}
+                <button
+                  type="button"
+                  onClick={handleToggleHouseLock}
+                  className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                    isHouseDoorLocked
+                      ? 'bg-rose-500/30 border-rose-400 text-rose-300'
+                      : 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/30'
+                  }`}
+                  title="Toggle lock on your front door with your key (Key L)"
+                >
+                  {isHouseDoorLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                  <span>{isHouseDoorLocked ? 'UNLOCK DOOR [L]' : 'LOCK DOOR [L]'}</span>
+                </button>
+
+                {/* Enter House Button */}
+                <button
+                  type="button"
+                  onClick={() => executeEnterOrExit({
+                    id: 'house_1',
+                    name: 'Your Residence',
+                    type: 'residence',
+                    doorPos: { x: 18, y: 0, z: 24 },
+                    insidePos: { x: 18, y: 0, z: 18 },
+                    exitPos: { x: 18, y: 0, z: 26 },
+                    actionKey: 'E',
+                    enterLabel: 'ENTER MY HOUSE',
+                    exitLabel: 'EXIT HOUSE',
+                    ownerName: userProfile.name,
+                    isLocked: isHouseDoorLocked,
+                    isOwnerOnly: true,
+                  })}
+                  className="px-4 py-2 bg-emerald-500 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl hover:bg-emerald-400 transition-all cursor-pointer whitespace-nowrap shadow-lg active:scale-95"
+                >
+                  ENTER MY HOUSE [E]
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
 
+      {/* Sleeping in Bed Peaceful Dimmed Atmosphere Overlay */}
+      {isSleepingInBed && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex flex-col items-center justify-center pointer-events-auto animate-fadeIn p-4">
+          <div className="bg-[#0b101e]/95 border-2 border-amber-400/70 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-[0_0_50px_rgba(251,191,36,0.3)] space-y-4">
+            <div className="w-16 h-16 rounded-full bg-amber-400/20 border border-amber-400/50 flex items-center justify-center mx-auto text-amber-300 animate-pulse">
+              <Moon className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-black uppercase text-white font-sora">
+                RESTING PEACEFULLY
+              </h3>
+              <p className="text-xs text-amber-200/80 mt-1 font-hud">
+                Sleeping comfortably in your private villa bed · Energy restored to 100%
+              </p>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full w-full animate-pulse" />
+            </div>
             <button
-              onClick={handleToggleHome}
-              className="px-4 py-2 bg-emerald-500 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl hover:bg-emerald-400 transition-all cursor-pointer whitespace-nowrap shadow-lg active:scale-95"
+              type="button"
+              onClick={handleWakeUp}
+              className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-black font-black uppercase tracking-wider text-xs rounded-2xl shadow-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
             >
-              {isInPlayerHome ? 'EXIT HOME' : 'ENTER HOME [E]'}
+              <Sun className="w-4 h-4" />
+              <span>WAKE UP REFRESHED [Z]</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Prayer on Mat Serene Spiritual Guidance Overlay */}
+      {isPrayingOnMat && (
+        <div className="fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 bg-[#09261b]/95 border-2 border-emerald-400/80 rounded-2xl p-3.5 sm:px-6 sm:py-4 max-w-md w-[calc(100vw-2rem)] shadow-[0_0_35px_rgba(16,185,129,0.4)] backdrop-blur-xl animate-fadeIn flex items-center justify-between gap-3 pointer-events-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <span className="text-xs sm:text-sm font-black uppercase text-white block">
+                PRAYING ON PRIVATE SAJJADAH
+              </span>
+              <span className="text-[10px] text-emerald-300 font-hud">
+                Facing Qiblah North · Offering Salah with peace & tranquility (+25 Coins)
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleFinishPrayer}
+            className="px-3.5 py-2 bg-emerald-400 text-black font-black text-xs uppercase tracking-wider rounded-xl hover:bg-emerald-300 transition-all cursor-pointer active:scale-95 whitespace-nowrap shadow-md shrink-0"
+          >
+            COMPLETE PRAYER
+          </button>
         </div>
       )}
 
@@ -4641,235 +6774,264 @@ export default function ThreeGameWorld({
 
       {/* Minimal Overlay Hamburger Menu Drawer */}
       {isMenuOpen && (
-        <div className="absolute top-14 sm:top-16 right-2 sm:right-4 z-50 bg-[#12151f]/95 border border-emerald-500/40 rounded-3xl max-w-[calc(100vw-1rem)] sm:max-w-sm w-full p-4 sm:p-6 shadow-2xl backdrop-blur-xl animate-fadeIn space-y-5">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">CHARACTER & GAME CONTROL</h3>
-            <button onClick={() => setIsMenuOpen(false)} className="text-zinc-400 hover:text-white p-1 rounded-lg">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+        <>
+          {/* Backdrop on mobile & desktop to easily tap outside and close */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-fadeIn"
+            onClick={() => setIsMenuOpen(false)}
+          />
 
-          {/* Menu Tabs */}
-          <div className="grid grid-cols-6 gap-1 p-1 bg-black/60 rounded-2xl border border-white/10 text-[9px]">
-            {(['character', 'missions', 'shop', 'friends', 'messages', 'settings'] as const).map((tab) => (
+          <div className="fixed sm:absolute top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] right-2 sm:right-4 left-2 sm:left-auto z-50 bg-[#10141f]/98 border border-emerald-500/50 rounded-3xl sm:max-w-sm w-auto sm:w-full p-3.5 sm:p-5 shadow-[0_20px_60px_rgba(0,0,0,0.95)] backdrop-blur-2xl animate-fadeIn space-y-3.5 max-h-[82vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                  <Menu className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">GAME & CHARACTER MENU</h3>
+              </div>
               <button
-                key={tab}
-                onClick={() => setMenuTab(tab)}
-                className={`py-2 text-[9px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center ${
-                  menuTab === tab ? 'bg-emerald-500 text-black font-extrabold' : 'text-zinc-400 hover:text-white'
-                }`}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-zinc-400 hover:text-white p-1 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                title="Close Menu"
               >
-                {tab === 'character' ? 'Char' : tab === 'missions' ? 'Quests' : tab === 'shop' ? 'Shop' : tab}
+                <X className="w-4 h-4" />
               </button>
-            ))}
-          </div>
+            </div>
 
-          {/* Tab Content */}
-          {menuTab === 'character' && (
-            <div className="space-y-4">
-              {/* Prominent 3D Avatar Customization Room Launcher */}
-              <div className="p-3.5 bg-gradient-to-br from-emerald-950/80 to-black/80 border border-emerald-500/40 rounded-2xl space-y-2.5 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-black uppercase tracking-wider text-white">
-                      3D AVATAR STUDIO
+            {/* Menu Tabs: Clean, minimal pill strip */}
+            <div className="grid grid-cols-6 gap-1 p-1 bg-black/70 rounded-2xl border border-white/10">
+              {(['character', 'missions', 'shop', 'friends', 'messages', 'settings'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setMenuTab(tab)}
+                  className={`py-1.5 text-[8.5px] sm:text-[9px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center truncate ${
+                    menuTab === tab
+                      ? 'bg-emerald-500 text-black font-black shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {tab === 'character' ? 'Char' : tab === 'missions' ? 'Quests' : tab === 'shop' ? 'Shop' : tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            {menuTab === 'character' && (
+              <div className="space-y-3">
+                {/* Prominent 3D Avatar Customization Room Launcher */}
+                <div className="p-3 bg-gradient-to-br from-emerald-950/80 to-black/80 border border-emerald-500/40 rounded-2xl space-y-2 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-white">
+                        3D AVATAR STUDIO
+                      </span>
+                    </div>
+                    <span className="text-[8px] font-hud text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full uppercase">
+                      {avatarConfig.gender} · {avatarConfig.skinTone}
                     </span>
                   </div>
-                  <span className="text-[9px] font-hud text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full uppercase">
-                    {avatarConfig.gender} · {avatarConfig.skinTone}
-                  </span>
-                </div>
-                <p className="text-[10px] text-zinc-300">
-                  Full 3D character creator with rotatable 3D avatar preview, modest thobes, abayas, hijabs, taqiyahs & colors.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setIsCustomizerOpen(true);
-                  }}
-                  className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black uppercase text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                >
-                  <Palette className="w-4 h-4" />
-                  <span>OPEN 3D AVATAR CUSTOMIZER</span>
-                </button>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">CITIZEN NAME</label>
-                <input
-                  type="text"
-                  value={userProfile.name}
-                  onChange={(e) => onUpdateProfile && onUpdateProfile({ name: e.target.value })}
-                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-white font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">FACIAL EXPRESSION</label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(['Neutral', 'Happy', 'Smile', 'Laugh', 'Sad', 'Angry', 'Surprised', 'Calm'] as ExpressionType[]).map((expr) => (
-                    <button
-                      key={expr}
-                      onClick={() => handleSelectExpression(expr)}
-                      className={`p-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider text-center transition-all cursor-pointer ${
-                        currentExpression === expr
-                          ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
-                          : 'border-white/10 bg-black/40 text-zinc-300'
-                      }`}
-                    >
-                      {expr}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">EQUIPPED OUTFIT</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    'Royal Emerald Jalabiyya',
-                    'Lagos Street Modest Hoodie',
-                    'Makkah White Thobe',
-                    'Kano Indigo Tunic',
-                  ].map((outfit) => (
-                    <button
-                      key={outfit}
-                      onClick={() => onUpdateProfile && onUpdateProfile({ outfit })}
-                      className={`p-2.5 rounded-xl border text-[10px] font-bold uppercase tracking-wider text-left transition-all cursor-pointer ${
-                        userProfile.outfit === outfit
-                          ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
-                          : 'border-white/10 bg-black/40 text-zinc-300'
-                      }`}
-                    >
-                      {outfit}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {menuTab === 'missions' && (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">ACTIVE QUESTS</span>
-              {missions.map((m) => (
-                <div key={m.id} className="p-2.5 bg-black/50 border border-white/10 rounded-xl flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-white block">{m.title}</span>
-                    <span className="text-[9px] text-zinc-400">{m.current}/{m.target} {m.unit || ''}</span>
-                  </div>
-                  <span className="text-amber-400 font-hud font-bold">+{m.reward}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {menuTab === 'shop' && (
-            <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">QUICK SOUQ BAZAAR ACCESS</span>
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  setIsSouqShopOpen(true);
-                }}
-                className="w-full py-2.5 bg-amber-500 text-black font-black uppercase text-xs rounded-xl shadow-lg"
-              >
-                OPEN SOUQ MARKETPLACE
-              </button>
-            </div>
-          )}
-
-          {menuTab === 'friends' && (
-            <div className="space-y-3 max-h-60 overflow-y-auto">
-              {otherAvatarsRef.current.map((f) => (
-                <div key={f.id} className="p-3 bg-black/50 border border-white/10 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold uppercase text-white block">{f.name}</span>
-                    <span className="text-[10px] font-hud text-emerald-400">{f.city} Resident</span>
-                  </div>
+                  <p className="text-[9.5px] text-zinc-300 leading-snug">
+                    Modest thobes, abayas, hijabs, taqiyahs & 3D rotatable preview.
+                  </p>
                   <button
-                    onClick={() => handleAddFriendClick(f.name, f.city)}
-                    className="px-3 py-1 bg-emerald-500 text-black text-[10px] font-bold uppercase rounded-lg"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsCustomizerOpen(true);
+                    }}
+                    className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black uppercase text-[11px] rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                   >
-                    {addedFriends[f.name] ? 'ADDED' : 'ADD'}
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>CUSTOMIZE AVATAR</span>
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {menuTab === 'messages' && (
-            <div className="space-y-3">
-              <div className="h-40 overflow-y-auto p-3 bg-black/60 border border-white/10 rounded-2xl space-y-2 text-xs">
-                {chatMessages.map((m) => (
-                  <div key={m.id}>
-                    <span className="font-bold text-emerald-400">{m.senderName}: </span>
-                    <span className="text-white">{m.text}</span>
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">CITIZEN NAME</label>
+                  <input
+                    type="text"
+                    value={userProfile.name}
+                    onChange={(e) => onUpdateProfile && onUpdateProfile({ name: e.target.value })}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">FACIAL EXPRESSION</label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {(['Neutral', 'Happy', 'Smile', 'Laugh', 'Sad', 'Angry', 'Surprised', 'Calm'] as ExpressionType[]).map((expr) => (
+                      <button
+                        key={expr}
+                        onClick={() => handleSelectExpression(expr)}
+                        className={`py-1.5 rounded-lg border text-[8.5px] font-bold uppercase tracking-wider text-center transition-all cursor-pointer truncate ${
+                          currentExpression === expr
+                            ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
+                            : 'border-white/10 bg-black/40 text-zinc-300'
+                        }`}
+                      >
+                        {expr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">EQUIPPED OUTFIT</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      'Royal Emerald Jalabiyya',
+                      'Lagos Street Modest Hoodie',
+                      'Makkah White Thobe',
+                      'Kano Indigo Tunic',
+                    ].map((outfit) => (
+                      <button
+                        key={outfit}
+                        onClick={() => onUpdateProfile && onUpdateProfile({ outfit })}
+                        className={`p-2 rounded-xl border text-[9px] font-bold uppercase tracking-wider text-left transition-all cursor-pointer truncate ${
+                          userProfile.outfit === outfit
+                            ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
+                            : 'border-white/10 bg-black/40 text-zinc-300'
+                        }`}
+                      >
+                        {outfit}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {menuTab === 'missions' && (
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 block">ACTIVE QUESTS</span>
+                {missions.map((m) => (
+                  <div key={m.id} className="p-2 bg-black/50 border border-white/10 rounded-xl flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-white text-[11px] block">{m.title}</span>
+                      <span className="text-[8.5px] text-zinc-400">{m.current}/{m.target} {m.unit || ''}</span>
+                    </div>
+                    <span className="text-amber-400 font-hud font-bold text-[11px]">+{m.reward}</span>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {menuTab === 'settings' && (
-            <div className="space-y-3 text-xs font-bold uppercase text-zinc-300">
-              <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
-                <span className="flex items-center gap-1.5"><Maximize2 className="w-3.5 h-3.5 text-emerald-400" /> CAMERA VIEW</span>
-                <button
-                  onClick={() => setCameraViewMode(cameraViewMode === 'third_person' ? 'close_up' : 'third_person')}
-                  className="px-2.5 py-1 bg-white/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-black uppercase cursor-pointer"
-                >
-                  {cameraViewMode === 'third_person' ? '3RD PERSON' : 'CLOSE UP'}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
-                <span className="flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5 text-emerald-400" /> ORIENTATION</span>
-                <button
-                  onClick={toggleOrientation}
-                  className="px-2.5 py-1 bg-white/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-black uppercase cursor-pointer"
-                >
-                  {viewportProfile.isPortrait ? 'STRAIGHT (PORTRAIT)' : 'LANDSCAPE'}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-black/50 rounded-2xl border border-white/10">
-                <span>AMBIENT AUDIO</span>
-                <button onClick={() => setIsAudioEnabled(!isAudioEnabled)} className="text-emerald-400">
-                  {isAudioEnabled ? 'ON' : 'OFF'}
-                </button>
-              </div>
-
-              <div className="p-3 bg-black/50 rounded-2xl border border-white/10 flex items-center justify-between">
-                <span>RETURN TO HOMEPAGE</span>
+            {menuTab === 'shop' && (
+              <div className="space-y-2.5">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400 block">SOUQ BAZAAR MARKETPLACE</span>
+                <p className="text-[10px] text-zinc-300">Earn coins with community jobs or purchase prayer carpets, juices and modest items.</p>
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
-                    onExitToLanding && onExitToLanding();
+                    setIsSouqShopOpen(true);
                   }}
-                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black rounded-lg uppercase cursor-pointer"
+                  className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase text-[11px] rounded-xl shadow-lg transition-all cursor-pointer active:scale-95"
                 >
-                  EXIT WORLD
+                  OPEN SOUQ MARKETPLACE
                 </button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Quick Exit to First Page Banner inside Drawer */}
-          <div className="pt-3 border-t border-white/10">
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                onExitToLanding && onExitToLanding();
-              }}
-              className="w-full py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg active:scale-95"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>LEAVE WORLD · BACK TO FIRST PAGE</span>
-            </button>
+            {menuTab === 'friends' && (
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                {otherAvatarsRef.current.length === 0 ? (
+                  <p className="text-[10px] text-zinc-400 text-center py-2">Searching nearby citizens...</p>
+                ) : (
+                  otherAvatarsRef.current.map((f) => (
+                    <div key={f.id} className="p-2 bg-black/50 border border-white/10 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase text-white block">{f.name}</span>
+                        <span className="text-[8.5px] font-hud text-emerald-400">{f.city} Resident</span>
+                      </div>
+                      <button
+                        onClick={() => handleAddFriendClick(f.name, f.city)}
+                        className="px-2.5 py-1 bg-emerald-500 text-black text-[9px] font-bold uppercase rounded-lg active:scale-95"
+                      >
+                        {addedFriends[f.name] ? 'ADDED' : 'ADD'}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {menuTab === 'messages' && (
+              <div className="space-y-2">
+                <div className="h-36 overflow-y-auto p-2.5 bg-black/60 border border-white/10 rounded-xl space-y-1.5 text-xs">
+                  {chatMessages.length === 0 ? (
+                    <p className="text-[10px] text-zinc-500 text-center py-3">No messages yet.</p>
+                  ) : (
+                    chatMessages.slice(-10).map((m) => (
+                      <div key={m.id} className="text-[10px]">
+                        <span className="font-bold text-emerald-400">{m.senderName}: </span>
+                        <span className="text-zinc-200">{m.text}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {menuTab === 'settings' && (
+              <div className="space-y-2 text-[10px] font-bold uppercase text-zinc-300">
+                <div className="flex items-center justify-between p-2 bg-black/50 rounded-xl border border-white/10">
+                  <span className="flex items-center gap-1.5"><Maximize2 className="w-3 h-3 text-emerald-400" /> CAMERA VIEW</span>
+                  <button
+                    onClick={() => setCameraViewMode(cameraViewMode === 'third_person' ? 'close_up' : 'third_person')}
+                    className="px-2 py-1 bg-white/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase cursor-pointer"
+                  >
+                    {cameraViewMode === 'third_person' ? '3RD PERSON' : 'CLOSE UP'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-2 bg-black/50 rounded-xl border border-white/10">
+                  <span className="flex items-center gap-1.5"><Smartphone className="w-3 h-3 text-emerald-400" /> ORIENTATION</span>
+                  <button
+                    onClick={toggleOrientation}
+                    className="px-2 py-1 bg-white/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase cursor-pointer"
+                  >
+                    {viewportProfile.isPortrait ? 'STRAIGHT' : 'LANDSCAPE'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-2 bg-black/50 rounded-xl border border-white/10">
+                  <span>AMBIENT AUDIO</span>
+                  <button onClick={() => setIsAudioEnabled(!isAudioEnabled)} className="text-emerald-400 px-2 py-1 bg-white/10 rounded-lg text-[9px]">
+                    {isAudioEnabled ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+
+                <div className="p-2 bg-black/50 rounded-xl border border-white/10 flex items-center justify-between">
+                  <span>RETURN TO HOMEPAGE</span>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onExitToLanding && onExitToLanding();
+                    }}
+                    className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-black text-[9px] font-black rounded-lg uppercase cursor-pointer"
+                  >
+                    EXIT WORLD
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Exit to First Page Banner inside Drawer */}
+            <div className="pt-2 border-t border-white/10">
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onExitToLanding && onExitToLanding();
+                }}
+                className="w-full py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-lg active:scale-95"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>LEAVE WORLD · BACK TO FIRST PAGE</span>
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* GTA-Style Contextual Interaction Prompt (Center Bottom) */}
@@ -4896,12 +7058,17 @@ export default function ThreeGameWorld({
         </div>
       )}
 
-      {/* GTA-Style Left HUD: Radar Minimap, District Strip & Vitality/Stamina (Adapts cleanly to straight portrait or landscape) */}
-      <div className={`absolute ${
-        viewportProfile.isPortrait
-          ? 'bottom-[calc(max(env(safe-area-inset-bottom),1rem)+5.75rem)] left-[max(env(safe-area-inset-left),1rem)]'
-          : 'bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)]'
-      } z-30 flex items-end gap-3 pointer-events-none transition-all duration-300`}>
+      {/* GTA-Style Left HUD: Radar Minimap, District Strip & Vitality/Stamina (Adapts cleanly to straight portrait or landscape, Draggable to any position) */}
+      <div
+        style={{
+          transform: `translate3d(${minimapOffset.x}px, ${minimapOffset.y}px, 0)`,
+        }}
+        className={`absolute ${
+          viewportProfile.isPortrait
+            ? 'bottom-[calc(max(env(safe-area-inset-bottom),1rem)+5.75rem)] left-[max(env(safe-area-inset-left),1rem)]'
+            : 'bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)]'
+        } z-30 flex items-end gap-3 pointer-events-none transition-transform duration-75`}
+      >
         {/* Radar Minimap Component */}
         <GtaRadarMinimap
           playerX={radarCoords.x}
@@ -4914,6 +7081,13 @@ export default function ThreeGameWorld({
           vehicles={vehiclesRef.current.map((v) => ({ id: v.id, x: v.mesh.position.x, z: v.mesh.position.z }))}
           onExpandMap={() => setIsMinimapExpanded(true)}
           isMobile={viewportProfile.isMobile}
+          onDragStart={handleStartMinimapDrag}
+          hasCustomPosition={minimapOffset.x !== 0 || minimapOffset.y !== 0}
+          onResetPosition={resetMinimapPosition}
+          mapScale={minimapScale}
+          onScaleChange={handleSetMinimapScale}
+          radarZoom={radarZoomLevel}
+          onRadarZoomChange={setRadarZoomLevel}
         />
 
         {/* Desktop Keybind Helper Bar (alongside Radar) */}
@@ -4942,21 +7116,221 @@ export default function ThreeGameWorld({
         onFastTravel={handleFastTravel}
       />
 
-      {/* Mobile & Tablet Touch Virtual Joystick (Floating in Left Safe Area - Ergonomic in both straight portrait and landscape mode) */}
+      {/* Mobile & Tablet Touch Virtual Joystick (Draggable and Repositionable anywhere on screen) */}
       {(isMobileControlsVisible || viewportProfile.isMobile || viewportProfile.isTablet) && (
-        <div className={`absolute ${
-          viewportProfile.isPortrait
-            ? 'bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)]'
-            : 'bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-[calc(max(env(safe-area-inset-left),1rem)+8.5rem)] sm:left-[max(env(safe-area-inset-left),10rem)]'
-        } z-30 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-emerald-500/40 bg-black/40 backdrop-blur-md flex items-center justify-center pointer-events-auto transition-all duration-300`}>
-          <div
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 shadow-lg border border-white transition-transform"
-            style={{
-              transform: `translate(${joystickVector.x * 26}px, ${joystickVector.y * 26}px)`,
-            }}
-          />
+        <div
+          style={{
+            transform: `translate3d(${joystickOffset.x}px, ${joystickOffset.y}px, 0)`,
+          }}
+          className={`absolute ${
+            viewportProfile.isPortrait
+              ? 'bottom-[max(env(safe-area-inset-bottom),1rem)] left-[max(env(safe-area-inset-left),1rem)]'
+              : 'bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-[calc(max(env(safe-area-inset-left),1rem)+8.5rem)] sm:left-[max(env(safe-area-inset-left),10rem)]'
+          } z-30 flex items-end gap-3.5 pointer-events-auto select-none`}
+        >
+          {/* Virtual Joystick Column */}
+          <div className="flex flex-col items-center gap-1 relative">
+            {/* Active Drag Indicator Banner */}
+            {isRepositioningStick && (
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap bg-cyan-400 text-black px-2 py-0.5 rounded-full text-[8px] font-black font-hud uppercase tracking-wider shadow-[0_0_15px_rgba(34,211,238,0.9)] animate-pulse flex items-center gap-1">
+                <Move className="w-2.5 h-2.5" />
+                <span>DRAGGING STICK · DROP ANYWHERE</span>
+              </div>
+            )}
+
+            {/* Reposition Handle Bar + Stick Size Controls + Reset Button */}
+            <div
+              onMouseDown={handleStartJoystickDrag}
+              onTouchStart={handleStartJoystickDrag}
+              style={{ width: `${Math.round(92 * joystickScale)}px` }}
+              className="flex items-center justify-between px-2 py-0.5 bg-black/85 hover:bg-black border border-white/20 rounded-full cursor-grab active:cursor-grabbing text-[7.5px] font-black text-zinc-300 shadow-md backdrop-blur-md transition-all group"
+              title="Long-press directly on joystick to drag anywhere, or tap - / + to resize stick"
+            >
+              <div className="flex items-center gap-1">
+                <GripHorizontal className="w-2.5 h-2.5 text-emerald-400" />
+                <span className="uppercase">{Math.round(joystickScale * 100)}%</span>
+              </div>
+
+              {/* Stick Enlarge & Reduce Controls */}
+              <div className="flex items-center gap-1">
+                {/* Reduce Stick Size Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetJoystickScale(joystickScale - 0.2);
+                  }}
+                  className="w-4 h-4 rounded bg-white/10 hover:bg-rose-500 hover:text-white text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Reduce Stick Size (-)"
+                >
+                  <Minus className="w-2 h-2" />
+                </button>
+
+                {/* Enlarge Stick Size Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetJoystickScale(joystickScale + 0.2);
+                  }}
+                  className="w-4 h-4 rounded bg-white/10 hover:bg-emerald-500 hover:text-black text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Enlarge Stick Size (+)"
+                >
+                  <Plus className="w-2 h-2" />
+                </button>
+
+                {(joystickOffset.x !== 0 || joystickOffset.y !== 0) && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resetJoystickPosition();
+                    }}
+                    className="text-zinc-400 hover:text-white px-1 bg-white/10 hover:bg-emerald-500 hover:text-black rounded text-[6.5px] uppercase cursor-pointer"
+                    title="Reset joystick back to default corner position"
+                  >
+                    <RotateCcw className="w-2 h-2" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Virtual Joystick Ring and Analog Knob (Direct Long-Press to Drag!) */}
+            <div
+              onMouseDown={handleJoystickPointerDown}
+              onTouchStart={handleJoystickPointerDown}
+              onMouseMove={handleJoystickPointerMove}
+              onTouchMove={handleJoystickPointerMove}
+              onMouseUp={handleJoystickPointerUp}
+              onTouchEnd={handleJoystickPointerUp}
+              style={{
+                width: `${Math.round(92 * joystickScale)}px`,
+                height: `${Math.round(92 * joystickScale)}px`,
+              }}
+              className={`rounded-full border-2 bg-black/40 backdrop-blur-md flex items-center justify-center relative shadow-2xl cursor-grab active:cursor-grabbing transition-all ${
+                isRepositioningStick 
+                  ? 'border-cyan-400 ring-4 ring-cyan-400/60 shadow-[0_0_35px_rgba(34,211,238,0.9)]' 
+                  : 'border-emerald-500/40 hover:border-emerald-400'
+              }`}
+              title="Hold & drag anywhere on stick to reposition it across screen"
+            >
+              <div
+                style={{
+                  width: `${Math.round(38 * joystickScale)}px`,
+                  height: `${Math.round(38 * joystickScale)}px`,
+                  transform: `translate(${joystickVector.x * (26 * joystickScale)}px, ${joystickVector.y * (26 * joystickScale)}px)`,
+                }}
+                className="rounded-full bg-emerald-500 shadow-lg border border-white transition-transform pointer-events-none"
+              />
+            </div>
+          </div>
+
+          {/* Mobile GTA V Big Circular ENTER / EXIT Button next to Joystick */}
+          {activeEnterTarget && (
+            <div className="flex flex-col items-center gap-1 animate-fadeIn shrink-0 pb-1">
+              <button
+                type="button"
+                onClick={() => executeEnterOrExit(activeEnterTarget)}
+                className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-[#081126] border-2 border-[#22d3ee] text-[#22d3ee] flex flex-col items-center justify-center shadow-[0_0_24px_rgba(34,211,238,0.7),inset_0_0_12px_rgba(34,211,238,0.3)] animate-pulse active:scale-90 transition-all cursor-pointer"
+                title={currentInsideLocation || drivingVehicleId ? 'Tap to Exit' : 'Tap to Enter'}
+              >
+                {currentInsideLocation || drivingVehicleId ? (
+                  <LogOut className="w-7 h-7 sm:w-8 sm:h-8 text-[#22d3ee]" />
+                ) : (
+                  <LogIn className="w-7 h-7 sm:w-8 sm:h-8 text-[#22d3ee]" />
+                )}
+                <span className="text-[8.5px] sm:text-[9px] font-black tracking-wider uppercase font-hud text-[#22d3ee] mt-0.5">
+                  {currentInsideLocation || drivingVehicleId ? 'EXIT' : 'ENTER'}
+                </span>
+              </button>
+              <span className="text-[7.5px] sm:text-[8px] font-black uppercase text-cyan-300 bg-black/90 px-2 py-0.5 rounded-[4px] border border-cyan-500/30 font-hud max-w-[85px] truncate text-center shadow-lg">
+                {currentInsideLocation || drivingVehicleId
+                  ? (activeEnterTarget.actionKey === 'F' ? 'EXIT VEHICLE' : 'EXIT')
+                  : activeEnterTarget.enterLabel}
+              </span>
+            </div>
+          )}
         </div>
       )}
+
+      {/* GTA V-Style Enter / Exit Box (Desktop Floating Screen-Space Projected above Door/Vehicle) */}
+      {activeEnterTarget && (
+        <div
+          style={
+            projectedEnterPromptPos && projectedEnterPromptPos.visible
+              ? {
+                  left: `${projectedEnterPromptPos.x}px`,
+                  top: `${projectedEnterPromptPos.y}px`,
+                  transform: 'translate(-50%, -100%)',
+                }
+              : {
+                  left: '50%',
+                  top: '22%',
+                  transform: 'translate(-50%, -50%)',
+                }
+          }
+          className="fixed z-50 pointer-events-auto hidden md:block select-none animate-fadeIn"
+        >
+          <button
+            type="button"
+            onClick={() => executeEnterOrExit(activeEnterTarget)}
+            className="bg-white text-black font-black uppercase text-xs sm:text-sm tracking-wide px-3.5 py-1.5 rounded-[4px] shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-black/10 flex items-center gap-2 hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer font-hud group"
+            title={currentInsideLocation || drivingVehicleId ? 'Press key or click to exit' : 'Press key or click to enter'}
+          >
+            <span className="bg-black text-white px-1.5 py-0.5 rounded-[2px] text-[11px] font-mono font-black leading-none shrink-0 group-hover:scale-105 transition-transform">
+              [{activeEnterTarget.actionKey}]
+            </span>
+            <span className="font-hud font-extrabold text-black tracking-wider text-xs sm:text-sm">
+              {currentInsideLocation || drivingVehicleId
+                ? (activeEnterTarget.actionKey === 'F' ? 'EXIT VEHICLE' : 'EXIT')
+                : activeEnterTarget.enterLabel}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Top-Center GTA V Prompt Box (also tappable on mobile devices) */}
+      {activeEnterTarget && (
+        <div className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto select-none animate-fadeIn">
+          <button
+            type="button"
+            onClick={() => executeEnterOrExit(activeEnterTarget)}
+            className="bg-white text-black font-black uppercase text-xs tracking-wide px-3.5 py-1.5 rounded-[4px] shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-black/10 flex items-center gap-2 active:scale-95 transition-all cursor-pointer font-hud"
+          >
+            <span className="bg-black text-white px-1.5 py-0.5 rounded-[2px] text-[10px] font-mono font-black leading-none shrink-0">
+              [{activeEnterTarget.actionKey}]
+            </span>
+            <span className="font-hud font-extrabold text-black tracking-wider text-xs">
+              {currentInsideLocation || drivingVehicleId
+                ? (activeEnterTarget.actionKey === 'F' ? 'EXIT VEHICLE' : 'EXIT')
+                : activeEnterTarget.enterLabel}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* GTA V-Style In-Vehicle Driving HUD (Speedometer & Controls) */}
+      {drivingVehicleId && (
+        <div className="fixed bottom-24 right-4 sm:bottom-28 sm:right-6 z-40 bg-black/85 border border-cyan-400/50 backdrop-blur-md px-3.5 py-2 rounded-2xl flex items-center gap-3 text-white shadow-[0_4px_24px_rgba(0,0,0,0.8)] animate-fadeIn pointer-events-auto">
+          <Car className="w-5 h-5 text-cyan-400 animate-pulse shrink-0" />
+          <div className="flex flex-col text-left">
+            <span className="text-sm font-black font-mono text-cyan-300 leading-tight">
+              {drivingVehicleSpeed} <span className="text-[10px] text-zinc-400 font-sans">KM/H</span>
+            </span>
+            <span className="text-[8.5px] font-hud text-zinc-300 uppercase tracking-wider">
+              DRIVING VEHICLE · PRESS [F] OR TAP EXIT
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* GTA V Seamless Screen Fade to Black Transition (0.3s) */}
+      <div
+        className={`fixed inset-0 bg-black z-[999] pointer-events-none transition-opacity duration-300 ease-in-out ${
+          isFadeToBlack ? 'opacity-100' : 'opacity-0'
+        }`}
+        aria-hidden="true"
+      />
     </div>
   );
 }

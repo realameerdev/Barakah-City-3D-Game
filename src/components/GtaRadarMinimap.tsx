@@ -3,25 +3,40 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useEffect } from 'react';
-import { Compass, MapPin, Maximize2 } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Compass, MapPin, Maximize2, GripHorizontal, RotateCcw, Plus, Minus, ZoomIn, ZoomOut, Move } from 'lucide-react';
 
 interface LandmarkBlip {
   name: string;
   x: number;
   z: number;
   color: string;
-  type: 'mosque' | 'souq' | 'uni' | 'madrasa' | 'pitch' | 'home' | 'park';
+  type: 'mosque' | 'souq' | 'uni' | 'madrasa' | 'pitch' | 'home' | 'park' | 'school' | 'marina' | 'garden';
 }
 
 const CITY_LANDMARKS: LandmarkBlip[] = [
+  // Masajids (Mosques)
   { name: 'Grand Mosque', x: 0, z: -58, color: '#10b981', type: 'mosque' },
-  { name: 'Souq Al-Madina', x: -28, z: 24, color: '#f59e0b', type: 'souq' },
+  { name: 'Al-Andalus East Masjid', x: 130, z: -60, color: '#059669', type: 'mosque' },
+  { name: 'Al-Madinah Oasis Masjid', x: -130, z: 90, color: '#10b981', type: 'mosque' },
+  { name: 'Al-Qarawiyyin Masjid', x: -110, z: -110, color: '#047857', type: 'mosque' },
+  { name: 'Sultan Baybars South Masjid', x: 110, z: 120, color: '#10b981', type: 'mosque' },
+
+  // Schools, Academies & Universities
   { name: 'Bayt Al-Hikma Uni', x: -48, z: -25, color: '#3b82f6', type: 'uni' },
-  { name: 'Madrasa Academy', x: -22, z: -42, color: '#14b8a6', type: 'madrasa' },
+  { name: 'Madrasa Quran Academy', x: -22, z: -42, color: '#14b8a6', type: 'madrasa' },
+  { name: 'Ibn Sina Medical School', x: 140, z: 40, color: '#2563eb', type: 'school' },
+  { name: 'Al-Khwarizmi Astronomy Academy', x: -140, z: -40, color: '#0284c7', type: 'school' },
+  { name: 'Al-Zahra Youth Academy', x: -70, z: 140, color: '#06b6d4', type: 'school' },
+  { name: 'Dar Al-Quran Conservatory', x: 70, z: -130, color: '#0d9488', type: 'school' },
+
+  // Community & Landmarks
+  { name: 'Souq Al-Madina Bazaar', x: -28, z: 24, color: '#f59e0b', type: 'souq' },
   { name: 'Football Arena', x: -45, z: 52, color: '#10b981', type: 'pitch' },
   { name: 'Private Residence', x: 18, z: 18, color: '#a855f7', type: 'home' },
   { name: 'Public Park Fountain', x: 32, z: -28, color: '#06b6d4', type: 'park' },
+  { name: 'Oasis Botanical Gardens', x: 150, z: -130, color: '#10b981', type: 'garden' },
+  { name: 'Grand Marina Harbor', x: -160, z: 0, color: '#38bdf8', type: 'marina' },
 ];
 
 interface GtaRadarMinimapProps {
@@ -35,6 +50,13 @@ interface GtaRadarMinimapProps {
   vehicles?: Array<{ id: string; x: number; z: number }>;
   onExpandMap?: () => void;
   isMobile?: boolean;
+  onDragStart?: (e: React.MouseEvent | React.TouchEvent) => void;
+  hasCustomPosition?: boolean;
+  onResetPosition?: () => void;
+  mapScale?: number;
+  onScaleChange?: (scale: number) => void;
+  radarZoom?: number;
+  onRadarZoomChange?: (zoom: number) => void;
 }
 
 export default function GtaRadarMinimap({
@@ -48,8 +70,97 @@ export default function GtaRadarMinimap({
   vehicles = [],
   onExpandMap,
   isMobile = false,
+  onDragStart,
+  hasCustomPosition = false,
+  onResetPosition,
+  mapScale = 1.0,
+  onScaleChange,
+  radarZoom = 1.0,
+  onRadarZoomChange,
 }: GtaRadarMinimapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Local state for long press dragging detection directly on map
+  const longPressTimerRef = useRef<number | null>(null);
+  const [isPressDragging, setIsPressDragging] = useState(false);
+  const pressStartPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const hasMovedRef = useRef<boolean>(false);
+
+  const currentMapScale = mapScale;
+  const currentRadarZoom = radarZoom;
+
+  const handleEnlargeMap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = Math.min(1.6, Math.round((currentMapScale + 0.2) * 10) / 10);
+    onScaleChange?.(next);
+  };
+
+  const handleReduceMap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = Math.max(0.7, Math.round((currentMapScale - 0.2) * 10) / 10);
+    onScaleChange?.(next);
+  };
+
+  const handleToggleRadarZoom = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Cycle zoom between 1.0x (normal), 1.5x (zoomed in detail), 0.7x (zoomed out wide)
+    const next = currentRadarZoom === 1.0 ? 1.5 : currentRadarZoom === 1.5 ? 0.7 : 1.0;
+    onRadarZoomChange?.(next);
+  };
+
+  // Direct Long-Press on Map to initiate Dragging
+  const handleMapPressStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = isTouch ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    pressStartPosRef.current = { x: clientX, y: clientY };
+    hasMovedRef.current = false;
+
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+
+    // 240ms long-press initiates drag mode directly from touching the map
+    longPressTimerRef.current = window.setTimeout(() => {
+      setIsPressDragging(true);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(35);
+      }
+      onDragStart?.(e);
+    }, 240);
+  };
+
+  const handleMapPressMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = isTouch ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    const dist = Math.hypot(clientX - pressStartPosRef.current.x, clientY - pressStartPosRef.current.y);
+    if (dist > 8) {
+      hasMovedRef.current = true;
+    }
+  };
+
+  const handleMapPressEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    if (isPressDragging) {
+      setIsPressDragging(false);
+      return;
+    }
+
+    // If it was a quick click without long-press or drag:
+    if (!hasMovedRef.current) {
+      // Toggle map enlargement/zoom
+      if (currentMapScale < 1.4) {
+        onScaleChange?.(Math.round((currentMapScale + 0.25) * 100) / 100);
+      } else {
+        onScaleChange?.(0.85);
+      }
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,7 +171,7 @@ export default function GtaRadarMinimap({
     const size = canvas.width;
     const center = size / 2;
     const radarRadius = center - 8;
-    const scale = radarRadius / 55; // 55m radius in world space
+    const scale = (radarRadius / 55) * currentRadarZoom; // Adjust scale by radar zoom factor
 
     // Clear
     ctx.clearRect(0, 0, size, size);
@@ -217,24 +328,116 @@ export default function GtaRadarMinimap({
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('N', center, 6);
-  }, [playerX, playerZ, playerRotation, otherPlayers, vehicles]);
+  }, [playerX, playerZ, playerRotation, otherPlayers, vehicles, currentRadarZoom]);
 
-  const radarDimension = isMobile ? 104 : 124;
+  const radarDimension = Math.round((isMobile ? 104 : 124) * currentMapScale);
 
   return (
-    <div className="flex flex-col items-start select-none pointer-events-auto">
-      {/* Radar Screen Box */}
+    <div 
+      className={`flex flex-col items-start select-none pointer-events-auto transition-transform duration-75 relative ${
+        isPressDragging ? 'scale-105 opacity-95' : ''
+      }`}
+    >
+      {/* Active Drag Indicator Banner */}
+      {isPressDragging && (
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap bg-cyan-400 text-black px-2 py-0.5 rounded-full text-[8px] font-black font-hud uppercase tracking-wider shadow-[0_0_15px_rgba(34,211,238,0.9)] animate-pulse flex items-center gap-1">
+          <Move className="w-2.5 h-2.5" />
+          <span>DRAGGING MAP · DROP TO PLACE</span>
+        </div>
+      )}
+
+      {/* Map Control Bar (Enlarge, Reduce, Zoom & Drag) */}
       <div
-        onClick={onExpandMap}
-        className="relative group cursor-pointer bg-black/75 rounded-full p-1 border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.85)] hover:border-emerald-500/60 transition-all backdrop-blur-md"
-        title="Tap to Expand Full Baraka City World Map"
+        onMouseDown={onDragStart}
+        onTouchStart={onDragStart}
+        style={{ width: `${radarDimension}px` }}
+        className="flex items-center justify-between px-2 py-1 mb-1 bg-black/85 hover:bg-black/95 rounded-xl border border-white/15 cursor-grab active:cursor-grabbing backdrop-blur-md shadow-lg transition-all group"
+        title="Hold & drag anywhere on map to move it, or tap buttons to resize"
+      >
+        <div className="flex items-center gap-1">
+          <GripHorizontal className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
+          <span className="text-[7.5px] font-black uppercase text-zinc-300 tracking-wider">
+            {Math.round(currentMapScale * 100)}%
+          </span>
+        </div>
+
+        {/* Map Size & Zoom Buttons */}
+        <div className="flex items-center gap-1">
+          {/* Reduce Size Button */}
+          <button
+            type="button"
+            onClick={handleReduceMap}
+            className="w-4 h-4 rounded bg-white/10 hover:bg-rose-500 hover:text-white text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
+            title="Reduce Map Size (-)"
+          >
+            <Minus className="w-2.5 h-2.5" />
+          </button>
+
+          {/* Enlarge Size Button */}
+          <button
+            type="button"
+            onClick={handleEnlargeMap}
+            className="w-4 h-4 rounded bg-white/10 hover:bg-emerald-500 hover:text-black text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
+            title="Enlarge Map Size (+)"
+          >
+            <Plus className="w-2.5 h-2.5" />
+          </button>
+
+          {/* Radar Terrain Zoom Button */}
+          <button
+            type="button"
+            onClick={handleToggleRadarZoom}
+            className={`w-4 h-4 rounded flex items-center justify-center transition-colors cursor-pointer ${
+              currentRadarZoom !== 1.0 ? 'bg-cyan-400 text-black font-black' : 'bg-white/10 text-zinc-300 hover:bg-white/20'
+            }`}
+            title={`Radar Range Zoom: ${currentRadarZoom}x (Click to cycle)`}
+          >
+            {currentRadarZoom >= 1.5 ? (
+              <ZoomIn className="w-2.5 h-2.5" />
+            ) : currentRadarZoom < 1.0 ? (
+              <ZoomOut className="w-2.5 h-2.5" />
+            ) : (
+              <Compass className="w-2.5 h-2.5" />
+            )}
+          </button>
+
+          {hasCustomPosition && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onResetPosition?.();
+              }}
+              className="text-[7px] font-black px-1 py-0.5 bg-white/10 hover:bg-emerald-500 hover:text-black rounded text-zinc-300 transition-colors uppercase flex items-center gap-0.5 cursor-pointer ml-0.5"
+              title="Reset Radar Map back to default corner position"
+            >
+              <RotateCcw className="w-2 h-2" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Radar Screen Box (Direct Long-Press to Drag or Click to Enlarge/Zoom) */}
+      <div
+        onMouseDown={handleMapPressStart}
+        onTouchStart={handleMapPressStart}
+        onMouseMove={handleMapPressMove}
+        onTouchMove={handleMapPressMove}
+        onMouseUp={handleMapPressEnd}
+        onTouchEnd={handleMapPressEnd}
+        className={`relative group cursor-grab active:cursor-grabbing bg-black/85 rounded-full p-1 border shadow-[0_4px_24px_rgba(0,0,0,0.85)] transition-all backdrop-blur-md ${
+          isPressDragging 
+            ? 'border-cyan-400 ring-4 ring-cyan-400/60 shadow-[0_0_30px_rgba(34,211,238,0.8)]' 
+            : 'border-white/15 hover:border-emerald-500/70'
+        }`}
+        title="Long-press & drag to move map anywhere. Click to enlarge or toggle zoom."
       >
         <canvas
           ref={canvasRef}
           width={radarDimension * 2}
           height={radarDimension * 2}
           style={{ width: `${radarDimension}px`, height: `${radarDimension}px` }}
-          className="rounded-full block"
+          className="rounded-full block pointer-events-none"
         />
 
         {/* Hover / Touch Expand Icon Badge */}
@@ -244,7 +447,10 @@ export default function GtaRadarMinimap({
       </div>
 
       {/* GTA-Style District Banner & Dual Vitality / Stamina Gauges */}
-      <div className={`mt-1.5 flex flex-col bg-black/80 border border-white/10 backdrop-blur-md rounded-xl p-1.5 shadow-2xl ${isMobile ? 'w-[104px]' : 'w-[124px]'}`}>
+      <div 
+        style={{ width: `${radarDimension}px` }}
+        className="mt-1.5 flex flex-col bg-black/80 border border-white/10 backdrop-blur-md rounded-xl p-1.5 shadow-2xl transition-all"
+      >
         {/* District Name */}
         <div className="flex items-center gap-1 mb-1 truncate">
           <MapPin className="w-2.5 h-2.5 text-emerald-400 shrink-0" />

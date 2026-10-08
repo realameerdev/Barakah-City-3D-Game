@@ -190,10 +190,10 @@ export default function CinematicGameEntry({
     }, 1200);
   }, [isEntering, isGameReady, onEnterWorld, onStartTransition, playEntranceChime, selectedWorld]);
 
-  // Keyboard shortcut: Press Enter or Space to enter
+  // Keyboard shortcut: Press Enter, Space, or KeyE to enter
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Enter' || e.code === 'Space') {
+      if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') {
         if (!isEntering && isGameReady) {
           handleEnterClick();
         }
@@ -1191,10 +1191,15 @@ export default function CinematicGameEntry({
                     <span className="text-[10px] sm:text-[11px] font-serif text-amber-300 font-bold tracking-widest block uppercase drop-shadow">
                       بِسْمِ ٱللَّٰهِ · BISMILLAH
                     </span>
-                    <span className="text-sm sm:text-base md:text-lg font-black uppercase text-white tracking-wider block font-sora drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-                      {isEntering ? 'ENTERING BARAKA CITY...' : 'ENTER BARAKA CITY'}
-                    </span>
-                    <span className="text-[9px] sm:text-[10px] font-hud text-emerald-300 block tracking-wider uppercase font-semibold truncate">
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="bg-white text-black font-mono font-black text-[10.5px] sm:text-xs px-1.5 py-0.5 rounded-[4px] shadow-sm leading-none shrink-0 font-hud">
+                        [ENTER]
+                      </span>
+                      <span className="text-sm sm:text-base md:text-lg font-black uppercase text-white tracking-wider block font-sora drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] truncate">
+                        {isEntering ? 'ENTERING BARAKA CITY...' : 'ENTER BARAKA CITY'}
+                      </span>
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] font-hud text-emerald-300 block tracking-wider uppercase font-semibold truncate mt-0.5">
                       IMMERSIVE 3D METROPOLIS · {selectedWorld.toUpperCase()}
                     </span>
                   </div>
@@ -1208,7 +1213,9 @@ export default function CinematicGameEntry({
 
               {/* Keyboard Helper */}
               <span className="text-[9px] font-hud text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 opacity-80">
-                <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-mono">ENTER ↵</span> OR TAP TO PLAY
+                <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-mono">ENTER ↵</span>
+                <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-mono">[E]</span>
+                <span>OR TAP TO PLAY</span>
               </span>
             </div>
           )}
