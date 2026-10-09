@@ -14,7 +14,8 @@ import {
   ShoppingBag, BookOpen, Heart, Trophy, AlertTriangle, Gift, Briefcase,
   ArrowLeft, ChevronLeft, LogOut, Palette, RefreshCw, MessageCircle,
   Minimize2, Wifi, Globe2, Smartphone, GripHorizontal, LogIn, Car,
-  Lock, Unlock, Moon, Sun, ZoomIn, ZoomOut, Coffee, Sparkles, Move, Plus, Minus
+  Lock, Unlock, Moon, Sun, ZoomIn, ZoomOut, Coffee, Sparkles, Move, Plus, Minus,
+  Camera, Download, Edit3
 } from 'lucide-react';
 import AvatarCustomizerModal from './AvatarCustomizerModal';
 import { 
@@ -623,6 +624,45 @@ export default function ThreeGameWorld({
       });
     } catch {
       // Audio autoplay fallback
+    }
+  }, [initAudio]);
+
+  // Crisp mechanical camera shutter click for dashboard screenshot
+  const playCameraShutter = useCallback(() => {
+    try {
+      if (!audioCtxRef.current) initAudio();
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now = ctx.currentTime;
+      // High click sound
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(1400, now);
+      osc1.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+      gain1.gain.setValueAtTime(0.18, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.04);
+
+      // Mechanical release click (60ms later)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(850, now + 0.06);
+      osc2.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+      gain2.gain.setValueAtTime(0.14, now + 0.06);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.06);
+      osc2.stop(now + 0.12);
+    } catch {
+      // Audio fallback
     }
   }, [initAudio]);
 
@@ -1487,9 +1527,140 @@ export default function ThreeGameWorld({
       isWalking: true,
       statusText: 'Dhow Sea Captain',
     },
+    {
+      id: 'p26',
+      name: 'Amina_Ilorin',
+      city: 'Kwara',
+      outfitColor: 0xf59e0b,
+      position: new THREE.Vector3(52, 0, 82),
+      targetPosition: new THREE.Vector3(60, 0, 90),
+      rotation: Math.PI / 4,
+      isWalking: true,
+      statusText: 'Artisan Potter',
+    },
+    {
+      id: 'p27',
+      name: 'Hamza_Istanbul',
+      city: 'Istanbul',
+      outfitColor: 0xec4899,
+      position: new THREE.Vector3(118, 0, -120),
+      targetPosition: new THREE.Vector3(125, 0, -130),
+      rotation: -Math.PI / 3,
+      isWalking: true,
+      statusText: 'Bosphorus Pilot',
+    },
+    {
+      id: 'p28',
+      name: 'Dilshod_Samarkand',
+      city: 'Samarkand',
+      outfitColor: 0x06b6d4,
+      position: new THREE.Vector3(-146, 0, -82),
+      targetPosition: new THREE.Vector3(-155, 0, -88),
+      rotation: Math.PI / 2,
+      isWalking: true,
+      statusText: 'Silk Registan Scholar',
+    },
+    {
+      id: 'p29',
+      name: 'Asha_Zanzibar',
+      city: 'Zanzibar',
+      outfitColor: 0x14b8a6,
+      position: new THREE.Vector3(-170, 0, -56),
+      targetPosition: new THREE.Vector3(-178, 0, -65),
+      rotation: 0,
+      isWalking: true,
+      statusText: 'Clove Spice Trader',
+    },
+    {
+      id: 'p30',
+      name: 'Salim_Muscat',
+      city: 'Muscat',
+      outfitColor: 0x8b5cf6,
+      position: new THREE.Vector3(146, 0, 78),
+      targetPosition: new THREE.Vector3(154, 0, 84),
+      rotation: -Math.PI / 2,
+      isWalking: true,
+      statusText: 'Omani Citadel Guard',
+    },
+    {
+      id: 'p31',
+      name: 'Cheikh_Dakar',
+      city: 'Dakar',
+      outfitColor: 0x10b981,
+      position: new THREE.Vector3(22, 0, -160),
+      targetPosition: new THREE.Vector3(28, 0, -170),
+      rotation: Math.PI / 3,
+      isWalking: true,
+      statusText: 'Teranga Host',
+    },
+    {
+      id: 'p32',
+      name: 'Nur_KL',
+      city: 'Kuala Lumpur',
+      outfitColor: 0xa855f7,
+      position: new THREE.Vector3(-78, 0, -62),
+      targetPosition: new THREE.Vector3(-84, 0, -68),
+      rotation: -Math.PI / 4,
+      isWalking: true,
+      statusText: 'Minaret Engineer',
+    },
+    {
+      id: 'p33',
+      name: 'Salah_AlQuds',
+      city: 'Jerusalem',
+      outfitColor: 0xeab308,
+      position: new THREE.Vector3(-76, 0, 2),
+      targetPosition: new THREE.Vector3(-85, 0, -4),
+      rotation: Math.PI,
+      isWalking: true,
+      statusText: 'Heritage Caretaker',
+    },
   ]);
 
   const [projectedTags, setProjectedTags] = useState<Array<{ id: string; name: string; city: string; x: number; y: number; visible: boolean; dist: number }>>([]);
+
+  // Dynamic Time of Day Atmosphere Mode ('morning' | 'afternoon' | 'night')
+  const [timeMode, setTimeMode] = useState<'morning' | 'afternoon' | 'night'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('baraka_time_mode');
+      if (saved === 'morning' || saved === 'afternoon' || saved === 'night') {
+        return saved;
+      }
+    }
+    return 'afternoon';
+  });
+
+  // Scene Atmosphere Dynamic Lighting & Sky Dome Refs
+  const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const hemiLightRef = useRef<THREE.HemisphereLight | null>(null);
+  const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
+  const skyDomeRef = useRef<THREE.Mesh | null>(null);
+  const streetPointLightsRef = useRef<THREE.PointLight[]>([]);
+  const skylineGroupRef = useRef<THREE.Group | null>(null);
+
+  // High-Resolution Screenshot & Shutter States
+  const [isShutterFlashing, setIsShutterFlashing] = useState(false);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+
+  // Persistent Citizen Name State synced with localStorage & Profile
+  const [citizenName, setCitizenName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('baraka_citizen_name');
+      if (saved && saved.trim()) return saved.trim();
+    }
+    return userProfile.name || 'Ibrahim_NG';
+  });
+  const [editedName, setEditedName] = useState(citizenName);
+  const [nameInput, setNameInput] = useState(citizenName);
+  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (userProfile.name && userProfile.name !== citizenName) {
+      setCitizenName(userProfile.name);
+      setEditedName(userProfile.name);
+      setNameInput(userProfile.name);
+    }
+  }, [userProfile.name]);
 
   // Detect mobile
   useEffect(() => {
@@ -2373,9 +2544,29 @@ export default function ThreeGameWorld({
   }, [playChime]);
 
   const handleFastTravel = (targetX: number, targetZ: number, districtName: string) => {
+    // If inside a building, exit to street space cleanly
+    if (currentInsideLocationRef.current) {
+      currentInsideLocationRef.current = null;
+      setCurrentInsideLocation(null);
+      setIsSleepingInBed(false);
+      setIsPrayingOnMat(false);
+    }
+
+    // If player is driving a vehicle, teleport vehicle and driver together
+    if (drivingVehicleRef.current) {
+      const curVeh = vehiclesRef.current.find((v) => v.id === drivingVehicleRef.current);
+      if (curVeh) {
+        curVeh.mesh.position.set(targetX, 0, targetZ);
+        curVeh.currentSpeed = 0;
+      }
+    }
+
     playerPositionRef.current.set(targetX, 0, targetZ);
+    if (playerGroupRef.current) {
+      playerGroupRef.current.position.set(targetX, 0, targetZ);
+    }
     playChime(580, 'triangle', 0.25);
-    showToast(`Navigated to ${districtName}`);
+    showToast(`Navigated to ${districtName} 🌍`);
   };
 
   const handleSelectExpression = (expr: ExpressionType) => {
@@ -2385,6 +2576,371 @@ export default function ThreeGameWorld({
     playChime(600, 'sine', 0.18);
     showToast(`Facial Expression: ${expr}`);
   };
+
+  // Helper to dynamically build rich Sky Canvas Dome Texture for each atmosphere mode
+  const createSkyCanvas = useCallback((mode: 'morning' | 'afternoon' | 'night') => {
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = 512;
+    skyCanvas.height = 512;
+    const skyCtx = skyCanvas.getContext('2d');
+    if (!skyCtx) return skyCanvas;
+
+    const grad = skyCtx.createLinearGradient(0, 0, 0, 512);
+    if (mode === 'morning') {
+      // Warm dawn sunrise gradient
+      grad.addColorStop(0, '#111827'); // Zenith subtle deep sky
+      grad.addColorStop(0.35, '#312e81'); // Indigo dawn
+      grad.addColorStop(0.65, '#b45309'); // Warm dawn terracotta
+      grad.addColorStop(0.85, '#f59e0b'); // Golden amber
+      grad.addColorStop(1.0, '#fef08a'); // Bright rising dawn horizon
+      skyCtx.fillStyle = grad;
+      skyCtx.fillRect(0, 0, 512, 512);
+
+      // Soft dawn glow disk (morning sun rising in the east)
+      const sunGrad = skyCtx.createRadialGradient(160, 420, 10, 160, 420, 140);
+      sunGrad.addColorStop(0, 'rgba(255, 250, 200, 0.9)');
+      sunGrad.addColorStop(0.3, 'rgba(251, 191, 36, 0.5)');
+      sunGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+      skyCtx.fillStyle = sunGrad;
+      skyCtx.beginPath();
+      skyCtx.arc(160, 420, 140, 0, Math.PI * 2);
+      skyCtx.fill();
+    } else if (mode === 'afternoon') {
+      // Clear brilliant azure Mediterranean daytime sky
+      grad.addColorStop(0, '#0284c7'); // Deep azure zenith
+      grad.addColorStop(0.4, '#0ea5e9'); // Cerulean
+      grad.addColorStop(0.75, '#38bdf8'); // Sky blue
+      grad.addColorStop(0.92, '#7dd3fc'); // Soft atmospheric horizon
+      grad.addColorStop(1.0, '#bae6fd'); // Crisp light daylight horizon
+      skyCtx.fillStyle = grad;
+      skyCtx.fillRect(0, 0, 512, 512);
+
+      // High overhead golden sun glare
+      const sunGrad = skyCtx.createRadialGradient(256, 120, 15, 256, 120, 120);
+      sunGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      sunGrad.addColorStop(0.25, 'rgba(254, 243, 199, 0.6)');
+      sunGrad.addColorStop(1, 'rgba(224, 242, 254, 0)');
+      skyCtx.fillStyle = sunGrad;
+      skyCtx.beginPath();
+      skyCtx.arc(256, 120, 120, 0, Math.PI * 2);
+      skyCtx.fill();
+    } else {
+      // Deep nocturnal starry night sky
+      grad.addColorStop(0, '#030712'); // Pitch black-blue zenith
+      grad.addColorStop(0.5, '#0b0f19'); // Midnight indigo
+      grad.addColorStop(0.85, '#111827'); // Deep nocturnal blue
+      grad.addColorStop(1.0, '#1e293b'); // Horizon night ambient
+      skyCtx.fillStyle = grad;
+      skyCtx.fillRect(0, 0, 512, 512);
+
+      // Paint realistic stars in the upper half
+      skyCtx.fillStyle = '#ffffff';
+      for (let i = 0; i < 90; i++) {
+        const sx = ((i * 37) % 512);
+        const sy = ((i * 59) % 320);
+        const r = (i % 3 === 0) ? 1.5 : 0.8;
+        skyCtx.beginPath();
+        skyCtx.arc(sx, sy, r, 0, Math.PI * 2);
+        skyCtx.fill();
+      }
+
+      // Crescent Moon in the night sky
+      skyCtx.save();
+      skyCtx.fillStyle = 'rgba(240, 249, 255, 0.95)';
+      skyCtx.beginPath();
+      skyCtx.arc(360, 140, 24, 0, Math.PI * 2);
+      skyCtx.fill();
+      // Cutout for crescent
+      skyCtx.globalCompositeOperation = 'destination-out';
+      skyCtx.beginPath();
+      skyCtx.arc(370, 134, 20, 0, Math.PI * 2);
+      skyCtx.fill();
+      skyCtx.restore();
+
+      // Soft moonlight halo around moon
+      const moonHalo = skyCtx.createRadialGradient(360, 140, 20, 360, 140, 80);
+      moonHalo.addColorStop(0, 'rgba(186, 230, 253, 0.35)');
+      moonHalo.addColorStop(1, 'rgba(186, 230, 253, 0)');
+      skyCtx.fillStyle = moonHalo;
+      skyCtx.beginPath();
+      skyCtx.arc(360, 140, 80, 0, Math.PI * 2);
+      skyCtx.fill();
+    }
+
+    return skyCanvas;
+  }, []);
+
+  // Synchronize 3D scene lighting, sky and fog to atmosphere mode
+  const applyTimeMode = useCallback((mode: 'morning' | 'afternoon' | 'night') => {
+    if (!sceneRef.current) return;
+    const scene = sceneRef.current;
+
+    // 1. Sky Dome Texture
+    if (skyDomeRef.current && skyDomeRef.current.material instanceof THREE.MeshBasicMaterial) {
+      const newCanvas = createSkyCanvas(mode);
+      const newTexture = new THREE.CanvasTexture(newCanvas);
+      if (skyDomeRef.current.material.map) {
+        skyDomeRef.current.material.map.dispose();
+      }
+      skyDomeRef.current.material.map = newTexture;
+      skyDomeRef.current.material.needsUpdate = true;
+    }
+
+    // 2. Scene Fog & Background - Clear Panoramic Visibility for Expanded Metropolises
+    if (mode === 'morning') {
+      scene.background = new THREE.Color(0xb45309);
+      scene.fog = new THREE.FogExp2(0xb45309, 0.0018);
+    } else if (mode === 'afternoon') {
+      scene.background = new THREE.Color(0x38bdf8);
+      scene.fog = new THREE.FogExp2(0x38bdf8, 0.0014);
+    } else {
+      scene.background = new THREE.Color(0x090d16);
+      scene.fog = new THREE.FogExp2(0x090d16, 0.0022);
+    }
+
+    // 3. Directional Sun/Moon Light
+    if (sunLightRef.current) {
+      if (mode === 'morning') {
+        sunLightRef.current.position.set(-90, 60, 70);
+        sunLightRef.current.color.setHex(0xfde68a); // Warm dawn gold
+        sunLightRef.current.intensity = 1.45;
+      } else if (mode === 'afternoon') {
+        sunLightRef.current.position.set(30, 150, 40);
+        sunLightRef.current.color.setHex(0xffffff); // High noon pure white
+        sunLightRef.current.intensity = 2.1;
+      } else {
+        sunLightRef.current.position.set(70, 95, -70);
+        sunLightRef.current.color.setHex(0x93c5fd); // Cool silvery moonlight
+        sunLightRef.current.intensity = 0.75;
+      }
+    }
+
+    // 4. Ambient Light
+    if (ambientLightRef.current) {
+      if (mode === 'morning') {
+        ambientLightRef.current.color.setHex(0xfef3c7);
+        ambientLightRef.current.intensity = 0.65;
+      } else if (mode === 'afternoon') {
+        ambientLightRef.current.color.setHex(0xe0f2fe);
+        ambientLightRef.current.intensity = 0.95;
+      } else {
+        ambientLightRef.current.color.setHex(0x1e293b);
+        ambientLightRef.current.intensity = 0.35;
+      }
+    }
+
+    // 5. Hemisphere Light
+    if (hemiLightRef.current) {
+      if (mode === 'morning') {
+        hemiLightRef.current.color.setHex(0xfef08a);
+        hemiLightRef.current.groundColor.setHex(0x475569);
+        hemiLightRef.current.intensity = 0.85;
+      } else if (mode === 'afternoon') {
+        hemiLightRef.current.color.setHex(0x38bdf8);
+        hemiLightRef.current.groundColor.setHex(0x64748b);
+        hemiLightRef.current.intensity = 1.15;
+      } else {
+        hemiLightRef.current.color.setHex(0x1e1b4b);
+        hemiLightRef.current.groundColor.setHex(0x090a0f);
+        hemiLightRef.current.intensity = 0.45;
+      }
+    }
+
+    // 6. Street Lamps
+    streetPointLightsRef.current.forEach((lamp) => {
+      lamp.intensity = mode === 'night' ? 1.7 : mode === 'morning' ? 0.7 : 0.15;
+    });
+
+    // 7. City Skyline Horizon
+    if (skylineGroupRef.current) {
+      const silColor = mode === 'morning' ? 0x451a03 : mode === 'afternoon' ? 0x1e293b : 0x0a0f1a;
+      skylineGroupRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshBasicMaterial) {
+          child.material.color.setHex(silColor);
+        }
+      });
+    }
+  }, [createSkyCanvas]);
+
+  // Atmosphere Mode Switch Handler
+  const handleSetTimeMode = useCallback((mode: 'morning' | 'afternoon' | 'night') => {
+    setTimeMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('baraka_time_mode', mode);
+    }
+    applyTimeMode(mode);
+    playChime(mode === 'morning' ? 660 : mode === 'afternoon' ? 880 : 440, 'triangle', 0.2);
+    showToast(
+      mode === 'morning'
+        ? '🌅 Switched to Morning Atmosphere'
+        : mode === 'afternoon'
+        ? '☀️ Switched to Afternoon Daylight'
+        : '🌙 Switched to Nocturnal Night'
+    );
+  }, [applyTimeMode, playChime, showToast]);
+
+  // Dedicated Citizen Name Save Handler (Immediate State + LocalStorage + Profile Sync)
+  const handleSaveCitizenName = useCallback((newName?: string) => {
+    const target = (newName !== undefined ? newName : nameInput).trim();
+    if (!target) {
+      showToast('Citizen name cannot be empty');
+      return;
+    }
+    if (target.length < 2) {
+      showToast('Citizen name must be at least 2 characters');
+      return;
+    }
+    setCitizenName(target);
+    setEditedName(target);
+    setNameInput(target);
+    setIsNameModalOpen(false);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('baraka_citizen_name', target);
+    }
+    if (onUpdateProfile) {
+      onUpdateProfile({ name: target });
+    }
+    playChime(660, 'sine', 0.22);
+    showToast(`Citizen name saved as "${target}" · Updated live on dashboard & screenshots ✍️`);
+  }, [nameInput, onUpdateProfile, playChime, showToast]);
+
+  const handleSaveName = useCallback(() => {
+    handleSaveCitizenName(editedName);
+  }, [editedName, handleSaveCitizenName]);
+
+  // High-Resolution Dashboard & Game Page Screenshot Handler
+  const handleTakeScreenshot = useCallback(() => {
+    if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !containerRef.current) {
+      showToast('Camera system initializing, please try again.');
+      return;
+    }
+
+    // Play crisp camera shutter click sound
+    playCameraShutter();
+
+    // Trigger visual screen flash
+    setIsShutterFlashing(true);
+    setTimeout(() => setIsShutterFlashing(false), 350);
+
+    try {
+      // Force immediate clean render to WebGL buffer
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      const webglCanvas = rendererRef.current.domElement;
+
+      // Create high-res composite offscreen canvas
+      const offscreen = document.createElement('canvas');
+      offscreen.width = webglCanvas.width;
+      offscreen.height = webglCanvas.height;
+      const ctx = offscreen.getContext('2d');
+      if (!ctx) return;
+
+      // Draw 3D scene from WebGL
+      ctx.drawImage(webglCanvas, 0, 0);
+
+      const w = offscreen.width;
+      const h = offscreen.height;
+
+      // Subtle dark gradients at top and bottom for HUD readability
+      const topGrad = ctx.createLinearGradient(0, 0, 0, Math.min(130, h * 0.16));
+      topGrad.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
+      topGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 0, w, Math.min(130, h * 0.16));
+
+      const btmGrad = ctx.createLinearGradient(0, h - Math.min(100, h * 0.12), 0, h);
+      btmGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      btmGrad.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
+      ctx.fillStyle = btmGrad;
+      ctx.fillRect(0, h - Math.min(100, h * 0.12), w, Math.min(100, h * 0.12));
+
+      // Brand Title, Citizen Metadata & Watermark Overlay
+      ctx.save();
+      const scaleFactor = Math.max(1, Math.min(2.5, w / 1280));
+      
+      // Top Left: Emerald Dot + Baraka City
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(28 * scaleFactor, 32 * scaleFactor, 6 * scaleFactor, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 ${Math.round(18 * scaleFactor)}px "Sora", sans-serif`;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('BARAKA CITY', 42 * scaleFactor, 32 * scaleFactor);
+
+      ctx.fillStyle = '#34d399';
+      ctx.font = `700 ${Math.round(11 * scaleFactor)}px monospace`;
+      ctx.fillText(`${userProfile.world || 'ABUJA METROPOLIS'} · ${currentDistrict}`, 42 * scaleFactor, 52 * scaleFactor);
+
+      // Top Right: Citizen Info, Mode & Wealth
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `800 ${Math.round(14 * scaleFactor)}px "Sora", sans-serif`;
+      ctx.fillText(`CITIZEN: ${citizenName.toUpperCase()}`, w - 28 * scaleFactor, 30 * scaleFactor);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = `700 ${Math.round(11 * scaleFactor)}px monospace`;
+      const modeLabel = timeMode === 'morning' ? 'MORNING (M)' : timeMode === 'afternoon' ? 'AFTERNOON (A)' : 'NIGHT (N)';
+      ctx.fillText(`ATMOSPHERE: ${modeLabel} · 💰 ${coins.toLocaleString()} BRC`, w - 28 * scaleFactor, 48 * scaleFactor);
+
+      // Bottom Right: Capture Timestamp
+      const nowStr = new Date().toLocaleString();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.font = `600 ${Math.round(10 * scaleFactor)}px monospace`;
+      ctx.fillText(`CAPTURED: ${nowStr} · barakacity.io`, w - 28 * scaleFactor, h - 24 * scaleFactor);
+
+      // Viewfinder camera corner brackets
+      const bracketLen = 24 * scaleFactor;
+      const margin = 16 * scaleFactor;
+      ctx.strokeStyle = 'rgba(52, 211, 153, 0.7)';
+      ctx.lineWidth = 2 * scaleFactor;
+      // Top-Left
+      ctx.beginPath();
+      ctx.moveTo(margin, margin + bracketLen);
+      ctx.lineTo(margin, margin);
+      ctx.lineTo(margin + bracketLen, margin);
+      ctx.stroke();
+      // Top-Right
+      ctx.beginPath();
+      ctx.moveTo(w - margin - bracketLen, margin);
+      ctx.lineTo(w - margin, margin);
+      ctx.lineTo(w - margin, margin + bracketLen);
+      ctx.stroke();
+      // Bottom-Left
+      ctx.beginPath();
+      ctx.moveTo(margin, h - margin - bracketLen);
+      ctx.lineTo(margin, h - margin);
+      ctx.lineTo(margin + bracketLen, h - margin);
+      ctx.stroke();
+      // Bottom-Right
+      ctx.beginPath();
+      ctx.moveTo(w - margin - bracketLen, h - margin);
+      ctx.lineTo(w - margin, h - margin);
+      ctx.lineTo(w - margin, h - margin - bracketLen);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Export as PNG dataURL
+      const dataUrl = offscreen.toDataURL('image/png');
+      setScreenshotPreview(dataUrl);
+
+      // Automatic download trigger
+      const link = document.createElement('a');
+      const filename = `baraka_city_${citizenName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}.png`;
+      link.download = filename;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('📸 Screenshot saved to your device!');
+    } catch (err) {
+      console.error('Screenshot capture error:', err);
+      showToast('Screenshot capture failed. Please try again.');
+    }
+  }, [playCameraShutter, showToast, citizenName, userProfile.world, currentDistrict, timeMode, coins]);
 
   // Build Full 3D Living City Environment Scene
   useEffect(() => {
@@ -2398,31 +2954,20 @@ export default function ThreeGameWorld({
     sceneRef.current = scene;
     const skyHorizonColor = new THREE.Color(0x181e33);
     scene.background = skyHorizonColor;
-    scene.fog = new THREE.FogExp2(0x181e33, 0.0075);
+    scene.fog = new THREE.FogExp2(0x181e33, 0.0022);
 
-    // Dynamic Atmospheric Sky Dome with Sunset Twilight Gradient
-    const skyCanvas = document.createElement('canvas');
-    skyCanvas.width = 512;
-    skyCanvas.height = 512;
-    const skyCtx = skyCanvas.getContext('2d');
-    if (skyCtx) {
-      const grad = skyCtx.createLinearGradient(0, 0, 0, 512);
-      grad.addColorStop(0, '#0a0d1a'); // Zenith deep dusk
-      grad.addColorStop(0.45, '#1e1b4b'); // Twilight indigo
-      grad.addColorStop(0.72, '#7c2d12'); // Rich terracotta sunset glow
-      grad.addColorStop(0.88, '#d97706'); // Golden amber horizon
-      grad.addColorStop(1.0, '#f59e0b'); // Warm glowing horizon
-      skyCtx.fillStyle = grad;
-      skyCtx.fillRect(0, 0, 512, 512);
-    }
+    // Dynamic Atmospheric Sky Dome with Atmosphere Gradient
+    const skyCanvas = createSkyCanvas(timeMode);
     const skyTexture = new THREE.CanvasTexture(skyCanvas);
     const skyGeo = new THREE.SphereGeometry(460, 32, 16);
     const skyMat = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide, depthWrite: false });
     const skyDome = new THREE.Mesh(skyGeo, skyMat);
+    skyDomeRef.current = skyDome;
     scene.add(skyDome);
 
     // Distant City Silhouette Horizon (Islamic city skyline of towers, arches and domes)
     const skylineGroup = new THREE.Group();
+    skylineGroupRef.current = skylineGroup;
     const silMat = new THREE.MeshBasicMaterial({ color: 0x111625, fog: true });
     for (let i = 0; i < 48; i++) {
       const angle = (i / 48) * Math.PI * 2;
@@ -2457,6 +3002,7 @@ export default function ThreeGameWorld({
       antialias: !isMobileDevice && performanceTier !== 'performance',
       alpha: false,
       powerPreference: 'high-performance',
+      preserveDrawingBuffer: true,
     });
     rendererRef.current = renderer;
     renderer.setSize(width, height, false);
@@ -2470,9 +3016,11 @@ export default function ThreeGameWorld({
 
     // Rich Ambient, Directional & Hemisphere Lighting
     const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x1e293b, 0.85);
+    hemiLightRef.current = hemiLight;
     scene.add(hemiLight);
 
     const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.5);
+    ambientLightRef.current = ambientLight;
     scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xfef3c7, 1.5);
@@ -2489,6 +3037,7 @@ export default function ThreeGameWorld({
     sunLight.shadow.camera.top = d;
     sunLight.shadow.camera.bottom = -d;
     sunLight.shadow.bias = -0.0005;
+    sunLightRef.current = sunLight;
     scene.add(sunLight);
 
     // Ground Paving / Base Grid (Wide Metropolis Scale)
@@ -2617,6 +3166,7 @@ export default function ThreeGameWorld({
     scene.add(sidewalk2);
 
     // 2. Street Lamps along Sidewalks
+    streetPointLightsRef.current = [];
     for (let x = -90; x <= 90; x += 30) {
       if (Math.abs(x) < 15) continue;
       [8.5, -8.5].forEach((z) => {
@@ -2632,11 +3182,15 @@ export default function ThreeGameWorld({
         bulb.position.set(x, 5, z);
         scene.add(bulb);
 
-        const lampLight = new THREE.PointLight(0xfef08a, 1.2, 18);
+        const lampLight = new THREE.PointLight(0xfef08a, timeMode === 'night' ? 1.7 : timeMode === 'morning' ? 0.7 : 0.15, 18);
         lampLight.position.set(x, 4.8, z);
         scene.add(lampLight);
+        streetPointLightsRef.current.push(lampLight);
       });
     }
+
+    // Apply active atmosphere settings immediately upon scene generation
+    applyTimeMode(timeMode);
 
     // 3. Moving Traffic / Cars on Roads with Waypoint Road Routing
     const createdVehicles: MovingVehicle[] = [];
@@ -3050,6 +3604,114 @@ export default function ThreeGameWorld({
         new THREE.Vector3(3.5, 0, -200),
         new THREE.Vector3(0, 0, -206),
         new THREE.Vector3(-3.5, 0, -200),
+      ],
+    });
+
+    // Vehicle 15: Atlantic Coastal Parkway Cruiser (Lagos - Zanzibar - Grand Marina Route)
+    const v15Data = createVehicleMesh(0x059669, 'cruiser');
+    v15Data.carGroup.position.set(-175, 0, -60);
+    v15Data.carGroup.rotation.y = 0;
+    scene.add(v15Data.carGroup);
+    createdVehicles.push({
+      id: 'v15',
+      name: 'Atlantic Coastline Cruiser',
+      mesh: v15Data.carGroup,
+      colorHex: 0x059669,
+      type: 'cruiser',
+      cruiseSpeed: 17,
+      currentSpeed: 17,
+      waypointIndex: 0,
+      wheels: v15Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(-175, 0, 80),
+        new THREE.Vector3(-170, 0, 85),
+        new THREE.Vector3(-165, 0, 80),
+        new THREE.Vector3(-165, 0, -80),
+        new THREE.Vector3(-170, 0, -85),
+        new THREE.Vector3(-175, 0, -80),
+      ],
+    });
+
+    // Vehicle 16: Golden Imperial Transporter (Istanbul - Cairo - Muscat Route)
+    const v16Data = createVehicleMesh(0xd97706, 'sedan');
+    v16Data.carGroup.position.set(120, 0, -110);
+    v16Data.carGroup.rotation.y = Math.PI;
+    scene.add(v16Data.carGroup);
+    createdVehicles.push({
+      id: 'v16',
+      name: 'Imperial Citadel Transporter',
+      mesh: v16Data.carGroup,
+      colorHex: 0xd97706,
+      type: 'sedan',
+      cruiseSpeed: 16,
+      currentSpeed: 16,
+      waypointIndex: 0,
+      wheels: v16Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(120, 0, 130),
+        new THREE.Vector3(125, 0, 135),
+        new THREE.Vector3(130, 0, 130),
+        new THREE.Vector3(130, 0, -130),
+        new THREE.Vector3(125, 0, -135),
+        new THREE.Vector3(120, 0, -130),
+      ],
+    });
+
+    // Vehicle 17: Silk Road Registan Van (Samarkand - Fez - Dar Al-Quran Route)
+    const v17Data = createVehicleMesh(0x0284c7, 'taxi');
+    v17Data.carGroup.position.set(-140, 0, -85);
+    v17Data.carGroup.rotation.y = Math.PI / 2;
+    scene.add(v17Data.carGroup);
+    createdVehicles.push({
+      id: 'v17',
+      name: 'Silk Road Caravanserai Van',
+      mesh: v17Data.carGroup,
+      colorHex: 0x0284c7,
+      type: 'taxi',
+      cruiseSpeed: 15,
+      currentSpeed: 15,
+      waypointIndex: 0,
+      wheels: v17Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(80, 0, -85),
+        new THREE.Vector3(85, 0, -90),
+        new THREE.Vector3(80, 0, -95),
+        new THREE.Vector3(-160, 0, -95),
+        new THREE.Vector3(-165, 0, -90),
+        new THREE.Vector3(-160, 0, -85),
+      ],
+    });
+
+    // Vehicle 18: Sahara Heritage Express (Kwara - Al-Madinah - Sultan Baybars Route)
+    const v18Data = createVehicleMesh(0x7c3aed, 'cruiser');
+    v18Data.carGroup.position.set(50, 0, 85);
+    v18Data.carGroup.rotation.y = -Math.PI / 2;
+    scene.add(v18Data.carGroup);
+    createdVehicles.push({
+      id: 'v18',
+      name: 'Sahara Heritage Express',
+      mesh: v18Data.carGroup,
+      colorHex: 0x7c3aed,
+      type: 'cruiser',
+      cruiseSpeed: 17,
+      currentSpeed: 17,
+      waypointIndex: 0,
+      wheels: v18Data.wheels,
+      stoppedForPedestrian: false,
+      stoppedForVehicle: false,
+      waypoints: [
+        new THREE.Vector3(-140, 0, 85),
+        new THREE.Vector3(-145, 0, 90),
+        new THREE.Vector3(-140, 0, 95),
+        new THREE.Vector3(120, 0, 95),
+        new THREE.Vector3(125, 0, 90),
+        new THREE.Vector3(120, 0, 85),
       ],
     });
 
@@ -3902,6 +4564,358 @@ export default function ThreeGameWorld({
     marinaGroup.position.set(-160, 0, 0);
     scene.add(marinaGroup);
 
+    // T. LAGOS COASTAL CITY & EKO HAVEN (Location: [-175, 0, 65])
+    const lagosGroup = new THREE.Group();
+    // Atlantic Lekki Promenade Boardwalk
+    const lagosBoardwalk = new THREE.Mesh(
+      new THREE.BoxGeometry(22, 0.4, 38),
+      new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.6 })
+    );
+    lagosBoardwalk.position.set(0, 0.2, 0);
+    lagosGroup.add(lagosBoardwalk);
+    // Lekki Coastal Water Ingress
+    const lagosOcean = new THREE.Mesh(
+      new THREE.PlaneGeometry(45, 45),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, metalness: 0.85 })
+    );
+    lagosOcean.rotation.x = -Math.PI / 2;
+    lagosOcean.position.set(-12, 0.04, 0);
+    lagosGroup.add(lagosOcean);
+    // Lekki Coastal Lighthouse Beacon Tower
+    const lagosLighthouse = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.4, 2.2, 22, 12),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 })
+    );
+    lagosLighthouse.position.set(6, 11, -10);
+    lagosGroup.add(lagosLighthouse);
+    // Lighthouse Beacon Crown
+    const lagosBeacon = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.6, 1.4, 2.5, 12),
+      new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.3 })
+    );
+    lagosBeacon.position.set(6, 23, -10);
+    lagosGroup.add(lagosBeacon);
+    const lagosBeaconLight = new THREE.PointLight(0x38bdf8, 2.0, 35);
+    lagosBeaconLight.position.set(6, 24, -10);
+    lagosGroup.add(lagosBeaconLight);
+    // Eko Coastal Palm Trees
+    [-8, 8].forEach((pz) => {
+      const palmTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.4, 6.5, 6), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+      palmTrunk.position.set(8, 3.25, pz);
+      lagosGroup.add(palmTrunk);
+      const palmTop = new THREE.Mesh(new THREE.ConeGeometry(2.4, 4.0, 6), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
+      palmTop.position.set(8, 7.5, pz);
+      lagosGroup.add(palmTop);
+    });
+    lagosGroup.position.set(-175, 0, 65);
+    scene.add(lagosGroup);
+
+    // U. KWARA CULTURAL CITADEL & ILORIN EMIRATE GATES (Location: [55, 0, 85])
+    const kwaraGroup = new THREE.Group();
+    // Red Sahelian Clay Gateway Arch
+    const kwaraPillarL = new THREE.Mesh(new THREE.BoxGeometry(3.5, 12, 3.5), new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.8 }));
+    kwaraPillarL.position.set(-6, 6, 0);
+    kwaraGroup.add(kwaraPillarL);
+    const kwaraPillarR = new THREE.Mesh(new THREE.BoxGeometry(3.5, 12, 3.5), new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.8 }));
+    kwaraPillarR.position.set(6, 6, 0);
+    kwaraGroup.add(kwaraPillarR);
+    const kwaraLintel = new THREE.Mesh(new THREE.BoxGeometry(16, 3.0, 4.0), new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.7 }));
+    kwaraLintel.position.set(0, 13, 0);
+    kwaraGroup.add(kwaraLintel);
+    // Emirate Citadel Clay Crenellations
+    for (let i = -7; i <= 7; i += 3.5) {
+      const battlement = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 4.2), new THREE.MeshStandardMaterial({ color: 0x9a3412 }));
+      battlement.position.set(i, 15, 0);
+      kwaraGroup.add(battlement);
+    }
+    // Traditional Terracotta Pottery Urns & Souq Stalls
+    [-3.5, 3.5].forEach((ox, idx) => {
+      const pot = new THREE.Mesh(new THREE.DodecahedronGeometry(1.1), new THREE.MeshStandardMaterial({ color: 0xea580c, roughness: 0.85 }));
+      pot.position.set(ox, 1.1, -4);
+      kwaraGroup.add(pot);
+      const stallAwning = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.3, 4.5), new THREE.MeshStandardMaterial({ color: idx === 0 ? 0xf59e0b : 0x10b981 }));
+      stallAwning.rotation.x = Math.PI / 12;
+      stallAwning.position.set(ox * 2.2, 3.8, 6);
+      kwaraGroup.add(stallAwning);
+    });
+    const kwaraLantern = new THREE.PointLight(0xf59e0b, 1.8, 26);
+    kwaraLantern.position.set(0, 10, 0);
+    kwaraGroup.add(kwaraLantern);
+    kwaraGroup.position.set(55, 0, 85);
+    scene.add(kwaraGroup);
+
+    // V. ISTANBUL BOSPHORUS IMPERIAL CITY & WATERFRONT (Location: [120, 0, -125])
+    const istanbulGroup = new THREE.Group();
+    // Ottoman Grand Mosque Pavilion
+    const istanbulBase = new THREE.Mesh(new THREE.BoxGeometry(24, 8, 24), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }));
+    istanbulBase.position.set(0, 4, 0);
+    istanbulGroup.add(istanbulBase);
+    // Ottoman Turquoise Grand Central Dome
+    const istanbulDome = new THREE.Mesh(
+      new THREE.SphereGeometry(6.5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x0f766e, roughness: 0.35, metalness: 0.25 })
+    );
+    istanbulDome.position.set(0, 8, 0);
+    istanbulGroup.add(istanbulDome);
+    // Crescent Finial
+    const istanbulCrescent = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.15, 8, 16, Math.PI * 1.5), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9 }));
+    istanbulCrescent.position.set(0, 15, 0);
+    istanbulGroup.add(istanbulCrescent);
+    // Twin Pencil Minarets
+    [-11, 11].forEach((mx) => {
+      const minaretPencil = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.1, 22, 8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 }));
+      minaretPencil.position.set(mx, 11, -11);
+      istanbulGroup.add(minaretPencil);
+      const minaretSpire = new THREE.Mesh(new THREE.ConeGeometry(0.9, 4.5, 8), new THREE.MeshStandardMaterial({ color: 0x0f766e }));
+      minaretSpire.position.set(mx, 24, -11);
+      istanbulGroup.add(minaretSpire);
+    });
+    // Bosphorus Sea Water Ingress
+    const bosphorusWater = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, metalness: 0.9 }));
+    bosphorusWater.rotation.x = -Math.PI / 2;
+    bosphorusWater.position.set(0, 0.04, 18);
+    istanbulGroup.add(bosphorusWater);
+    istanbulGroup.position.set(120, 0, -125);
+    scene.add(istanbulGroup);
+
+    // W. SAMARKAND SILK ROAD REGISTAN CITADEL (Location: [-150, 0, -85])
+    const samarkandGroup = new THREE.Group();
+    // Monumental Registan Iwan Portal Arch
+    const iwanFacade = new THREE.Mesh(new THREE.BoxGeometry(22, 16, 6), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 }));
+    iwanFacade.position.set(0, 8, 0);
+    samarkandGroup.add(iwanFacade);
+    // Inner Portal Niche
+    const iwanNiche = new THREE.Mesh(new THREE.BoxGeometry(11, 11, 4), new THREE.MeshStandardMaterial({ color: 0x0e7490, roughness: 0.3 }));
+    iwanNiche.position.set(0, 5.5, 1.2);
+    samarkandGroup.add(iwanNiche);
+    // Fluted Azure Turquoise Ribbed Dome
+    const samarkandDome = new THREE.Mesh(new THREE.SphereGeometry(5.2, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.3, metalness: 0.3 }));
+    samarkandDome.position.set(0, 16, -2);
+    samarkandGroup.add(samarkandDome);
+    // Registan Minaret Towers
+    [-11, 11].forEach((sx) => {
+      const sMin = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 20, 10), new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 }));
+      sMin.position.set(sx, 10, 0);
+      samarkandGroup.add(sMin);
+      const sCrown = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3.2, 10), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
+      sCrown.position.set(sx, 21.5, 0);
+      samarkandGroup.add(sCrown);
+    });
+    // Silk Road Astrolabe Monument Pedestal
+    const astrolabePedestal = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.6, 2.5, 8), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+    astrolabePedestal.position.set(0, 1.25, 8);
+    samarkandGroup.add(astrolabePedestal);
+    const bronzeRing = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.16, 8, 24), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85 }));
+    bronzeRing.rotation.x = Math.PI / 4;
+    bronzeRing.position.set(0, 3.2, 8);
+    samarkandGroup.add(bronzeRing);
+    samarkandGroup.position.set(-150, 0, -85);
+    scene.add(samarkandGroup);
+
+    // X. ZANZIBAR STONE TOWN OCEAN HAVEN (Location: [-175, 0, -60])
+    const zanzibarGroup = new THREE.Group();
+    // Coral Stone Arched Quarter
+    const zanzibarWall = new THREE.Mesh(new THREE.BoxGeometry(18, 9, 6), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.85 }));
+    zanzibarWall.position.set(0, 4.5, 0);
+    zanzibarGroup.add(zanzibarWall);
+    // Carved Teak Wooden Gateway Doors
+    const zDoor = new THREE.Mesh(new THREE.BoxGeometry(5, 7, 0.5), new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.7 }));
+    zDoor.position.set(0, 3.5, 3.1);
+    zanzibarGroup.add(zDoor);
+    // Indian Ocean Dhow Wooden Pier
+    const zPier = new THREE.Mesh(new THREE.BoxGeometry(12, 0.4, 26), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.75 }));
+    zPier.position.set(12, 0.2, 8);
+    zanzibarGroup.add(zPier);
+    // Traditional Dhow Boat Hull
+    const dhowHull = new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 12), new THREE.MeshStandardMaterial({ color: 0x5b21b6, roughness: 0.7 }));
+    dhowHull.position.set(12, 0.6, 22);
+    zanzibarGroup.add(dhowHull);
+    // Dhow Mast & White Triangular Sail
+    const dhowMast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 8, 6), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+    dhowMast.position.set(12, 4.5, 22);
+    zanzibarGroup.add(dhowMast);
+    const dhowSail = new THREE.Mesh(new THREE.ConeGeometry(2.6, 6.0, 3), new THREE.MeshStandardMaterial({ color: 0xf8fafc, side: THREE.DoubleSide }));
+    dhowSail.rotation.z = Math.PI / 10;
+    dhowSail.position.set(12.8, 5.0, 22);
+    zanzibarGroup.add(dhowSail);
+    zanzibarGroup.position.set(-175, 0, -60);
+    scene.add(zanzibarGroup);
+
+    // Y. MUSCAT GULF CITADEL & CORNICHE (Location: [150, 0, 80])
+    const muscatGroup = new THREE.Group();
+    // Omani White Watchtower Fortress
+    const omaniTower = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 5.5, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 }));
+    omaniTower.position.set(0, 8, 0);
+    muscatGroup.add(omaniTower);
+    // Tower Crenellations
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      const cren = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.2), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 }));
+      cren.position.set(Math.sin(a) * 4.6, 16.8, Math.cos(a) * 4.6);
+      muscatGroup.add(cren);
+    }
+    // Giant Omani Incense Burner (Mabkhara) Monument
+    const incenseBase = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 1.4, 3.5, 8), new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.4 }));
+    incenseBase.position.set(9, 1.75, 0);
+    muscatGroup.add(incenseBase);
+    const incenseGlow = new THREE.PointLight(0xf59e0b, 1.5, 22);
+    incenseGlow.position.set(9, 4.0, 0);
+    muscatGroup.add(incenseGlow);
+    muscatGroup.position.set(150, 0, 80);
+    scene.add(muscatGroup);
+
+    // Z. JERUSALEM AL-QUDS HISTORIC STONE HAVEN (Location: [-80, 0, 0])
+    const jerusalemGroup = new THREE.Group();
+    // Ancient Limestone Gateway
+    const jGate = new THREE.Mesh(new THREE.BoxGeometry(18, 9, 5), new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.9 }));
+    jGate.position.set(0, 4.5, 0);
+    jerusalemGroup.add(jGate);
+    // Golden Octagonal Dome Pavilion
+    const jPavilion = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 5, 8), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+    jPavilion.position.set(0, 9.5, 0);
+    jerusalemGroup.add(jPavilion);
+    const jGoldDome = new THREE.Mesh(new THREE.SphereGeometry(4.6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.2, metalness: 0.9 }));
+    jGoldDome.position.set(0, 12, 0);
+    jerusalemGroup.add(jGoldDome);
+    // Shaded Olive Grove Trees
+    [-6, 6].forEach((ox) => {
+      const oliveTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 4.5, 6), new THREE.MeshStandardMaterial({ color: 0x475569 }));
+      oliveTrunk.position.set(ox, 2.25, 7);
+      jerusalemGroup.add(oliveTrunk);
+      const oliveFoliage = new THREE.Mesh(new THREE.DodecahedronGeometry(2.2), new THREE.MeshStandardMaterial({ color: 0x4d7c0f }));
+      oliveFoliage.position.set(ox, 5.5, 7);
+      jerusalemGroup.add(oliveFoliage);
+    });
+    jerusalemGroup.position.set(-80, 0, 0);
+    scene.add(jerusalemGroup);
+
+    // AA. KUALA LUMPUR MINARET TOWERS (Location: [-80, 0, -65])
+    const klGroup = new THREE.Group();
+    // Contemporary Twin Emerald Minaret Spires
+    [-5.5, 5.5].forEach((kx) => {
+      const klTower = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.4, 26, 8), new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3, metalness: 0.7 }));
+      klTower.position.set(kx, 13, 0);
+      klGroup.add(klTower);
+      const klSpire = new THREE.Mesh(new THREE.ConeGeometry(1.6, 6.5, 8), new THREE.MeshStandardMaterial({ color: 0x34d399, metalness: 0.8 }));
+      klSpire.position.set(kx, 29, 0);
+      klGroup.add(klSpire);
+    });
+    // Skybridge connecting twin spires
+    const klBridge = new THREE.Mesh(new THREE.BoxGeometry(11, 1.2, 2.2), new THREE.MeshStandardMaterial({ color: 0x047857, metalness: 0.8 }));
+    klBridge.position.set(0, 16, 0);
+    klGroup.add(klBridge);
+    // Lotus Reflection Pool
+    const klPool = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.9 }));
+    klPool.position.set(0, 0.2, 8);
+    klGroup.add(klPool);
+    klGroup.position.set(-80, 0, -65);
+    scene.add(klGroup);
+
+    // AB. DAKAR ATLANTIC CORNICHE & TERANGA MONUMENT (Location: [25, 0, -165])
+    const dakarGroup = new THREE.Group();
+    // Coastal Bluff Minaret Pavilion
+    const dakarTower = new THREE.Mesh(new THREE.BoxGeometry(6, 18, 6), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.4 }));
+    dakarTower.position.set(0, 9, 0);
+    dakarGroup.add(dakarTower);
+    const dakarRoof = new THREE.Mesh(new THREE.ConeGeometry(4.2, 5.0, 4), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
+    dakarRoof.rotation.y = Math.PI / 4;
+    dakarRoof.position.set(0, 20.5, 0);
+    dakarGroup.add(dakarRoof);
+    // Teranga Flame Monument Bowl
+    const terangaPedestal = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.4, 3.2, 8), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+    terangaPedestal.position.set(7, 1.6, 0);
+    dakarGroup.add(terangaPedestal);
+    const terangaFlame = new THREE.PointLight(0xf97316, 2.0, 25);
+    terangaFlame.position.set(7, 4.0, 0);
+    dakarGroup.add(terangaFlame);
+    dakarGroup.position.set(25, 0, -165);
+    scene.add(dakarGroup);
+
+    // AC. CORDOBA GREAT MOSQUE PATIO & ARCHES (Location: [75, 0, -55])
+    const cordobaGroup = new THREE.Group();
+    // Andalusian Horseshoe Colonnade Wall
+    const cordobaWall = new THREE.Mesh(new THREE.BoxGeometry(22, 8, 4), new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.6 }));
+    cordobaWall.position.set(0, 4, 0);
+    cordobaGroup.add(cordobaWall);
+    // White/Red Alternating Voussoir Pillars
+    for (let cx = -8; cx <= 8; cx += 4) {
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6, 8), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
+      col.position.set(cx, 3, 2.2);
+      cordobaGroup.add(col);
+    }
+    // Patio de los Naranjos (Fragrant Orange Trees)
+    [-5, 5].forEach((ox) => {
+      const orangeTree = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 4.0, 6), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+      orangeTree.position.set(ox, 2.0, 7);
+      cordobaGroup.add(orangeTree);
+      const orangeLeaves = new THREE.Mesh(new THREE.SphereGeometry(1.8, 8, 8), new THREE.MeshStandardMaterial({ color: 0x15803d }));
+      orangeLeaves.position.set(ox, 4.8, 7);
+      cordobaGroup.add(orangeLeaves);
+    });
+    cordobaGroup.position.set(75, 0, -55);
+    scene.add(cordobaGroup);
+
+    // AD. BAGHDAD ROUND CITY PALACE & ROTUNDA (Location: [-135, 0, -35])
+    const baghdadGroup = new THREE.Group();
+    // Circular Palace Wall
+    const baghdadBase = new THREE.Mesh(new THREE.CylinderGeometry(9, 10, 7, 16), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.5 }));
+    baghdadBase.position.set(0, 3.5, 0);
+    baghdadGroup.add(baghdadBase);
+    // Turquoise Rotunda Cupola
+    const baghdadCupola = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.3 }));
+    baghdadCupola.position.set(0, 7, 0);
+    baghdadGroup.add(baghdadCupola);
+    baghdadGroup.position.set(-135, 0, -35);
+    scene.add(baghdadGroup);
+
+    // AE. KANO ANCIENT WALLS & DYE PITS (Location: [2, 0, 22])
+    const kanoGroup = new THREE.Group();
+    // Sahelian Clay City Wall
+    const kanoWall = new THREE.Mesh(new THREE.BoxGeometry(16, 5, 2.5), new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.9 }));
+    kanoWall.position.set(0, 2.5, 0);
+    kanoGroup.add(kanoWall);
+    // Kofar Mata Indigo Dye Vats
+    [-3, 3].forEach((vx) => {
+      const vat = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 0.9, 0.8, 10), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.4 }));
+      vat.position.set(vx, 0.4, 4);
+      kanoGroup.add(vat);
+    });
+    kanoGroup.position.set(2, 0, 22);
+    scene.add(kanoGroup);
+
+    // AF. BUKHARA KALYAN MINARET BEACON (Location: [135, 0, 35])
+    const bukharaGroup = new THREE.Group();
+    const kalyanTower = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 3.2, 22, 12), new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.7 }));
+    kalyanTower.position.set(0, 11, 0);
+    bukharaGroup.add(kalyanTower);
+    const kalyanLantern = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.0, 3, 12), new THREE.MeshStandardMaterial({ color: 0x06b6d4 }));
+    kalyanLantern.position.set(0, 23.5, 0);
+    bukharaGroup.add(kalyanLantern);
+    const kalyanLight = new THREE.PointLight(0xf59e0b, 1.8, 28);
+    kalyanLight.position.set(0, 24, 0);
+    bukharaGroup.add(kalyanLight);
+    bukharaGroup.position.set(135, 0, 35);
+    scene.add(bukharaGroup);
+
+    // AG. MAKKAH AL-MUKARRAMAH SANCTUARY PRAYER TERRACE (Location: [0, 0, -85])
+    const makkahGroup = new THREE.Group();
+    const makkahTerrace = new THREE.Mesh(new THREE.BoxGeometry(32, 0.5, 24), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.1 }));
+    makkahTerrace.position.set(0, 0.25, 0);
+    makkahGroup.add(makkahTerrace);
+    // Colonnade Pillars with Golden Mihrab Arch
+    [-12, 12].forEach((px) => {
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 9, 8), new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.2 }));
+      col.position.set(px, 4.5, -9);
+      makkahGroup.add(col);
+    });
+    const makkahMihrab = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 2), new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.5 }));
+    makkahMihrab.position.set(0, 4, -10);
+    makkahGroup.add(makkahMihrab);
+    const makkahGlow = new THREE.PointLight(0xfef08a, 2.2, 35);
+    makkahGlow.position.set(0, 7, -8);
+    makkahGroup.add(makkahGlow);
+    makkahGroup.position.set(0, 0, -85);
+    scene.add(makkahGroup);
+
     // S. METROPOLIS PERIMETER BOUNDARY PYLONS (Marking city edge at x: ±230, z: ±230)
     [
       [-230, -230], [230, -230], [-230, 230], [230, 230],
@@ -4274,6 +5288,21 @@ export default function ThreeGameWorld({
       { id: 'obs_zahra', name: 'Al-Zahra Youth Academy', type: 'building', penalty: 5, minX: -85.0, maxX: -55.0, minZ: 127.0, maxZ: 153.0 },
       { id: 'obs_quran', name: 'Dar Al-Quran Conservatory', type: 'building', penalty: 5, minX: 57.0, maxX: 83.0, minZ: -141.0, maxZ: -119.0 },
       { id: 'obs_marina', name: 'Grand Marina Waterfront Pier', type: 'building', penalty: 5, minX: -172.0, maxX: -148.0, minZ: -26.0, maxZ: 26.0 },
+      // Global Islamic Metropolises & Citadels
+      { id: 'obs_lagos', name: 'Lagos Coastal City & Lekki Pier', type: 'building', penalty: 5, minX: -188.0, maxX: -162.0, minZ: 48.0, maxZ: 82.0 },
+      { id: 'obs_kwara', name: 'Kwara Cultural Citadel & Ilorin Gates', type: 'building', penalty: 5, minX: 47.0, maxX: 63.0, minZ: 77.0, maxZ: 93.0 },
+      { id: 'obs_istanbul', name: 'Istanbul Bosphorus Imperial Mosque', type: 'building', penalty: 5, minX: 106.0, maxX: 134.0, minZ: -138.0, maxZ: -112.0 },
+      { id: 'obs_samarkand', name: 'Samarkand Silk Road Registan Iwan', type: 'building', penalty: 5, minX: -163.0, maxX: -137.0, minZ: -98.0, maxZ: -72.0 },
+      { id: 'obs_zanzibar', name: 'Zanzibar Stone Town & Dhow Pier', type: 'building', penalty: 5, minX: -188.0, maxX: -162.0, minZ: -72.0, maxZ: -48.0 },
+      { id: 'obs_muscat', name: 'Muscat Gulf Citadel & Watchtower', type: 'building', penalty: 5, minX: 142.0, maxX: 158.0, minZ: 72.0, maxZ: 88.0 },
+      { id: 'obs_jerusalem', name: 'Jerusalem Al-Quds Historic Haven', type: 'building', penalty: 5, minX: -91.0, maxX: -69.0, minZ: -8.0, maxZ: 8.0 },
+      { id: 'obs_kl', name: 'Kuala Lumpur Minaret Towers', type: 'building', penalty: 5, minX: -92.0, maxX: -68.0, minZ: -76.0, maxZ: -54.0 },
+      { id: 'obs_dakar', name: 'Dakar Atlantic Corniche & Teranga', type: 'building', penalty: 5, minX: 18.0, maxX: 32.0, minZ: -174.0, maxZ: -156.0 },
+      { id: 'obs_cordoba', name: 'Cordoba Great Mosque Patio', type: 'building', penalty: 5, minX: 63.0, maxX: 87.0, minZ: -67.0, maxZ: -43.0 },
+      { id: 'obs_baghdad', name: 'Baghdad Round City Rotunda', type: 'building', penalty: 5, minX: -146.0, maxX: -124.0, minZ: -46.0, maxZ: -24.0 },
+      { id: 'obs_kano', name: 'Kano Ancient Walls & Indigo Dye Pits', type: 'building', penalty: 5, minX: -8.0, maxX: 12.0, minZ: 14.0, maxZ: 30.0 },
+      { id: 'obs_bukhara', name: 'Bukhara Kalyan Minaret Beacon', type: 'building', penalty: 5, minX: 128.0, maxX: 142.0, minZ: 28.0, maxZ: 42.0 },
+      { id: 'obs_makkah', name: 'Makkah Al-Mukarramah Sanctuary', type: 'building', penalty: 5, minX: -18.0, maxX: 18.0, minZ: -99.0, maxZ: -71.0 },
     ];
 
     const animate = () => {
@@ -4880,43 +5909,76 @@ export default function ThreeGameWorld({
       const px = playerPositionRef.current.x;
       const py = playerPositionRef.current.y;
       const pz = playerPositionRef.current.z;
-      let newDist = 'Central Boulevard';
-      if (Math.hypot(px - 130, pz - (-60)) < 26) {
-        newDist = 'Al-Andalus East Grand Masjid';
+      let newDist = 'Central Boulevard & Esplanade';
+      // Global Metropolises & Historic Citadels
+      if (Math.hypot(px - (-175), pz - 65) < 32) {
+        newDist = 'Lagos Coastal City & Eko Haven';
+      } else if (Math.hypot(px - 55, pz - 85) < 28) {
+        newDist = 'Kwara Cultural City & Ilorin Citadel';
+      } else if (Math.hypot(px, pz - (-85)) < 26) {
+        newDist = 'Makkah Al-Mukarramah Sanctuary';
       } else if (Math.hypot(px - (-130), pz - 90) < 26) {
-        newDist = 'Al-Madinah Oasis Masjid';
+        newDist = 'Al-Madinah Oasis & Palm Grove';
+      } else if (Math.hypot(px - 110, pz - 120) < 28) {
+        newDist = 'Cairo Historic Citadel & Nile Esplanade';
+      } else if (Math.hypot(px - 120, pz - (-125)) < 30) {
+        newDist = 'Istanbul Bosphorus Imperial City';
+      } else if (Math.hypot(px - (-150), pz - (-85)) < 30) {
+        newDist = 'Samarkand Silk Road Registan Citadel';
+      } else if (Math.hypot(px - (-175), pz - (-60)) < 30) {
+        newDist = 'Zanzibar Stone Town Ocean Haven';
+      } else if (Math.hypot(px - 150, pz - 80) < 28) {
+        newDist = 'Muscat Gulf Citadel & Corniche';
+      } else if (Math.hypot(px - (-75), pz - (-150)) < 28) {
+        newDist = 'Fez Ancient Medina & Qarawiyyin';
+      } else if (Math.hypot(px - 75, pz - (-55)) < 26) {
+        newDist = 'Cordoba Great Mosque & Guadalquivir';
+      } else if (Math.hypot(px - (-135), pz - (-35)) < 28) {
+        newDist = 'Baghdad Round City & Tigris Haven';
+      } else if (Math.hypot(px - 2, pz - 22) < 20) {
+        newDist = 'Kano Ancient Walls & Kurmi Souq';
+      } else if (Math.hypot(px - 25, pz - (-165)) < 28) {
+        newDist = 'Dakar Atlantic Corniche & Teranga';
+      } else if (Math.hypot(px - 135, pz - 35) < 26) {
+        newDist = 'Bukhara Silk Oasis & Kalyan Citadel';
+      } else if (Math.hypot(px - (-80), pz) < 26) {
+        newDist = 'Jerusalem Al-Quds Historic Haven';
+      } else if (Math.hypot(px - (-80), pz - (-65)) < 26) {
+        newDist = 'Kuala Lumpur Minaret Towers City';
+      } else if (Math.hypot(px - 130, pz - (-60)) < 26) {
+        newDist = 'Al-Andalus East Grand Masjid';
       } else if (Math.hypot(px - (-110), pz - (-110)) < 26) {
         newDist = 'Al-Qarawiyyin Historical Masjid';
-      } else if (Math.hypot(px - 110, pz - 120) < 26) {
-        newDist = 'Sultan Baybars South Masjid';
       } else if (Math.hypot(px - 140, pz - 40) < 24) {
-        newDist = 'Ibn Sina Medical School';
+        newDist = 'Ibn Sina Medical School & Research';
       } else if (Math.hypot(px - (-140), pz - (-40)) < 24) {
-        newDist = 'Al-Khwarizmi Astronomy Academy';
+        newDist = 'Al-Khwarizmi Astronomy & STEM Academy';
       } else if (Math.hypot(px - (-70), pz - 140) < 24) {
-        newDist = 'Al-Zahra Youth Academy';
+        newDist = 'Al-Zahra Youth & International Academy';
       } else if (Math.hypot(px - 70, pz - (-130)) < 24) {
-        newDist = 'Dar Al-Quran Conservatory';
+        newDist = 'Dar Al-Quran & Calligraphy Conservatory';
       } else if (Math.hypot(px - 150, pz - (-130)) < 28) {
         newDist = 'Oasis Botanical Palm Grove';
       } else if (Math.hypot(px - (-160), pz) < 28) {
         newDist = 'Grand Marina Harbor Waterfront';
       } else if (pz < -45 && Math.abs(px) < 24) {
-        newDist = 'Grand Mosque Sanctuary';
+        newDist = 'Grand Mosque & Mihrab Sanctuary';
       } else if (px < -35 && pz > 38 && px > -65 && pz < 65) {
         newDist = 'Baraka Football Arena';
       } else if (px < -14 && pz > 10 && px > -45 && pz < 35) {
-        newDist = 'Souq Al-Madina Bazaar';
+        newDist = 'Souq Al-Madina Marketplace';
       } else if (px < -15 && pz < -30 && px > -35 && pz > -50) {
         newDist = 'Madrasa Quran Academy';
       } else if (px < -35 && pz < -10 && px > -65 && pz > -38) {
         newDist = 'Bayt Al-Hikma University';
       } else if (px > 12 && pz > 10 && px < 40 && pz < 35) {
-        newDist = 'Residential Quarter';
+        newDist = 'Residential Quarter & Private Homes';
       } else if (px > 20 && pz < -15 && px < 48 && pz > -40) {
-        newDist = 'Public Park & Fountain';
+        newDist = 'Public Park & Central Fountain';
+      } else if (Math.abs(px) < 25 && Math.abs(pz) < 25) {
+        newDist = 'Abuja Metropolis Central Capital';
       } else {
-        newDist = 'Central Boulevard';
+        newDist = 'Central Boulevard & Esplanade';
       }
       if (newDist !== currentDistrictRef.current) {
         currentDistrictRef.current = newDist;
@@ -5025,6 +6087,184 @@ export default function ThreeGameWorld({
             setCoins((c) => c + 15);
             showToast('Enjoyed the Peaceful Ocean Breeze at Grand Marina');
           },
+        };
+      }
+      // Lagos Coastal City & Eko Haven
+      else if (Math.hypot(px - (-175), pz - 65) < 22) {
+        detectedPrompt = {
+          text: 'STROLL LEKKI OCEAN PROMENADE IN LAGOS',
+          subText: 'Gaze across Atlantic waters by the Lekki lighthouse (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(520, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Welcomed to Lagos Coastal City & Eko Haven 🌊');
+          },
+        };
+      }
+      // Kwara Cultural Citadel & Ilorin
+      else if (Math.hypot(px - 55, pz - 85) < 20) {
+        detectedPrompt = {
+          text: 'EXPLORE ILORIN ARTISAN POTTERY SOUQ',
+          subText: 'Admire traditional terracotta craftsmanship & Emirate heritage (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(560, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Explored Kwara Cultural Citadel & Ilorin Souq 🏺');
+          },
+        };
+      }
+      // Istanbul Bosphorus Imperial City
+      else if (Math.hypot(px - 120, pz - (-125)) < 22) {
+        detectedPrompt = {
+          text: 'GAZE AT BOSPHORUS IMPERIAL STRAIT',
+          subText: 'Admire Ottoman dome skyline and maritime strait breeze (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(620, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Gazed at Istanbul Bosphorus Imperial Skyline 🕌');
+          },
+        };
+      }
+      // Samarkand Silk Road Registan Citadel
+      else if (Math.hypot(px - (-150), pz - (-85)) < 22) {
+        detectedPrompt = {
+          text: 'ADMIRE REGISTAN AZURE MAJOLICA TILES',
+          subText: 'Contemplate monumental Silk Road iwan portal arch (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(640, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Admired Samarkand Silk Road Registan Citadel 🏛️');
+          },
+        };
+      }
+      // Zanzibar Stone Town Ocean Haven
+      else if (Math.hypot(px - (-175), pz - (-60)) < 22) {
+        detectedPrompt = {
+          text: 'INSPECT DHOW SAILS IN ZANZIBAR STONE TOWN',
+          subText: 'Admire carved coral stone gates & Indian Ocean dhow piers (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(580, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Inspected Zanzibar Stone Town Ocean Haven ⛵');
+          },
+        };
+      }
+      // Muscat Gulf Citadel & Corniche
+      else if (Math.hypot(px - 150, pz - 80) < 20) {
+        detectedPrompt = {
+          text: 'VISIT MUSCAT GULF CORNICHE WATCHTOWER',
+          subText: 'View Omani fortress ramparts & incense burner monument (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(540, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Visited Muscat Gulf Citadel & Corniche 🏰');
+          },
+        };
+      }
+      // Jerusalem Al-Quds Historic Haven
+      else if (Math.hypot(px - (-80), pz) < 20) {
+        detectedPrompt = {
+          text: 'CONTEMPLATE ANCIENT AL-QUDS STONE ARCHES',
+          subText: 'Walk through shaded olive trees by the golden dome (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(660, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Contemplated Jerusalem Al-Quds Historic Haven 🌿');
+          },
+        };
+      }
+      // Kuala Lumpur Minaret Towers
+      else if (Math.hypot(px - (-80), pz - (-65)) < 20) {
+        detectedPrompt = {
+          text: 'VIEW KUALA LUMPUR MINARET TOWERS',
+          subText: 'Admire soaring emerald twin spires & lotus reflection pool (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(600, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Viewed Kuala Lumpur Minaret Towers 🏙️');
+          },
+        };
+      }
+      // Dakar Atlantic Corniche & Teranga
+      else if (Math.hypot(px - 25, pz - (-165)) < 20) {
+        detectedPrompt = {
+          text: 'EXPERIENCE DAKAR TERANGA HOSPITALITY',
+          subText: 'Gaze over Atlantic ocean bluff by the Teranga monument (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(580, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Experienced Dakar Atlantic Teranga Hospitality 🔥');
+          },
+        };
+      }
+      // Cordoba Great Mosque Patio
+      else if (Math.hypot(px - 75, pz - (-55)) < 20) {
+        detectedPrompt = {
+          text: 'WALK CORDOBA PATIO DE LOS NARANJOS',
+          subText: 'Fragrant orange trees & iconic red-and-white horseshoe arches (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(560, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Walked Cordoba Great Mosque Arches & Patio 🍊');
+          },
+        };
+      }
+      // Baghdad Round City Rotunda
+      else if (Math.hypot(px - (-135), pz - (-35)) < 20) {
+        detectedPrompt = {
+          text: 'STUDY SCHOLARSHIP AT BAGHDAD ROTUNDA',
+          subText: 'Ancient scientific center overlooking the Tigris riverfront (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(620, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Studied at Baghdad Round City Rotunda 📜');
+          },
+        };
+      }
+      // Kano Ancient Walls & Dye Pits
+      else if (Math.hypot(px - 2, pz - 22) < 16) {
+        detectedPrompt = {
+          text: 'VISIT HISTORIC KOFAR MATA DYE PITS',
+          subText: 'Centuries-old indigo dye craft by the ancient Emirate walls (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(520, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Visited Kano Ancient Walls & Kofar Mata Dye Pits 🧵');
+          },
+        };
+      }
+      // Bukhara Kalyan Minaret Beacon
+      else if (Math.hypot(px - 135, pz - 35) < 20) {
+        detectedPrompt = {
+          text: 'BEHOLD BUKHARA KALYAN MINARET BEACON',
+          subText: 'Ancient Silk Oasis beacon tower & turquoise dome (+25 Coins)',
+          actionKey: 'E',
+          onExecute: () => {
+            playChime(640, 'sine', 0.3);
+            setCoins((c) => c + 25);
+            showToast('Beheld Bukhara Kalyan Minaret Beacon 🕌');
+          },
+        };
+      }
+      // Makkah Sanctuary Prayer Terrace
+      else if (Math.hypot(px, pz - (-85)) < 22) {
+        detectedPrompt = {
+          text: 'PRAY SALAH ON MAKKAH SANCTUARY TERRACE',
+          subText: 'Join congregation on polished white marble terrace facing Qibla (+35 Coins)',
+          actionKey: 'P',
+          onExecute: handleActionPray,
         };
       }
       // A. Central Mosque Sanctuary (Near Mihrab or Prayer Carpets)
@@ -5529,13 +6769,65 @@ export default function ThreeGameWorld({
           </div>
         </div>
 
-        {/* Center: Dedicated Coin Balance Section & Qibla Compass HUD */}
-        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto shrink-0">
+        {/* Center: Dedicated Coin Balance Section & Qibla Compass HUD & Atmosphere Mode Toggle */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto shrink-0">
           {/* Small, Dedicated Real-time Continuous Coin Balance Section */}
           <CoinBalanceDisplay coins={coins} />
 
+          {/* Dynamic Day/Time Atmosphere Mode Toggle (Morning, Afternoon, Night) */}
+          <div 
+            className="flex items-center bg-black/80 border border-white/15 backdrop-blur-md rounded-xl sm:rounded-2xl p-0.5 sm:p-1 shadow-2xl shrink-0"
+            role="group"
+            aria-label="Time of day atmosphere toggle"
+          >
+            {/* Morning Option */}
+            <button
+              type="button"
+              onClick={() => handleSetTimeMode('morning')}
+              className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                timeMode === 'morning'
+                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/30'
+                  : 'text-zinc-400 hover:text-amber-300'
+              }`}
+              title="Switch to Morning Dawn Atmosphere"
+            >
+              <span className="text-xs">🌅</span>
+              <span className="hidden sm:inline">MORNING</span>
+            </button>
+
+            {/* Afternoon Option */}
+            <button
+              type="button"
+              onClick={() => handleSetTimeMode('afternoon')}
+              className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                timeMode === 'afternoon'
+                  ? 'bg-sky-400 text-black shadow-md shadow-sky-400/30'
+                  : 'text-zinc-400 hover:text-sky-300'
+              }`}
+              title="Switch to Afternoon Daylight Atmosphere"
+            >
+              <span className="text-xs">☀️</span>
+              <span className="hidden sm:inline">AFTERNOON</span>
+            </button>
+
+            {/* Night Option */}
+            <button
+              type="button"
+              onClick={() => handleSetTimeMode('night')}
+              className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                timeMode === 'night'
+                  ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
+                  : 'text-zinc-400 hover:text-indigo-300'
+              }`}
+              title="Switch to Nocturnal Night Atmosphere"
+            >
+              <span className="text-xs">🌙</span>
+              <span className="hidden sm:inline">NIGHT</span>
+            </button>
+          </div>
+
           {/* Live World Status & Qibla Compass HUD (Desktop / Tablet) */}
-          <div className="hidden lg:flex items-center gap-3 bg-black/70 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-2xl shrink-0">
+          <div className="hidden xl:flex items-center gap-3 bg-black/70 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-2xl shrink-0">
             <div className="flex items-center gap-2">
               <Compass className="w-4 h-4 text-emerald-400 animate-spin-slow" />
               <span className="text-[10px] font-hud font-bold text-white uppercase tracking-wider">QIBLA: NORTH</span>
@@ -5548,8 +6840,18 @@ export default function ThreeGameWorld({
           </div>
         </div>
 
-        {/* Top Right: View Controls & Hamburger Drawer Toggle */}
+        {/* Top Right: View Controls, Camera/Screenshot & Hamburger Drawer Toggle */}
         <div className="flex items-center gap-1 sm:gap-2 pointer-events-auto shrink-0">
+          {/* Quick Screenshot / Camera Button */}
+          <button
+            type="button"
+            onClick={handleTakeScreenshot}
+            className="p-1.5 sm:px-3 sm:py-2 bg-black/70 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-400 backdrop-blur-md text-white rounded-xl transition-all cursor-pointer shadow-lg flex items-center justify-center gap-1.5 active:scale-95 shrink-0"
+            title="Screenshot Dashboard & Game Page"
+          >
+            <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+            <span className="hidden md:inline text-xs font-bold uppercase tracking-wider">CAMERA</span>
+          </button>
           {/* Quick Chat Open Toggle Button */}
           <button
             onClick={() => {
@@ -5738,12 +7040,14 @@ export default function ThreeGameWorld({
             }}
             className="pointer-events-none z-10 flex flex-col items-center animate-fadeIn"
           >
-            <div className="bg-black/80 border border-emerald-500/40 text-white px-3 py-1 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span className="uppercase text-white tracking-wider">{tag.name}</span>
-              <span className="text-[9px] font-hud text-zinc-400">({tag.city})</span>
+            {/* Very small compact card showing citizen name and where they come from */}
+            <div className="bg-black/90 border border-emerald-400/50 text-white px-1.5 py-0.5 rounded shadow-lg backdrop-blur-md flex items-center gap-1 whitespace-nowrap leading-none select-none text-[8px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_4px_#34d399]" />
+              <span className="uppercase text-white tracking-tight">{tag.name}</span>
+              <span className="text-[7px] font-hud text-emerald-300/80 font-normal">({tag.city})</span>
             </div>
-            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-emerald-500/60 mt-0.5"></div>
+            {/* Small downward pointer arrow */}
+            <div className="w-0 h-0 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent border-t-[4px] border-t-emerald-400/60 mt-0.5"></div>
           </div>
         );
       })}
@@ -6847,14 +8151,34 @@ export default function ThreeGameWorld({
                   </button>
                 </div>
 
-                <div>
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">CITIZEN NAME</label>
-                  <input
-                    type="text"
-                    value={userProfile.name}
-                    onChange={(e) => onUpdateProfile && onUpdateProfile({ name: e.target.value })}
-                    className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-bold"
-                  />
+                <div className="bg-black/50 border border-white/10 rounded-2xl p-3 space-y-2">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+                    EDIT CITIZEN NAME
+                  </label>
+                  <p className="text-[9px] text-zinc-400">
+                    Your name will be visible to other players in the city above your avatar.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveName();
+                      }}
+                      placeholder="Enter citizen name..."
+                      maxLength={24}
+                      className="flex-1 bg-black/60 border border-white/20 focus:border-emerald-400 rounded-xl px-3 py-1.5 text-xs text-white font-bold outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveName}
+                      className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase tracking-wider rounded-xl cursor-pointer transition-all active:scale-95 shadow-md flex items-center gap-1"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>SAVE</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -6975,6 +8299,50 @@ export default function ThreeGameWorld({
 
             {menuTab === 'settings' && (
               <div className="space-y-2 text-[10px] font-bold uppercase text-zinc-300">
+                {/* Atmosphere Mode Selector */}
+                <div className="p-2.5 bg-black/50 rounded-xl border border-white/10 space-y-1.5">
+                  <span className="flex items-center gap-1.5 text-[9px] text-zinc-300">
+                    <Sun className="w-3.5 h-3.5 text-amber-400" /> ATMOSPHERE LIGHTING MODE
+                  </span>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['morning', 'afternoon', 'night'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => handleSetTimeMode(m)}
+                        className={`py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          timeMode === m
+                            ? m === 'morning'
+                              ? 'bg-amber-500 text-black'
+                              : m === 'afternoon'
+                              ? 'bg-sky-400 text-black'
+                              : 'bg-indigo-500 text-white'
+                            : 'bg-white/5 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        {m === 'morning' ? '🌅 MORNING' : m === 'afternoon' ? '☀️ AFTERNOON' : '🌙 NIGHT'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dashboard Screenshot Button */}
+                <div className="p-2.5 bg-black/50 rounded-xl border border-white/10 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-emerald-400" /> SNAP SCREENSHOT
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setTimeout(handleTakeScreenshot, 150);
+                    }}
+                    className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-black text-[9px] font-black rounded-lg uppercase cursor-pointer"
+                  >
+                    CAPTURE
+                  </button>
+                </div>
+
                 <div className="flex items-center justify-between p-2 bg-black/50 rounded-xl border border-white/10">
                   <span className="flex items-center gap-1.5"><Maximize2 className="w-3 h-3 text-emerald-400" /> CAMERA VIEW</span>
                   <button
@@ -7331,6 +8699,72 @@ export default function ThreeGameWorld({
         }`}
         aria-hidden="true"
       />
+
+      {/* Camera Shutter Flash Visual FX */}
+      {isShutterFlashing && (
+        <div className="fixed inset-0 z-[1000] bg-white pointer-events-none animate-shutter-flash" />
+      )}
+
+      {/* High-Resolution Screenshot Captured Preview Modal */}
+      {screenshotPreview && (
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn pointer-events-auto">
+          <div className="bg-[#10141f] border border-emerald-500/50 rounded-3xl max-w-lg w-full p-4 sm:p-5 shadow-[0_20px_60px_rgba(0,0,0,0.95)] space-y-3.5 relative">
+            <button
+              type="button"
+              onClick={() => setScreenshotPreview(null)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              title="Close Preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md">
+                <Camera className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black uppercase text-white tracking-wider">
+                  DASHBOARD SCREENSHOT CAPTURED
+                </h4>
+                <span className="text-[10px] text-emerald-400 font-hud">
+                  Saved automatically to your device downloads!
+                </span>
+              </div>
+            </div>
+
+            {/* Image Preview */}
+            <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-black/80 aspect-video shadow-inner">
+              <img
+                src={screenshotPreview}
+                alt="Baraka City Screenshot"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <p className="text-[10px] text-zinc-400 leading-relaxed">
+              Snapshot saved directly to your phone / computer storage. On mobile phones, you can also long-press the image above and tap &ldquo;Save to Photos&rdquo;.
+            </p>
+
+            <div className="flex items-center gap-2 pt-1">
+              <a
+                href={screenshotPreview}
+                download={`baraka_city_dashboard_${userProfile.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}.png`}
+                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all text-center flex items-center justify-center gap-1.5 shadow-lg active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                <span>DOWNLOAD AGAIN</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setScreenshotPreview(null)}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

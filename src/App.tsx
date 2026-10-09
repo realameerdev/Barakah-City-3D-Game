@@ -142,15 +142,22 @@ export default function App() {
   // Customizer state preview inside dashboard
   const [customCategory, setCustomCategory] = useState<'Face' | 'Hair' | 'Skin' | 'Outfit' | 'Accessories' | 'Expression'>('Outfit');
   const [selectedOutfit, setSelectedOutfit] = useState('Royal Emerald Jalabiyya');
+  const [userName, setUserName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('baraka_citizen_name');
+      if (saved && saved.trim()) return saved.trim();
+    }
+    return 'Ibrahim_NG';
+  });
 
   // Real Multi-User Server Connection
   const userProfile = React.useMemo(() => ({
-    name: 'Ibrahim_NG',
+    name: userName,
     citizenId: 'cit-84920',
     city: selectedWorld.includes('Lagos') ? 'Lagos' : selectedWorld.includes('Makkah') ? 'Makkah' : selectedWorld.includes('Cairo') ? 'Cairo' : 'Abuja',
     world: selectedWorld,
     outfit: selectedOutfit,
-  }), [selectedOutfit, selectedWorld]);
+  }), [userName, selectedOutfit, selectedWorld]);
 
   const {
     isConnected,
@@ -293,7 +300,10 @@ export default function App() {
             onExitToLanding={() => navigateTo('landing')}
             onUpdateProfile={(updates) => {
               if (updates.name) {
-                openModal('Name Updated', `Citizen name updated to ${updates.name}.`, 'profile');
+                setUserName(updates.name);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('baraka_citizen_name', updates.name);
+                }
               }
               if (updates.outfit) {
                 setSelectedOutfit(updates.outfit);

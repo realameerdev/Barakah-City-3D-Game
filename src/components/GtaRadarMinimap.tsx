@@ -15,6 +15,26 @@ interface LandmarkBlip {
 }
 
 const CITY_LANDMARKS: LandmarkBlip[] = [
+  // Global Cities & Historic Metropolises
+  { name: 'Abuja Capital', x: 0, z: 0, color: '#10b981', type: 'mosque' },
+  { name: 'Lagos Coastal City', x: -175, z: 65, color: '#38bdf8', type: 'marina' },
+  { name: 'Kwara Cultural Citadel', x: 55, z: 85, color: '#f59e0b', type: 'souq' },
+  { name: 'Makkah Sanctuary', x: 0, z: -85, color: '#fbbf24', type: 'mosque' },
+  { name: 'Al-Madinah Oasis', x: -130, z: 90, color: '#10b981', type: 'garden' },
+  { name: 'Cairo Citadel', x: 110, z: 120, color: '#eab308', type: 'mosque' },
+  { name: 'Istanbul Bosphorus', x: 120, z: -125, color: '#ec4899', type: 'marina' },
+  { name: 'Samarkand Silk Road', x: -150, z: -85, color: '#06b6d4', type: 'uni' },
+  { name: 'Zanzibar Stone Town', x: -175, z: -60, color: '#14b8a6', type: 'marina' },
+  { name: 'Muscat Gulf Citadel', x: 150, z: 80, color: '#8b5cf6', type: 'home' },
+  { name: 'Fez Ancient Medina', x: -75, z: -150, color: '#047857', type: 'mosque' },
+  { name: 'Cordoba Great Mosque', x: 75, z: -55, color: '#10b981', type: 'mosque' },
+  { name: 'Baghdad Round City', x: -135, z: -35, color: '#0284c7', type: 'uni' },
+  { name: 'Kano Ancient City', x: 2, z: 22, color: '#f59e0b', type: 'souq' },
+  { name: 'Dakar Atlantic Coast', x: 25, z: -165, color: '#06b6d4', type: 'marina' },
+  { name: 'Bukhara Silk Citadel', x: 135, z: 35, color: '#d97706', type: 'school' },
+  { name: 'Jerusalem Al-Quds', x: -80, z: 0, color: '#eab308', type: 'mosque' },
+  { name: 'Kuala Lumpur City', x: -80, z: -65, color: '#a855f7', type: 'garden' },
+
   // Masajids (Mosques)
   { name: 'Grand Mosque', x: 0, z: -58, color: '#10b981', type: 'mosque' },
   { name: 'Al-Andalus East Masjid', x: 130, z: -60, color: '#059669', type: 'mosque' },

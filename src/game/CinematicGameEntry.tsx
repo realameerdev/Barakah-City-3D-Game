@@ -3,10 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as THREE from 'three';
-import { Volume2, VolumeX, Compass, Users, ArrowRight, Eye, Play } from 'lucide-react';
-import RabbitLogo from '../components/RabbitLogo';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Volume2, VolumeX, Play, Pause, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
+
+// Photorealistic Islamic architectural & cultural showcase imagery from project
+import heroImg from '../assets/images/hero_avatar_mosque_1791286969661.jpg';
+import abujaImg from '../assets/images/world_abuja_1791286984830.jpg';
+import lagosImg from '../assets/images/world_lagos_1791287003842.jpg';
+import makkahImg from '../assets/images/world_makkah_1791287014819.jpg';
+import panoramicCityImg from '../assets/images/world_panoramic_city_1791287026807.jpg';
+import multiplayerSceneImg from '../assets/images/multiplayer_scene_1791287055254.jpg';
+import eventGuildImg from '../assets/images/event_guild_war_1791287082782.jpg';
+import eventMarketImg from '../assets/images/event_night_market_1791287095562.jpg';
+import customizerPreviewImg from '../assets/images/avatar_customizer_preview_1791287838619.jpg';
 
 interface CinematicGameEntryProps {
   onEnterWorld: (worldName?: string) => void;
@@ -15,57 +24,127 @@ interface CinematicGameEntryProps {
   initialWorld?: string;
 }
 
-interface MovingVehicle {
-  mesh: THREE.Group;
-  speed: number;
-  direction: THREE.Vector3;
-  pathStart: THREE.Vector3;
-  pathEnd: THREE.Vector3;
+// 8 Interactive Showcase Cards representing the real Baraka City dashboard & game features
+interface ShowcaseCard {
+  id: string;
+  category: string;
+  title: string;
+  subtitle: string;
+  highlight: string;
+  image: string;
+  stats: { label: string; value: string }[];
 }
 
-interface AutonomousAvatar {
-  mesh: THREE.Group;
-  name: string;
-  city: string;
-  role: string;
-  type: 'walker' | 'prayer' | 'talker' | 'sitter';
-  pathStart?: THREE.Vector3;
-  pathEnd?: THREE.Vector3;
-  direction?: number;
-  speed?: number;
-  partner?: THREE.Group;
-}
+const SHOWCASE_CARDS: ShowcaseCard[] = [
+  {
+    id: 'world-map',
+    category: '3D WORLD MAP & METROPOLISES',
+    title: 'Global Islamic Metropolises',
+    subtitle: 'Abuja · Lagos · Kwara · Makkah · Madinah · Cairo · Istanbul · Samarkand · Fez · Cordoba · Baghdad · Kano',
+    highlight: 'Open-World Travel',
+    image: panoramicCityImg,
+    stats: [
+      { label: 'Metropolises', value: '18 Live' },
+      { label: 'Atmosphere', value: 'Clear Day / Night' },
+    ],
+  },
+  {
+    id: 'avatar-wardrobe',
+    category: 'AVATAR & WARDROBE',
+    title: 'Custom Avatar & Attire',
+    subtitle: 'Royal Emerald Jalabiyya, Desert Kaftans, Hijabs & Kufis',
+    highlight: 'Modest Halal Styles',
+    image: customizerPreviewImg,
+    stats: [
+      { label: 'Wardrobe Sets', value: '32 Styles' },
+      { label: 'Customizer', value: 'Realtime 3D' },
+    ],
+  },
+  {
+    id: 'wealth-level',
+    category: 'ECONOMY & LEVEL SYSTEM',
+    title: 'Baraka Coins & Halal Wealth',
+    subtitle: 'Level 42 Al-Mu’allim · 28-Day Daily Prayer Streak',
+    highlight: 'Zero Gambling',
+    image: eventMarketImg,
+    stats: [
+      { label: 'Coins', value: '45,280 BRC' },
+      { label: 'Status', value: 'Al-Mu’allim' },
+    ],
+  },
+  {
+    id: 'jobs-quests',
+    category: 'CIVIC JOBS & SOUQ TRADING',
+    title: 'Jobs, Trades & Community Quests',
+    subtitle: 'Souq Merchant, City Architect, Library Scholar & Sadaqah',
+    highlight: 'Halal Income',
+    image: heroImg,
+    stats: [
+      { label: 'Daily Tasks', value: '12 Active' },
+      { label: 'Civic Guilds', value: 'Connected' },
+    ],
+  },
+  {
+    id: 'houses-cars',
+    category: 'ESTATE & PERFORMANCE CARS',
+    title: 'Private Villas & Highway Cars',
+    subtitle: 'Deadbolt Locks, Private Prayer Mat Room & City Sedans',
+    highlight: '1 User Per House',
+    image: abujaImg,
+    stats: [
+      { label: 'Residences', value: 'Private Villa' },
+      { label: 'Garage', value: 'Falcon Turbo' },
+    ],
+  },
+  {
+    id: 'nikah-family',
+    category: 'FAMILY & COMMUNITY BONDS',
+    title: 'Marriage & Family Endowment',
+    subtitle: 'Halal Nikah Registry, Shared Family Homes & Community Garden',
+    highlight: 'Family Friendly',
+    image: multiplayerSceneImg,
+    stats: [
+      { label: 'Community', value: '100k+ Strong' },
+      { label: 'Sadaqah', value: 'Ongoing Box' },
+    ],
+  },
+  {
+    id: 'events-tournaments',
+    category: 'ESPORTS & LIVE ARENA',
+    title: 'Ramadan Grand Championship',
+    subtitle: '$200,000 Grand Prize Pool, Cultural Football & Arena Matches',
+    highlight: 'Grand Prize Pool',
+    image: eventGuildImg,
+    stats: [
+      { label: 'Prize Pool', value: '$200,000' },
+      { label: 'Arena', value: 'Live Matches' },
+    ],
+  },
+  {
+    id: 'sanctuary-leaderboard',
+    category: 'SANCTUARY & CITIZEN RANKS',
+    title: 'Sanctuary Quiz & Leaderboards',
+    subtitle: 'Tariq_KSA (#1), Fatima_Lagos (#2), Amir_Cairo (#3)',
+    highlight: 'Global Ranks',
+    image: makkahImg,
+    stats: [
+      { label: 'Rank #1', value: '98.4% Accuracy' },
+      { label: 'Sanctuary', value: 'Makkah League' },
+    ],
+  },
+];
 
-// Helper: Compute aspect-aware responsive FOV and camera framing
-const calculateAdaptiveCamera = (w: number, h: number) => {
-  const aspect = w / Math.max(1, h);
-  let fov = 50;
-
-  if (aspect >= 2.2) {
-    // Ultrawide (21:9, 32:9)
-    fov = 46;
-  } else if (aspect >= 1.6) {
-    // Standard desktop (16:9, 16:10)
-    fov = 50;
-  } else if (aspect >= 1.25) {
-    // Landscape tablets, 4:3, laptops
-    fov = 56;
-  } else if (aspect >= 0.9) {
-    // Square / squarish screens
-    fov = 64;
-  } else if (aspect >= 0.65) {
-    // Portrait tablets (iPad, Galaxy Tab portrait)
-    fov = 70;
-  } else if (aspect >= 0.48) {
-    // Standard portrait phones (Pixel, Galaxy, iPhone standard)
-    fov = 78;
-  } else {
-    // Very tall/narrow phones (iPhone Pro Max, Galaxy Ultra, aspect < 0.48)
-    fov = 84;
-  }
-
-  return { fov, aspect };
-};
+// Floating golden light particles
+const PARTICLES = [
+  { left: '10%', delay: '0s', duration: '14s', size: 4 },
+  { left: '22%', delay: '2.5s', duration: '17s', size: 5 },
+  { left: '38%', delay: '1s', duration: '15s', size: 3.5 },
+  { left: '55%', delay: '4s', duration: '18s', size: 4.5 },
+  { left: '70%', delay: '1.8s', duration: '13s', size: 3.5 },
+  { left: '85%', delay: '3.2s', duration: '16s', size: 5 },
+  { left: '48%', delay: '6s', duration: '19s', size: 4 },
+  { left: '92%', delay: '5s', duration: '15s', size: 3 },
+];
 
 export default function CinematicGameEntry({
   onEnterWorld,
@@ -73,52 +152,103 @@ export default function CinematicGameEntry({
   onlineCount = 1420,
   initialWorld = 'Abuja Metropolis',
 }: CinematicGameEntryProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Responsive Stepped Loading Sequence: 0% -> 45% -> 75% -> 100%
-  const [loadingTarget, setLoadingTarget] = useState<number>(0);
+  // Stepped loading sequence: 0% -> 15% -> 45% -> 75% -> 100%
+  const [loadingStage, setLoadingStage] = useState<number>(0);
   const [displayedProgress, setDisplayedProgress] = useState<number>(0);
-  const [isGameReady, setIsGameReady] = useState(false);
-  const [isEntering, setIsEntering] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
-  const [selectedWorld, setSelectedWorld] = useState(initialWorld);
-  const [currentFocalArea, setCurrentFocalArea] = useState('Grand Mosque & Central Boulevard');
-  const [isInteractiveLook, setIsInteractiveLook] = useState(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isEntering, setIsEntering] = useState<boolean>(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(false);
 
-  // Stepped loading phase scheduler
+  // 3D Carousel Rotation & Drag Inertia State
+  const [isAutoRotating, setIsAutoRotating] = useState<boolean>(true);
+  const [isReducedMotion, setIsReducedMotion] = useState<boolean>(false);
+  const [activeCardIndex, setActiveCardIndex] = useState<number>(0);
+
+  // Carousel interactive animation refs
+  const carouselContainerRef = useRef<HTMLDivElement>(null);
+  const rotationYRef = useRef<number>(0);
+  const tiltXRef = useRef<number>(0);
+  const velocityRef = useRef<number>(0);
+  const isDraggingRef = useRef<boolean>(false);
+  const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const resumeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+
+  // Audio synthesizer ref
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Responsive ring radius state
+  const [cylinderRadius, setCylinderRadius] = useState<number>(460);
+
+  // Detect screen size & update radius
   useEffect(() => {
-    const t0 = setTimeout(() => setLoadingTarget(15), 180);
-    const t1 = setTimeout(() => setLoadingTarget(45), 650);
-    const t2 = setTimeout(() => setLoadingTarget(75), 1250);
-    const t3 = setTimeout(() => setLoadingTarget(100), 1950);
+    const updateRadius = () => {
+      const w = window.innerWidth;
+      if (w < 480) {
+        setCylinderRadius(240);
+      } else if (w < 768) {
+        setCylinderRadius(310);
+      } else if (w < 1024) {
+        setCylinderRadius(390);
+      } else if (w < 1440) {
+        setCylinderRadius(480);
+      } else {
+        setCylinderRadius(560);
+      }
+    };
+    updateRadius();
+    window.addEventListener('resize', updateRadius);
+    return () => window.removeEventListener('resize', updateRadius);
+  }, []);
+
+  // Check prefers-reduced-motion
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      setIsReducedMotion(mediaQuery.matches);
+      if (mediaQuery.matches) {
+        setIsAutoRotating(false);
+      }
+      const listener = (e: MediaQueryListEvent) => {
+        setIsReducedMotion(e.matches);
+        if (e.matches) setIsAutoRotating(false);
+      };
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, []);
+
+  // Stepped loading scheduler (15% -> 45% -> 75% -> 100%)
+  useEffect(() => {
+    const t1 = setTimeout(() => setLoadingStage(15), 350);
+    const t2 = setTimeout(() => setLoadingStage(45), 1300);
+    const t3 = setTimeout(() => setLoadingStage(75), 2350);
+    const t4 = setTimeout(() => setLoadingStage(100), 3400);
 
     return () => {
-      clearTimeout(t0);
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
     };
   }, []);
 
-  // Smooth number interpolation animation frame
+  // Smooth number interpolation between the paused stages
   useEffect(() => {
     let animId: number;
     const updateProgress = () => {
-      setDisplayedProgress((current) => {
-        if (current >= loadingTarget) {
-          if (current >= 100 && !isGameReady) {
-            setIsGameReady(true);
-            // STOPS HERE! User clicks Enter button themselves to proceed to dashboard.
+      setDisplayedProgress((curr) => {
+        if (curr >= loadingStage) {
+          if (curr >= 100 && !isLoaded) {
+            setIsLoaded(true);
           }
-          return current;
+          return curr;
         }
-        const diff = loadingTarget - current;
-        const step = Math.max(0.65, diff * 0.12);
-        const next = Math.min(loadingTarget, current + step);
-        if (next >= 100 && !isGameReady) {
-          setIsGameReady(true);
-          // STOPS HERE! User clicks Enter button themselves to proceed to dashboard.
+        const diff = loadingStage - curr;
+        const step = Math.max(0.75, diff * 0.12);
+        const next = Math.min(loadingStage, curr + step);
+        if (next >= 100 && !isLoaded) {
+          setIsLoaded(true);
         }
         return next;
       });
@@ -127,27 +257,9 @@ export default function CinematicGameEntry({
 
     animId = requestAnimationFrame(updateProgress);
     return () => cancelAnimationFrame(animId);
-  }, [loadingTarget, isGameReady]);
+  }, [loadingStage, isLoaded]);
 
-  // Audio synthesizer ref
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const ambientOscRef = useRef<OscillatorNode | null>(null);
-  const ambientGainRef = useRef<GainNode | null>(null);
-
-  // Scene & Camera Refs
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const vehiclesRef = useRef<MovingVehicle[]>([]);
-  const avatarsRef = useRef<AutonomousAvatar[]>([]);
-
-  // Camera animation parameters
-  const cameraProgressRef = useRef<number>(0);
-  const cameraLookOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const isDraggingRef = useRef(false);
-  const prevMouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  // Play harmonious chime
+  // Entrance chime
   const playEntranceChime = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -156,9 +268,8 @@ export default function CinematicGameEntry({
       audioCtxRef.current = ctx;
       if (ctx.state === 'suspended') ctx.resume();
 
-      // Deep resonant spiritual chord (E minor / modal pentatonic)
-      const frequencies = [164.81, 247.94, 329.63, 493.88];
-      frequencies.forEach((freq, idx) => {
+      const freqs = [164.81, 247.94, 329.63, 493.88];
+      freqs.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -166,1072 +277,644 @@ export default function CinematicGameEntry({
 
         gain.gain.setValueAtTime(0.001, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.12 / (idx + 1), ctx.currentTime + 0.15 + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.4);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.2);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(ctx.currentTime + idx * 0.08);
-        osc.stop(ctx.currentTime + 2.5);
+        osc.stop(ctx.currentTime + 2.3);
       });
     } catch {
-      // Audio policy safe
+      // Audio safe fallback
     }
   }, []);
 
+  // Circular Enter Button click handler
   const handleEnterClick = useCallback(() => {
-    if (isEntering || !isGameReady) return;
+    if (isEntering || !isLoaded) return;
     setIsEntering(true);
     onStartTransition?.();
     playEntranceChime();
 
-    // Trigger smooth transition after cinematic fly-in
     setTimeout(() => {
-      onEnterWorld(selectedWorld);
-    }, 1200);
-  }, [isEntering, isGameReady, onEnterWorld, onStartTransition, playEntranceChime, selectedWorld]);
+      onEnterWorld(initialWorld);
+    }, 800);
+  }, [isEntering, isLoaded, onEnterWorld, onStartTransition, playEntranceChime, initialWorld]);
 
-  // Keyboard shortcut: Press Enter, Space, or KeyE to enter
+  // Global Keyboard shortcuts: Enter, Space, Arrows
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') {
-        if (!isEntering && isGameReady) {
+      if (e.code === 'Enter' || (e.code === 'Space' && isLoaded && e.target === document.body)) {
+        if (!isEntering && isLoaded) {
+          e.preventDefault();
           handleEnterClick();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEntering, isGameReady, handleEnterClick]);
+  }, [isEntering, isLoaded, handleEnterClick]);
 
-
-  // Mouse drag for interactive camera look
-  const handleMouseDown = (e: React.MouseEvent) => {
-    isDraggingRef.current = true;
-    prevMouseRef.current = { x: e.clientX, y: e.clientY };
-    setIsInteractiveLook(true);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDraggingRef.current) return;
-    const deltaX = e.clientX - prevMouseRef.current.x;
-    const deltaY = e.clientY - prevMouseRef.current.y;
-
-    cameraLookOffsetRef.current.x -= deltaX * 0.003;
-    cameraLookOffsetRef.current.y = Math.max(-0.4, Math.min(0.4, cameraLookOffsetRef.current.y + deltaY * 0.003));
-
-    prevMouseRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseUp = () => {
-    isDraggingRef.current = false;
-  };
-
-  // Touch look on mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length > 0) {
-      isDraggingRef.current = true;
-      prevMouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      setIsInteractiveLook(true);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingRef.current || e.touches.length === 0) return;
-    const deltaX = e.touches[0].clientX - prevMouseRef.current.x;
-    const deltaY = e.touches[0].clientY - prevMouseRef.current.y;
-
-    cameraLookOffsetRef.current.x -= deltaX * 0.004;
-    cameraLookOffsetRef.current.y = Math.max(-0.4, Math.min(0.4, cameraLookOffsetRef.current.y + deltaY * 0.004));
-
-    prevMouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  };
-
-  const handleTouchEnd = () => {
-    isDraggingRef.current = false;
-  };
-
-  // Helper: Create 3D Human Avatar
-  const createAvatar = (colorHex: number, hatColorHex = 0xffffff) => {
-    const group = new THREE.Group();
-
-    // Body / Robe
-    const bodyGeo = new THREE.CylinderGeometry(0.35, 0.55, 1.4, 16);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.45 });
-    const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-    bodyMesh.name = 'bodyMesh';
-    bodyMesh.position.y = 0.9;
-    bodyMesh.castShadow = true;
-    group.add(bodyMesh);
-
-    // Gold Trim Sash
-    const sashGeo = new THREE.CylinderGeometry(0.38, 0.4, 0.08, 16);
-    const sashMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.2 });
-    const sash = new THREE.Mesh(sashGeo, sashMat);
-    sash.position.y = 1.0;
-    group.add(sash);
-
-    // Head
-    const headGeo = new THREE.SphereGeometry(0.28, 16, 16);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xe5c0a2, roughness: 0.6 });
-    const head = new THREE.Mesh(headGeo, headMat);
-    head.name = 'headMesh';
-    head.position.y = 1.85;
-    head.castShadow = true;
-    group.add(head);
-
-    // Hat / Tagiyah
-    const hatGeo = new THREE.CylinderGeometry(0.31, 0.31, 0.18, 16);
-    const hatMat = new THREE.MeshStandardMaterial({ color: hatColorHex, roughness: 0.3 });
-    const hat = new THREE.Mesh(hatGeo, hatMat);
-    hat.position.y = 2.02;
-    group.add(hat);
-
-    // Arms
-    const armGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.7, 8);
-    const armMat = new THREE.MeshStandardMaterial({ color: colorHex });
-
-    const leftArm = new THREE.Mesh(armGeo, armMat);
-    leftArm.name = 'leftArm';
-    leftArm.position.set(-0.45, 1.1, 0);
-    group.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeo, armMat);
-    rightArm.name = 'rightArm';
-    rightArm.position.set(0.45, 1.1, 0);
-    group.add(rightArm);
-
-    // Legs
-    const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8);
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x1f2937 });
-
-    const leftLeg = new THREE.Mesh(legGeo, legMat);
-    leftLeg.name = 'leftLeg';
-    leftLeg.position.set(-0.2, 0.3, 0);
-    group.add(leftLeg);
-
-    const rightLeg = new THREE.Mesh(legGeo, legMat);
-    rightLeg.name = 'rightLeg';
-    rightLeg.position.set(0.2, 0.3, 0);
-    group.add(rightLeg);
-
-    return group;
-  };
-
-  // Helper: Create 3D Car
-  const createVehicleMesh = (colorHex: number) => {
-    const carGroup = new THREE.Group();
-
-    const bodyGeo = new THREE.BoxGeometry(2.2, 0.9, 4.4);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.65, roughness: 0.25 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.6;
-    body.castShadow = true;
-    carGroup.add(body);
-
-    const cabinGeo = new THREE.BoxGeometry(1.8, 0.7, 2.2);
-    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1, metalness: 0.9 });
-    const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-    cabin.position.set(0, 1.3, -0.2);
-    carGroup.add(cabin);
-
-    // Headlights
-    const lightGeo = new THREE.BoxGeometry(0.3, 0.2, 0.1);
-    const lightMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-    const l1 = new THREE.Mesh(lightGeo, lightMat);
-    l1.position.set(-0.8, 0.7, 2.22);
-    carGroup.add(l1);
-
-    const l2 = new THREE.Mesh(lightGeo, lightMat);
-    l2.position.set(0.8, 0.7, 2.22);
-    carGroup.add(l2);
-
-    // Wheels
-    const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x090a0f, roughness: 0.8 });
-    const wheelPos: [number, number, number][] = [
-      [-1.1, 0.35, 1.4],
-      [1.1, 0.35, 1.4],
-      [-1.1, 0.35, -1.4],
-      [1.1, 0.35, -1.4],
-    ];
-    wheelPos.forEach(([wx, wy, wz]) => {
-      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(wx, wy, wz);
-      carGroup.add(wheel);
-    });
-
-    return carGroup;
-  };
-
-  // Build Full 3D Cinematic Living World
+  // Continuous 3D Carousel Render Loop with Inertia & Visibility Handling
   useEffect(() => {
-    if (!containerRef.current || !canvasRef.current) return;
+    let isTabVisible = true;
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
+    const handleVisibilityChange = () => {
+      isTabVisible = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Scene
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const skyHorizonColor = new THREE.Color(0x181e33);
-    scene.background = skyHorizonColor;
-    scene.fog = new THREE.FogExp2(0x181e33, 0.007);
-
-    // Sky Dome with Sunset Twilight Gradient
-    const skyCanvas = document.createElement('canvas');
-    skyCanvas.width = 512;
-    skyCanvas.height = 512;
-    const skyCtx = skyCanvas.getContext('2d');
-    if (skyCtx) {
-      const grad = skyCtx.createLinearGradient(0, 0, 0, 512);
-      grad.addColorStop(0, '#090d1c'); // Deep twilight zenith
-      grad.addColorStop(0.48, '#1e1b4b'); // Royal indigo
-      grad.addColorStop(0.72, '#7c2d12'); // Rich terracotta sunset
-      grad.addColorStop(0.88, '#d97706'); // Warm amber horizon
-      grad.addColorStop(1.0, '#f59e0b'); // Golden dusk
-      skyCtx.fillStyle = grad;
-      skyCtx.fillRect(0, 0, 512, 512);
-    }
-    const skyTexture = new THREE.CanvasTexture(skyCanvas);
-    const skyGeo = new THREE.SphereGeometry(240, 32, 16);
-    const skyMat = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide, depthWrite: false });
-    const skyDome = new THREE.Mesh(skyGeo, skyMat);
-    scene.add(skyDome);
-
-    // Distant City Skyline Silhouette
-    const skylineGroup = new THREE.Group();
-    const silMat = new THREE.MeshBasicMaterial({ color: 0x111625, fog: true });
-    for (let i = 0; i < 32; i++) {
-      const angle = (i / 32) * Math.PI * 2;
-      const dist = 190 + (i % 3) * 15;
-      const w = 14 + (i % 4) * 6;
-      const h = 28 + ((i * 7) % 40);
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(w, h, 12), silMat);
-      tower.position.set(Math.cos(angle) * dist, h / 2, Math.sin(angle) * dist);
-      tower.rotation.y = -angle;
-      skylineGroup.add(tower);
-
-      if (i % 2 === 0) {
-        const dDome = new THREE.Mesh(new THREE.SphereGeometry(w * 0.45, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), silMat);
-        dDome.position.set(Math.cos(angle) * dist, h, Math.sin(angle) * dist);
-        skylineGroup.add(dDome);
+    const renderLoop = () => {
+      if (!isTabVisible) {
+        animFrameRef.current = requestAnimationFrame(renderLoop);
+        return;
       }
-    }
-    scene.add(skylineGroup);
 
-    // Camera with aspect-aware adaptive FOV
-    const { fov, aspect } = calculateAdaptiveCamera(width, height);
-    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 450);
-    cameraRef.current = camera;
-    camera.position.set(0, 18, 55);
-
-    // Renderer (Performance-optimized for low-end to high-end devices)
-    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || width < 768;
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      antialias: !isMobileDevice,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
-    rendererRef.current = renderer;
-    renderer.setSize(width, height, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.5 : 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = isMobileDevice ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
-
-    // Lighting
-    const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x1e293b, 0.9);
-    scene.add(hemiLight);
-
-    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.55);
-    scene.add(ambientLight);
-
-    const sunLight = new THREE.DirectionalLight(0xfef3c7, 1.55);
-    sunLight.position.set(65, 80, 50);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = isMobileDevice ? 1024 : 2048;
-    sunLight.shadow.mapSize.height = isMobileDevice ? 1024 : 2048;
-    sunLight.shadow.bias = -0.0005;
-    scene.add(sunLight);
-
-    // Ground Base
-    const groundGeo = new THREE.PlaneGeometry(320, 320);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Roads & Markings
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e2433, roughness: 0.45 });
-    const lineYellowMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
-    const lineWhiteMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
-
-    // East-West Road
-    const roadH = new THREE.Mesh(new THREE.PlaneGeometry(300, 14), roadMat);
-    roadH.rotation.x = -Math.PI / 2;
-    roadH.position.set(0, 0.02, 0);
-    roadH.receiveShadow = true;
-    scene.add(roadH);
-
-    const centerLineH = new THREE.Mesh(new THREE.PlaneGeometry(300, 0.25), lineYellowMat);
-    centerLineH.rotation.x = -Math.PI / 2;
-    centerLineH.position.set(0, 0.03, 0);
-    scene.add(centerLineH);
-
-    // North-South Road
-    const roadV = new THREE.Mesh(new THREE.PlaneGeometry(14, 300), roadMat);
-    roadV.rotation.x = -Math.PI / 2;
-    roadV.position.set(0, 0.02, 0);
-    roadV.receiveShadow = true;
-    scene.add(roadV);
-
-    const centerLineV = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 300), lineYellowMat);
-    centerLineV.rotation.x = -Math.PI / 2;
-    centerLineV.position.set(0, 0.03, 0);
-    scene.add(centerLineV);
-
-    // Grand Mosque Plaza
-    const plazaCanvas = document.createElement('canvas');
-    plazaCanvas.width = 256;
-    plazaCanvas.height = 256;
-    const pCtx = plazaCanvas.getContext('2d');
-    if (pCtx) {
-      pCtx.fillStyle = '#f8fafc';
-      pCtx.fillRect(0, 0, 256, 256);
-      pCtx.strokeStyle = '#059669';
-      pCtx.lineWidth = 4;
-      pCtx.strokeRect(8, 8, 240, 240);
-      pCtx.strokeStyle = '#d97706';
-      pCtx.lineWidth = 2;
-      pCtx.beginPath();
-      pCtx.arc(128, 128, 80, 0, Math.PI * 2);
-      pCtx.stroke();
-    }
-    const plazaTexture = new THREE.CanvasTexture(plazaCanvas);
-    plazaTexture.wrapS = THREE.RepeatWrapping;
-    plazaTexture.wrapT = THREE.RepeatWrapping;
-    plazaTexture.repeat.set(8, 14);
-
-    const grandPlaza = new THREE.Mesh(
-      new THREE.PlaneGeometry(36, 60),
-      new THREE.MeshStandardMaterial({ map: plazaTexture, roughness: 0.35, metalness: 0.1 })
-    );
-    grandPlaza.rotation.x = -Math.PI / 2;
-    grandPlaza.position.set(0, 0.05, -35);
-    grandPlaza.receiveShadow = true;
-    scene.add(grandPlaza);
-
-    // Sidewalk Borders
-    const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
-    const sidewalk1 = new THREE.Mesh(new THREE.BoxGeometry(300, 0.15, 3), sidewalkMat);
-    sidewalk1.position.set(0, 0.08, 8.5);
-    scene.add(sidewalk1);
-
-    const sidewalk2 = new THREE.Mesh(new THREE.BoxGeometry(300, 0.15, 3), sidewalkMat);
-    sidewalk2.position.set(0, 0.08, -8.5);
-    scene.add(sidewalk2);
-
-    // Street Lamps
-    for (let x = -100; x <= 100; x += 30) {
-      if (Math.abs(x) < 14) continue;
-      [9.8, -9.8].forEach((z) => {
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 5, 8), new THREE.MeshStandardMaterial({ color: 0x475569 }));
-        pole.position.set(x, 2.5, z);
-        scene.add(pole);
-
-        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-        bulb.position.set(x, 5, z);
-        scene.add(bulb);
-
-        const light = new THREE.PointLight(0xfef08a, 1.2, 16);
-        light.position.set(x, 4.8, z);
-        scene.add(light);
-      });
-    }
-
-    // GRAND MOSQUE (Location: [0, 0, -60])
-    const mosqueGroup = new THREE.Group();
-
-    const hall = new THREE.Mesh(new THREE.BoxGeometry(34, 11, 30), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45 }));
-    hall.position.set(0, 5.5, 0);
-    hall.castShadow = true;
-    mosqueGroup.add(hall);
-
-    // Grand Central Dome
-    const dome = new THREE.Mesh(
-      new THREE.SphereGeometry(9.5, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.25, metalness: 0.5 })
-    );
-    dome.position.set(0, 16, 0);
-    dome.castShadow = true;
-    mosqueGroup.add(dome);
-
-    // Golden Crescent Finial
-    const crescent = new THREE.Mesh(
-      new THREE.TorusGeometry(1.3, 0.25, 12, 24, Math.PI * 1.5),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.2 })
-    );
-    crescent.position.set(0, 26, 0);
-    crescent.rotation.z = Math.PI / 4;
-    mosqueGroup.add(crescent);
-
-    // Dome Drum
-    const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(9.6, 9.6, 5, 32), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 }));
-    domeBase.position.set(0, 13.5, 0);
-    mosqueGroup.add(domeBase);
-
-    // Drum Windows
-    for (let w = 0; w < 8; w++) {
-      const wAngle = (w / 8) * Math.PI * 2;
-      const win = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.4, 0.3), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-      win.position.set(Math.cos(wAngle) * 9.65, 13.5, Math.sin(wAngle) * 9.65);
-      win.rotation.y = -wAngle + Math.PI / 2;
-      mosqueGroup.add(win);
-    }
-
-    // Monumental Entrance Arch
-    const portal = new THREE.Mesh(new THREE.BoxGeometry(14, 10, 3), new THREE.MeshStandardMaterial({ color: 0x334155 }));
-    portal.position.set(0, 5, 15.5);
-    mosqueGroup.add(portal);
-
-    const archInner = new THREE.Mesh(
-      new THREE.CylinderGeometry(3.6, 3.6, 6, 16, 1, false, 0, Math.PI),
-      new THREE.MeshBasicMaterial({ color: 0x0f172a })
-    );
-    archInner.rotation.x = Math.PI / 2;
-    archInner.position.set(0, 4, 16.5);
-    mosqueGroup.add(archInner);
-
-    // Minarets
-    [[-19, -17], [19, -17], [-19, 17], [19, 17]].forEach(([mx, mz]) => {
-      const minaret = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.5, 40, 16), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }));
-      minaret.position.set(mx, 20, mz);
-      minaret.castShadow = true;
-      mosqueGroup.add(minaret);
-
-      const spire = new THREE.Mesh(new THREE.ConeGeometry(1.8, 7, 16), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85 }));
-      spire.position.set(mx, 43.5, mz);
-      mosqueGroup.add(spire);
-
-      const lamp = new THREE.PointLight(0xfef08a, 1.4, 22);
-      lamp.position.set(mx, 34, mz);
-      mosqueGroup.add(lamp);
-    });
-
-    // Prayer Carpets on Courtyard
-    for (let r = 0; r < 3; r++) {
-      const carpet = new THREE.Mesh(new THREE.PlaneGeometry(24, 2.6), new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.9 }));
-      carpet.rotation.x = -Math.PI / 2;
-      carpet.position.set(0, 0.08, 19 + r * 3.6);
-      carpet.receiveShadow = true;
-      mosqueGroup.add(carpet);
-    }
-
-    mosqueGroup.position.set(0, 0, -60);
-    scene.add(mosqueGroup);
-
-    // ISLAMIC UNIVERSITY / CAMPUS ([-50, 0, -25])
-    const uniGroup = new THREE.Group();
-    const uniBody = new THREE.Mesh(new THREE.BoxGeometry(28, 12, 22), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.55 }));
-    uniBody.position.set(0, 6, 0);
-    uniBody.castShadow = true;
-    uniGroup.add(uniBody);
-
-    for (let c = -11; c <= 11; c += 5.5) {
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 7.5, 8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 }));
-      col.position.set(c, 3.75, 12.5);
-      uniGroup.add(col);
-    }
-    const uniRoof = new THREE.Mesh(new THREE.BoxGeometry(30, 1.2, 4.5), new THREE.MeshStandardMaterial({ color: 0x059669 }));
-    uniRoof.position.set(0, 8, 12.5);
-    uniGroup.add(uniRoof);
-
-    uniGroup.position.set(-50, 0, -25);
-    scene.add(uniGroup);
-
-    // BAZAAR SOUQ MARKETPLACE ([-28, 0, 26])
-    const bazaarGroup = new THREE.Group();
-    const stallColors = [0x059669, 0xd97706, 0x0284c7, 0xe11d48, 0x8b5cf6];
-    for (let i = -2; i <= 2; i++) {
-      const stallX = i * 8;
-      const stall = new THREE.Mesh(new THREE.BoxGeometry(5, 1.3, 3.8), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8 }));
-      stall.position.set(stallX, 0.65, 0);
-      stall.castShadow = true;
-      bazaarGroup.add(stall);
-
-      const canopy = new THREE.Mesh(
-        new THREE.ConeGeometry(3.5, 1.8, 4),
-        new THREE.MeshStandardMaterial({ color: stallColors[(i + 2) % stallColors.length], roughness: 0.5 })
-      );
-      canopy.position.set(stallX, 3.4, 0);
-      canopy.rotation.y = Math.PI / 4;
-      bazaarGroup.add(canopy);
-
-      const bLamp = new THREE.PointLight(0xfef08a, 1.2, 10);
-      bLamp.position.set(stallX, 2.4, 1.2);
-      bazaarGroup.add(bLamp);
-    }
-    bazaarGroup.position.set(-28, 0, 26);
-    scene.add(bazaarGroup);
-
-    // RESIDENTIAL DISTRICT ([36, 0, 18] and [55, 0, -10])
-    const resGroup = new THREE.Group();
-    const apt1 = new THREE.Mesh(new THREE.BoxGeometry(18, 19, 15), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 }));
-    apt1.position.set(0, 9.5, 0);
-    apt1.castShadow = true;
-    resGroup.add(apt1);
-
-    for (let f = 1; f <= 3; f++) {
-      for (let w = -4.5; w <= 4.5; w += 4.5) {
-        const win = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.6, 0.2), new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.4 }));
-        win.position.set(w, f * 4.6, 7.6);
-        resGroup.add(win);
+      // Apply drag inertia
+      if (!isDraggingRef.current) {
+        if (Math.abs(velocityRef.current) > 0.01) {
+          rotationYRef.current += velocityRef.current;
+          velocityRef.current *= 0.94; // Smooth damping
+        } else if (isAutoRotating && !isReducedMotion) {
+          // Slow, smooth continuous auto-rotation
+          rotationYRef.current += 0.075;
+        }
       }
-    }
-    resGroup.position.set(50, 0, 16);
-    scene.add(resGroup);
 
-    // PUBLIC PARK & FOUNTAIN ([32, 0, -28])
-    const parkGroup = new THREE.Group();
-    const lawn = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.9 }));
-    lawn.rotation.x = -Math.PI / 2;
-    lawn.position.set(0, 0.04, 0);
-    lawn.receiveShadow = true;
-    parkGroup.add(lawn);
-
-    const fBase = new THREE.Mesh(new THREE.CylinderGeometry(5, 5.5, 0.9, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
-    fBase.position.set(0, 0.45, 0);
-    parkGroup.add(fBase);
-
-    const water = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.1, 16), new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.8 }));
-    water.position.set(0, 0.95, 0);
-    parkGroup.add(water);
-
-    // Benches
-    [[-7, 0, 0], [7, 0, 0], [0, 0, -7], [0, 0, 7]].forEach(([bx, by, bz], idx) => {
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.6, 0.8), new THREE.MeshStandardMaterial({ color: 0x92400e }));
-      bench.position.set(bx, 0.3, bz);
-      if (idx < 2) bench.rotation.y = Math.PI / 2;
-      parkGroup.add(bench);
-    });
-    parkGroup.position.set(32, 0, -28);
-    scene.add(parkGroup);
-
-    // Palm Trees
-    [
-      [-32, 16], [32, 16], [-32, -16], [32, -16],
-      [-52, 32], [52, 32], [-52, -32], [52, -32],
-      [-16, -35], [16, -35], [-16, 35], [16, 35]
-    ].forEach(([px, pz]) => {
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 7.5, 8), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 }));
-      trunk.position.set(px, 3.75, pz);
-      scene.add(trunk);
-
-      const fronds = new THREE.Group();
-      for (let i = 0; i < 6; i++) {
-        const frond = new THREE.Mesh(new THREE.ConeGeometry(1.1, 4.8, 4), new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 }));
-        frond.rotation.z = Math.PI / 3;
-        frond.rotation.y = (i * Math.PI) / 3;
-        frond.position.set(0, 7.4, 0);
-        fronds.add(frond);
+      // Smooth tilt recovery
+      if (!isDraggingRef.current) {
+        tiltXRef.current *= 0.96;
       }
-      fronds.position.set(px, 0, pz);
-      scene.add(fronds);
-    });
 
-    // 4 MOVING TRAFFIC VEHICLES
-    const v1 = createVehicleMesh(0x0284c7);
-    v1.position.set(-80, 0, -3.5);
-    v1.rotation.y = Math.PI / 2; // Face Eastbound (+X)
-    scene.add(v1);
+      // Update 3D DOM transform directly on the cylinder element for ultra 60fps performance
+      if (carouselContainerRef.current) {
+        carouselContainerRef.current.style.transform = `rotateX(${tiltXRef.current.toFixed(
+          2
+        )}deg) rotateY(${rotationYRef.current.toFixed(2)}deg)`;
+      }
 
-    const v2 = createVehicleMesh(0xd97706);
-    v2.position.set(80, 0, 3.5);
-    v2.rotation.y = -Math.PI / 2; // Face Westbound (-X)
-    scene.add(v2);
+      // Determine front-most card for accessibility / indicator
+      const normalizedAngle = ((-rotationYRef.current % 360) + 360) % 360;
+      const anglePerCard = 360 / SHOWCASE_CARDS.length;
+      const nearestCardIdx = Math.round(normalizedAngle / anglePerCard) % SHOWCASE_CARDS.length;
+      setActiveCardIndex(nearestCardIdx);
 
-    const v3 = createVehicleMesh(0xf8fafc);
-    v3.position.set(3.5, 0, -90);
-    v3.rotation.y = 0; // Face Southbound (+Z)
-    scene.add(v3);
-
-    const v4 = createVehicleMesh(0x10b981);
-    v4.position.set(-3.5, 0, 90);
-    v4.rotation.y = Math.PI; // Face Northbound (-Z)
-    scene.add(v4);
-
-    vehiclesRef.current = [
-      { mesh: v1, speed: 17, direction: new THREE.Vector3(1, 0, 0), pathStart: new THREE.Vector3(-130, 0, -3.5), pathEnd: new THREE.Vector3(130, 0, -3.5) },
-      { mesh: v2, speed: 19, direction: new THREE.Vector3(-1, 0, 0), pathStart: new THREE.Vector3(130, 0, 3.5), pathEnd: new THREE.Vector3(-130, 0, 3.5) },
-      { mesh: v3, speed: 16, direction: new THREE.Vector3(0, 0, 1), pathStart: new THREE.Vector3(3.5, 0, -130), pathEnd: new THREE.Vector3(3.5, 0, 130) },
-      { mesh: v4, speed: 18, direction: new THREE.Vector3(0, 0, -1), pathStart: new THREE.Vector3(-3.5, 0, 130), pathEnd: new THREE.Vector3(-3.5, 0, -130) },
-    ];
-
-    // AUTONOMOUS POPULATION: 12 Active 3D Avatars
-    const createdAvatars: AutonomousAvatar[] = [];
-
-    // Walkers along Central Plaza & Sidewalks
-    const walkerData = [
-      { name: 'Tariq_KSA', city: 'Makkah', color: 0x10b981, start: new THREE.Vector3(-6, 0, -15), end: new THREE.Vector3(6, 0, -45), speed: 2.5 },
-      { name: 'Fatima_Lagos', city: 'Lagos', color: 0x3b82f6, start: new THREE.Vector3(-12, 0, 10), end: new THREE.Vector3(-24, 0, 24), speed: 2.2 },
-      { name: 'Amir_Cairo', city: 'Cairo', color: 0xf59e0b, start: new THREE.Vector3(16, 0, -5), end: new THREE.Vector3(30, 0, 14), speed: 2.8 },
-      { name: 'Zainab_DXB', city: 'Dubai', color: 0xec4899, start: new THREE.Vector3(-35, 0, -18), end: new THREE.Vector3(-45, 0, -25), speed: 2.1 },
-      { name: 'Youssef_Kano', city: 'Kano', color: 0x8b5cf6, start: new THREE.Vector3(2, 0, 16), end: new THREE.Vector3(2, 0, -20), speed: 2.4 },
-    ];
-
-    walkerData.forEach((wd) => {
-      const mesh = createAvatar(wd.color);
-      mesh.position.copy(wd.start);
-      scene.add(mesh);
-      createdAvatars.push({
-        mesh,
-        name: wd.name,
-        city: wd.city,
-        role: 'Citizen',
-        type: 'walker',
-        pathStart: wd.start,
-        pathEnd: wd.end,
-        direction: 1,
-        speed: wd.speed,
-      });
-    });
-
-    // Conversational Pair in Plaza
-    const talker1Mesh = createAvatar(0x06b6d4);
-    talker1Mesh.position.set(-4, 0, -22);
-    talker1Mesh.rotation.y = Math.PI / 3;
-    scene.add(talker1Mesh);
-
-    const talker2Mesh = createAvatar(0xe11d48);
-    talker2Mesh.position.set(-2.5, 0, -21);
-    talker2Mesh.rotation.y = -Math.PI / 1.5;
-    scene.add(talker2Mesh);
-
-    createdAvatars.push(
-      { mesh: talker1Mesh, name: 'Maryam_Abuja', city: 'Abuja', role: 'Architect', type: 'talker', partner: talker2Mesh },
-      { mesh: talker2Mesh, name: 'Bilal_Casablanca', city: 'Casablanca', role: 'Merchant', type: 'talker', partner: talker1Mesh }
-    );
-
-    // Worshippers in Prayer at Mosque Courtyard Carpets
-    const prayerPositions: [number, number, number][] = [
-      [-4, 0, -41],
-      [0, 0, -41],
-      [4, 0, -41],
-      [-2, 0, -44.5],
-      [2, 0, -44.5],
-    ];
-
-    prayerPositions.forEach(([px, py, pz], idx) => {
-      const pMesh = createAvatar(idx % 2 === 0 ? 0xffffff : 0x059669);
-      pMesh.position.set(px, py, pz);
-      // Face towards Qibla North (-Z)
-      pMesh.rotation.y = Math.PI;
-      scene.add(pMesh);
-      createdAvatars.push({
-        mesh: pMesh,
-        name: `Scholar_${idx + 1}`,
-        city: 'Baraka',
-        role: 'Prayer Circle',
-        type: 'prayer',
-      });
-    });
-
-    avatarsRef.current = createdAvatars;
-
-    // Responsive Window, Device Orientation & Container Resize
-    const handleResize = () => {
-      if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
-      const w = containerRef.current.clientWidth || window.innerWidth;
-      const h = containerRef.current.clientHeight || window.innerHeight;
-      
-      const { fov, aspect } = calculateAdaptiveCamera(w, h);
-      cameraRef.current.aspect = aspect;
-      cameraRef.current.fov = fov;
-      cameraRef.current.updateProjectionMatrix();
-
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || w < 768;
-      rendererRef.current.setSize(w, h, false);
-      rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+      animFrameRef.current = requestAnimationFrame(renderLoop);
     };
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-
-    const resizeObserver = new ResizeObserver(() => {
-      handleResize();
-    });
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
+    animFrameRef.current = requestAnimationFrame(renderLoop);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-      resizeObserver.disconnect();
-      renderer.dispose();
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [isAutoRotating, isReducedMotion]);
 
-  // 60FPS Game Loop with Sweeping Cinematic Drone Camera
-  useEffect(() => {
-    let animId: number;
-    let clock = new THREE.Clock();
+  // Pointer Hand Controls (Mouse drag, Touch swipe, Pen)
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only drag when interacting on background layer
+    isDraggingRef.current = true;
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    velocityRef.current = 0;
 
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
+    // Pause auto-rotation while interacting
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
 
-      const delta = clock.getDelta();
-      const elapsed = clock.getElapsedTime();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
 
-      // 1. Vehicles
-      vehiclesRef.current.forEach((veh) => {
-        veh.mesh.position.addScaledVector(veh.direction, veh.speed * delta);
-        if (veh.direction.x > 0 && veh.mesh.position.x > veh.pathEnd.x) veh.mesh.position.copy(veh.pathStart);
-        if (veh.direction.x < 0 && veh.mesh.position.x < veh.pathEnd.x) veh.mesh.position.copy(veh.pathStart);
-        if (veh.direction.z > 0 && veh.mesh.position.z > veh.pathEnd.z) veh.mesh.position.copy(veh.pathStart);
-        if (veh.direction.z < 0 && veh.mesh.position.z < veh.pathEnd.z) veh.mesh.position.copy(veh.pathStart);
-      });
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const deltaX = e.clientX - lastPointerRef.current.x;
+    const deltaY = e.clientY - lastPointerRef.current.y;
 
-      // 2. Avatars animation
-      avatarsRef.current.forEach((av) => {
-        if (av.type === 'walker' && av.pathStart && av.pathEnd) {
-          const target = av.direction === 1 ? av.pathEnd : av.pathStart;
-          const dir = new THREE.Vector3().subVectors(target, av.mesh.position);
-          const dist = dir.length();
+    rotationYRef.current += deltaX * 0.35;
+    tiltXRef.current = Math.max(-14, Math.min(14, tiltXRef.current - deltaY * 0.12));
 
-          if (dist < 1.2) {
-            av.direction = av.direction === 1 ? -1 : 1;
-          } else {
-            dir.normalize();
-            av.mesh.position.addScaledVector(dir, (av.speed || 2.2) * delta);
-            av.mesh.rotation.y = THREE.MathUtils.lerp(av.mesh.rotation.y, Math.atan2(dir.x, dir.z), 0.1);
+    velocityRef.current = deltaX * 0.32;
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+  };
 
-            const leftLeg = av.mesh.getObjectByName('leftLeg');
-            const rightLeg = av.mesh.getObjectByName('rightLeg');
-            const leftArm = av.mesh.getObjectByName('leftArm');
-            const rightArm = av.mesh.getObjectByName('rightArm');
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // safe fallback
+    }
 
-            const swing = Math.sin(elapsed * 7) * 0.55;
-            if (leftLeg) leftLeg.rotation.x = swing;
-            if (rightLeg) rightLeg.rotation.x = -swing;
-            if (leftArm) leftArm.rotation.x = -swing * 0.8;
-            if (rightArm) rightArm.rotation.x = swing * 0.8;
-          }
-        } else if (av.type === 'prayer') {
-          // Continuous reverence prayer cycle
-          const pCycle = (elapsed + av.mesh.position.x) % 10;
-          const body = av.mesh.getObjectByName('bodyMesh');
-          const leftArm = av.mesh.getObjectByName('leftArm');
-          const rightArm = av.mesh.getObjectByName('rightArm');
-
-          if (pCycle < 4) {
-            // Qiyam: hands folded
-            if (body) body.rotation.x = 0;
-            if (leftArm) { leftArm.rotation.x = -0.5; leftArm.rotation.z = 0.2; }
-            if (rightArm) { rightArm.rotation.x = -0.5; rightArm.rotation.z = -0.2; }
-            av.mesh.position.y = 0;
-          } else if (pCycle < 7) {
-            // Ruku: bowing
-            if (body) body.rotation.x = Math.PI / 2.3;
-            if (leftArm) { leftArm.rotation.x = -0.2; leftArm.rotation.z = 0; }
-            if (rightArm) { rightArm.rotation.x = -0.2; rightArm.rotation.z = 0; }
-            av.mesh.position.y = 0;
-          } else {
-            // Sujud: prostration
-            if (body) body.rotation.x = Math.PI / 1.9;
-            av.mesh.position.y = -0.45;
-          }
-        } else if (av.type === 'talker') {
-          // Subtle gesturing
-          const rArm = av.mesh.getObjectByName('rightArm');
-          if (rArm) {
-            rArm.rotation.x = -0.6 + Math.sin(elapsed * 4 + av.mesh.position.x) * 0.25;
-            rArm.rotation.z = -0.3;
-          }
-        }
-      });
-
-      // 3. Cinematic Camera Drone Path (Aspect & Orientation Aware)
-      if (cameraRef.current) {
-        const aspect = cameraRef.current.aspect || 1.6;
-        const isPortrait = aspect < 1.0;
-        const isUltrawide = aspect > 2.0;
-
-        if (isEntering) {
-          // Dynamic entrance rush: camera accelerates smoothly toward boulevard street level
-          cameraRef.current.position.y = THREE.MathUtils.lerp(cameraRef.current.position.y, isPortrait ? 3.5 : 2.8, 0.1);
-          cameraRef.current.position.z = THREE.MathUtils.lerp(cameraRef.current.position.z, isPortrait ? 20.0 : 16.0, 0.1);
-          cameraRef.current.position.x = THREE.MathUtils.lerp(cameraRef.current.position.x, 0, 0.1);
-          cameraRef.current.lookAt(0, isPortrait ? 2.5 : 1.8, -35);
-        } else {
-          // Fast, continuous AAA open-world cinematic fly-through through Baraka City
-          cameraProgressRef.current += delta * 0.38;
-          const t = cameraProgressRef.current;
-
-          // Multi-district sweeping trajectory flying through streets, mosque, souq, campus & park
-          const routePhase = (t % (Math.PI * 4));
-          let camX = 0;
-          let camY = 8;
-          let camZ = 0;
-          let lookTargetX = 0;
-          let lookTargetY = 5;
-          let lookTargetZ = -30;
-
-          if (routePhase < Math.PI) {
-            // Segment 1: Low flyover down Central Boulevard alongside moving traffic and pedestrians
-            const p = routePhase / Math.PI;
-            camX = THREE.MathUtils.lerp(-45, 35, p);
-            camY = 4.2 + Math.sin(p * Math.PI) * 2.5;
-            camZ = 12 + Math.cos(p * Math.PI) * 8;
-            lookTargetX = camX + 25;
-            lookTargetY = 3.2;
-            lookTargetZ = 0;
-            setCurrentFocalArea('Central Boulevard & City Traffic');
-          } else if (routePhase < Math.PI * 2) {
-            // Segment 2: Sweeping banking turn past Souq Al-Madina Marketplace & Enterable Stalls
-            const p = (routePhase - Math.PI) / Math.PI;
-            camX = -15 - Math.sin(p * Math.PI) * 25;
-            camY = 5.5 + Math.sin(p * Math.PI) * 3.0;
-            camZ = 10 + p * 20;
-            lookTargetX = -28;
-            lookTargetY = 3.5;
-            lookTargetZ = 24;
-            setCurrentFocalArea('Souq Al-Madina Marketplace & Trade');
-          } else if (routePhase < Math.PI * 3) {
-            // Segment 3: Grand ascent towards Grand Mosque Domes, Minarets & Esplanade
-            const p = (routePhase - Math.PI * 2) / Math.PI;
-            camX = Math.sin(p * Math.PI) * 30;
-            camY = 9.0 + Math.sin(p * Math.PI) * 9.5; // High cinematic aerial reveal
-            camZ = -20 - p * 30;
-            lookTargetX = 0;
-            lookTargetY = 14;
-            lookTargetZ = -58;
-            setCurrentFocalArea('Grand Mosque & Islamic Sanctuary');
-          } else {
-            // Segment 4: Fast swoop across Bayt Al-Hikma Campus, Madrasa & Public Park
-            const p = (routePhase - Math.PI * 3) / Math.PI;
-            camX = THREE.MathUtils.lerp(35, -25, p);
-            camY = 6.8 + Math.cos(p * Math.PI) * 2.5;
-            camZ = THREE.MathUtils.lerp(-35, 15, p);
-            lookTargetX = -35;
-            lookTargetY = 4.0;
-            lookTargetZ = -15;
-            setCurrentFocalArea('Bayt Al-Hikma Campus & Madrasa');
-          }
-
-          // Apply gentle user interactive look offset
-          const finalCamX = camX + cameraLookOffsetRef.current.x * (isPortrait ? 6 : 10);
-          const finalCamY = Math.max(3.2, camY - cameraLookOffsetRef.current.y * (isPortrait ? 6 : 10));
-
-          cameraRef.current.position.set(finalCamX, finalCamY, camZ);
-          cameraRef.current.lookAt(lookTargetX, lookTargetY, lookTargetZ);
-        }
+    // Resume auto-rotation gently a few seconds after letting go
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => {
+      if (!isReducedMotion) {
+        setIsAutoRotating(true);
       }
+    }, 2800);
+  };
 
-      if (rendererRef.current && sceneRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
+  // Wheel / Trackpad Scroll Control
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY * 0.5;
+    velocityRef.current -= delta * 0.08;
+
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => {
+      if (!isReducedMotion) {
+        setIsAutoRotating(true);
       }
-    };
+    }, 2800);
+  };
 
-    animId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animId);
-  }, [isEntering]);
+  // Keyboard navigation on background region
+  const handleRegionKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      velocityRef.current += 3.2;
+    } else if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      velocityRef.current -= 3.2;
+    } else if (e.code === 'Space') {
+      // Space pauses or resumes rotation when region is focused
+      e.preventDefault();
+      setIsAutoRotating((prev) => !prev);
+    }
+  };
+
+  const toggleOrbit = () => {
+    setIsAutoRotating((prev) => !prev);
+  };
+
+  const stepCarousel = (direction: 'prev' | 'next') => {
+    const step = (360 / SHOWCASE_CARDS.length) * (direction === 'next' ? -1 : 1);
+    velocityRef.current += step * 0.18;
+  };
 
   return (
-    <div
-      ref={containerRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="relative w-full h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#090a0f] select-none touch-none font-sora text-white"
-    >
-      {/* 3D WebGL Canvas filling 100% of the screen */}
-      <canvas ref={canvasRef} className="w-full h-full block cursor-grab active:cursor-grabbing touch-none" />
-
-      {/* Cinematic Vignette Overlay with dynamic depth */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#090a0f]/95 via-transparent to-[#090a0f]/70" />
-      <div className="absolute inset-0 pointer-events-none bg-radial from-transparent via-transparent to-black/60" />
-
-      {/* TOP HEADER: Responsive Game HUD */}
-      <div className="absolute top-0 inset-x-0 z-30 pt-[max(env(safe-area-inset-top),0.75rem)] px-3 xs:px-4 sm:px-6 md:px-8 pb-2 flex items-center justify-between pointer-events-none">
-        {/* Left: Baraka City Rabbit Emblem & Title */}
-        <div className="flex items-center gap-2 sm:gap-3 bg-black/70 border border-white/10 backdrop-blur-md px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl pointer-events-auto shadow-2xl">
-          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white/10 p-0.5 flex items-center justify-center shrink-0">
-            <RabbitLogo size={20} inverted={true} />
-          </div>
-          <div>
-            <span className="text-xs sm:text-sm md:text-base font-black tracking-wider uppercase bg-gradient-to-r from-white via-zinc-200 to-emerald-400 bg-clip-text text-transparent block leading-tight">
-              BARAKA CITY
-            </span>
-            <span className="text-[8px] sm:text-[9px] font-hud text-zinc-400 uppercase tracking-widest block leading-none">
-              LIVE 3D METROPOLIS
-            </span>
-          </div>
+    <div className="relative w-full h-[100dvh] min-h-[100dvh] max-h-[100dvh] overflow-hidden bg-[#06080d] text-white font-sora select-none flex flex-col justify-between">
+      {/* =====================================================================
+          NEW BACKGROUND: ROTATING 3D SHOWCASE OF THE WHOLE GAME
+          Constructed from real dashboard features in 3D carousel cylinder
+          Hand control: Pointer events (Mouse, Touch, Pen) with inertia
+          ===================================================================== */}
+      <div
+        role="region"
+        aria-label="Game preview, drag to explore"
+        tabIndex={0}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onWheel={handleWheel}
+        onKeyDown={handleRegionKeyDown}
+        className="absolute inset-0 z-0 overflow-hidden cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
+        style={{
+          touchAction: 'pan-y',
+          perspective: '1200px',
+          perspectiveOrigin: '50% 50%',
+        }}
+      >
+        {/* Soft Golden Light Sweep across the 3D scene */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+          <div className="w-[60vw] h-[220vh] bg-gradient-to-r from-transparent via-amber-300/12 via-yellow-200/20 to-transparent -top-[60vh] absolute animate-gold-sweep pointer-events-none" />
         </div>
 
-        {/* Right: Live Server Cluster & Audio Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto">
-          {/* Realm Indicator - Responsive badges */}
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-black/70 border border-white/10 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-[9px] xs:text-[10px] sm:text-[11px] font-bold shadow-xl">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-            <span className="text-zinc-200 font-hud uppercase max-w-[80px] xs:max-w-[120px] sm:max-w-none truncate">{selectedWorld.toUpperCase()}</span>
-            <span className="hidden xs:inline text-zinc-600">|</span>
-            <span className="hidden xs:inline text-emerald-400 font-hud">{onlineCount.toLocaleString()} CITIZENS</span>
-          </div>
+        {/* Floating Golden Light Particles */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+          {PARTICLES.map((p, idx) => (
+            <div
+              key={idx}
+              className={`absolute rounded-full bg-amber-300/80 shadow-[0_0_10px_#fbbf24] pointer-events-none ${
+                idx % 2 === 0 ? 'animate-particle-1' : 'animate-particle-2'
+              }`}
+              style={{
+                left: p.left,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                animationDelay: p.delay,
+                animationDuration: p.duration,
+              }}
+            />
+          ))}
+        </div>
 
-          {/* Sound Toggle */}
-          <button
-            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className="p-1.5 sm:px-3 sm:py-2 bg-black/70 border border-white/10 backdrop-blur-md text-white rounded-xl hover:border-emerald-500 transition-colors cursor-pointer flex items-center gap-1.5 shadow-xl shrink-0"
-            title="Toggle Ambient Audio"
-            aria-label="Toggle Ambient Audio"
+        {/* 3D ROTATING CYLINDER CONTAINER */}
+        <div className="w-full h-full flex items-center justify-center relative pointer-events-none">
+          <div
+            ref={carouselContainerRef}
+            className="w-0 h-0 relative flex items-center justify-center pointer-events-none"
+            style={{
+              transformStyle: 'preserve-3d',
+              willChange: 'transform',
+            }}
           >
-            {isAudioEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />}
-            <span className="hidden md:inline text-[10px] font-bold uppercase">{isAudioEnabled ? 'AUDIO ON' : 'AUDIO OFF'}</span>
-          </button>
-        </div>
-      </div>
+            {SHOWCASE_CARDS.map((card, idx) => {
+              const angle = (idx * 360) / SHOWCASE_CARDS.length;
 
-      {/* CURRENT LOCATION TELEMETRY: Top Left Sub-Badge (adaptive position, hidden on tiny landscape screens) */}
-      <div className="hidden xs:block absolute top-[calc(max(env(safe-area-inset-top),0.75rem)+3.25rem)] sm:top-[calc(max(env(safe-area-inset-top),0.75rem)+4.25rem)] left-3 xs:left-4 sm:left-6 md:left-8 z-20 pointer-events-none max-w-[85vw] sm:max-w-md">
-        <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-black/60 border border-emerald-500/30 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-hud text-zinc-300 shadow-xl truncate">
-          <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 animate-pulse shrink-0" />
-          <span className="text-emerald-400 font-bold uppercase shrink-0">VIEW:</span>
-          <span className="text-white font-medium uppercase tracking-wider truncate">{currentFocalArea}</span>
-        </div>
-      </div>
-
-      {/* CENTERPIECE: Monumental GTA-Style Game Title & Automatic Stepped Loading Indicator */}
-      <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center justify-end text-center pointer-events-none pb-[max(env(safe-area-inset-bottom),1.5rem)] px-4 sm:px-6">
-        <div className="max-w-lg md:max-w-xl w-full pointer-events-auto flex flex-col items-center">
-          
-          {/* Arabic Basmala / Divine Invocation */}
-          <div className="mb-2 sm:mb-3 animate-fadeIn">
-            <span className="text-base sm:text-xl md:text-2xl font-serif text-amber-300 tracking-widest drop-shadow-[0_2px_14px_rgba(245,158,11,0.5)] block leading-tight">
-              بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-            </span>
-          </div>
-
-          {/* Monumental GTA-Style Stylized Title Card */}
-          <div className="relative mb-3 sm:mb-4 select-none">
-            <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight text-white drop-shadow-[0_6px_28px_rgba(0,0,0,0.95)] leading-none font-sora">
-              <span className="bg-gradient-to-b from-white via-amber-100 to-amber-400 bg-clip-text text-transparent filter drop-shadow-[0_4px_16px_rgba(245,158,11,0.35)]">
-                BARAKA CITY
-              </span>
-            </h1>
-            <div className="text-[10px] sm:text-xs font-hud text-emerald-400 tracking-[0.35em] uppercase font-bold mt-1 text-center drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]">
-              OPEN WORLD · ISLAMIC METROPOLIS
-            </div>
-          </div>
-
-          {/* STEPPED LOADING PROGRESS OR FANCY SILK ENTER BUTTON */}
-          {!isGameReady ? (
-            /* AUTOMATIC CINEMATIC STEPPED LOADING BAR (0% -> 15% -> 45% -> 75% -> 100%) */
-            <div className="w-full max-w-[320px] sm:max-w-sm flex flex-col items-center bg-black/60 border border-white/10 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-2xl animate-fadeIn">
-              <div className="w-full flex items-center justify-between text-[11px] sm:text-xs font-hud tracking-wider mb-2 px-0.5">
-                <span className="text-emerald-400 font-bold flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                  <span className="text-zinc-200">
-                    {displayedProgress < 45
-                      ? 'INITIALIZING BARAKA CITY'
-                      : displayedProgress < 75
-                      ? 'LOADING CITY'
-                      : displayedProgress < 100
-                      ? 'LOADING WORLD'
-                      : 'BARAKA CITY READY'}
-                  </span>
-                </span>
-                <span className="font-mono font-bold text-amber-300 tracking-widest">{Math.round(displayedProgress)}%</span>
-              </div>
-
-              {/* Glowing Minimal Progress Track */}
-              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[0.5px]">
+              return (
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-300 rounded-full transition-all duration-150 shadow-[0_0_14px_rgba(16,185,129,0.9)]"
-                  style={{ width: `${Math.min(100, Math.max(2, displayedProgress))}%` }}
-                />
-              </div>
-            </div>
-          ) : (
-            /* FANCY, SILK ARCHITECTURAL ENTER BUTTON (Appears at 100% and halts until user clicks) */
-            <div className="w-full max-w-[340px] xs:max-w-[380px] sm:max-w-md flex flex-col items-center gap-2.5 animate-fadeIn">
-              {/* Ready Status Chip */}
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 border border-emerald-400/50 backdrop-blur-md shadow-lg text-[10px] font-hud text-emerald-300 uppercase tracking-widest">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)] animate-pulse" />
-                <span>BARAKA CITY READY · 100% LOADED</span>
-              </div>
+                  key={card.id}
+                  className="absolute pointer-events-none select-none"
+                  style={{
+                    transform: `rotateY(${angle}deg) translateZ(${cylinderRadius}px)`,
+                    transformStyle: 'preserve-3d',
+                    width: 'clamp(240px, 25vw, 360px)',
+                    height: 'clamp(320px, 42vh, 440px)',
+                    marginLeft: 'calc(-1 * clamp(240px, 25vw, 360px) / 2)',
+                    marginTop: 'calc(-1 * clamp(320px, 42vh, 440px) / 2)',
+                  }}
+                >
+                  {/* Visual-Only Showcase Card (Non-navigating, high-polish glassmorphism) */}
+                  <div className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-b from-[#141824]/90 via-[#0c0f18]/95 to-[#070910] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_30px_rgba(245,158,11,0.15)] flex flex-col justify-between p-3.5 sm:p-4 relative backdrop-blur-md">
+                    {/* Upper Showcase Image */}
+                    <div className="relative w-full h-[52%] sm:h-[55%] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 shrink-0">
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover select-none pointer-events-none"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0c0f18] via-transparent to-transparent pointer-events-none" />
 
-              {/* The Silk Architectural ENTER Button */}
-              <button
-                onClick={handleEnterClick}
-                disabled={isEntering}
-                className="w-full relative group overflow-hidden rounded-2xl sm:rounded-3xl p-[2px] bg-gradient-to-r from-emerald-400 via-amber-300 to-emerald-500 shadow-[0_0_35px_rgba(16,185,129,0.5),0_10px_30px_rgba(0,0,0,0.8)] hover:shadow-[0_0_55px_rgba(245,158,11,0.65),0_14px_45px_rgba(0,0,0,0.9)] transition-all duration-500 active:scale-95 cursor-pointer"
-                title="Enter Baraka City 3D Open World"
-              >
-                {/* Flowing Silk Sheen Shimmer Reflection */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
-
-                {/* Inner Silk Architectural Surface */}
-                <div className="relative w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-[calc(1rem-2px)] sm:rounded-[calc(1.5rem-2px)] bg-gradient-to-r from-[#0d3829] via-[#09261b] to-[#0a3528] group-hover:from-[#114734] group-hover:via-[#0c3324] group-hover:to-[#0e4433] transition-all flex items-center justify-between gap-3 text-left">
-                  
-                  {/* Left Decorative Gold/Emerald Insignia */}
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 to-emerald-500 p-0.5 shadow-lg shrink-0 flex items-center justify-center">
-                    <div className="w-full h-full rounded-[10px] sm:rounded-[14px] bg-[#09261b] flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Compass className="w-5 h-5 text-amber-300" />
+                      {/* Top Pill Badge */}
+                      <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/75 border border-amber-400/40 backdrop-blur-md text-[9px] sm:text-[10px] font-hud text-amber-300 font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        <span className="truncate">{card.highlight}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Center Text Column */}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] sm:text-[11px] font-serif text-amber-300 font-bold tracking-widest block uppercase drop-shadow">
-                      بِسْمِ ٱللَّٰهِ · BISMILLAH
-                    </span>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="bg-white text-black font-mono font-black text-[10.5px] sm:text-xs px-1.5 py-0.5 rounded-[4px] shadow-sm leading-none shrink-0 font-hud">
-                        [ENTER]
-                      </span>
-                      <span className="text-sm sm:text-base md:text-lg font-black uppercase text-white tracking-wider block font-sora drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] truncate">
-                        {isEntering ? 'ENTERING BARAKA CITY...' : 'ENTER BARAKA CITY'}
-                      </span>
+                    {/* Lower Information Section */}
+                    <div className="flex-1 flex flex-col justify-between pt-2.5 sm:pt-3">
+                      <div>
+                        <span className="text-[9px] sm:text-[10px] font-hud text-amber-300/80 uppercase tracking-widest font-bold block mb-0.5">
+                          {card.category}
+                        </span>
+                        <h3 className="text-sm sm:text-base font-extrabold text-white leading-tight font-sora drop-shadow line-clamp-1">
+                          {card.title}
+                        </h3>
+                        <p className="text-[10px] sm:text-[11px] text-zinc-300 line-clamp-2 mt-1 leading-snug font-medium">
+                          {card.subtitle}
+                        </p>
+                      </div>
+
+                      {/* Live Feature Stats Chips */}
+                      <div className="grid grid-cols-2 gap-1.5 pt-2 mt-1 border-t border-white/10">
+                        {card.stats.map((stat, sIdx) => (
+                          <div
+                            key={sIdx}
+                            className="bg-black/50 border border-white/10 rounded-lg px-2 py-1 flex flex-col"
+                          >
+                            <span className="text-[7.5px] sm:text-[8px] font-hud text-zinc-400 uppercase tracking-wider">
+                              {stat.label}
+                            </span>
+                            <span className="text-[10px] sm:text-[11px] font-mono font-bold text-amber-300 truncate">
+                              {stat.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span className="text-[9px] sm:text-[10px] font-hud text-emerald-300 block tracking-wider uppercase font-semibold truncate mt-0.5">
-                      IMMERSIVE 3D METROPOLIS · {selectedWorld.toUpperCase()}
-                    </span>
-                  </div>
 
-                  {/* Right Action Arrow Badge */}
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-emerald-500/20 border border-emerald-400/50 group-hover:bg-amber-400 group-hover:border-amber-300 flex items-center justify-center text-emerald-300 group-hover:text-black transition-all shrink-0 shadow-md">
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+                    {/* Subtle golden corner ambient sheen */}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-400/10 to-transparent pointer-events-none rounded-tr-3xl" />
                   </div>
                 </div>
-              </button>
+              );
+            })}
+          </div>
+        </div>
 
-              {/* Keyboard Helper */}
-              <span className="text-[9px] font-hud text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 opacity-80">
-                <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-mono">ENTER ↵</span>
-                <span className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-400 font-mono">[E]</span>
-                <span>OR TAP TO PLAY</span>
-              </span>
-            </div>
-          )}
+        {/* Ambient Ground Reflection Grid */}
+        <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-10" />
+
+        {/* Central Vignette Disc behind Logo Area to Guarantee Crystal Contrast without blur */}
+        <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+          <div className="w-[90vw] max-w-xl h-[480px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(6,8,13,0.85)_0%,rgba(6,8,13,0.55)_55%,transparent_100%)] pointer-events-none" />
+        </div>
+
+        {/* SHOWCASE ACCESSIBILITY HUD & CONTROLS (Pointer drag helper, Pause/Play orbit toggle) */}
+        <div className="absolute bottom-14 sm:bottom-16 left-3 sm:left-6 z-20 pointer-events-auto flex items-center gap-2">
+          {/* Pause / Play Orbit Button */}
+          <button
+            onClick={toggleOrbit}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/70 border border-white/15 hover:border-amber-400/50 text-zinc-300 hover:text-amber-300 transition-all text-[10px] sm:text-[11px] font-hud uppercase tracking-wider backdrop-blur-md cursor-pointer shadow-xl"
+            title={isAutoRotating ? 'Pause 3D showcase rotation' : 'Resume 3D showcase rotation'}
+            aria-label={isAutoRotating ? 'Pause 3D showcase rotation' : 'Resume 3D showcase rotation'}
+          >
+            {isAutoRotating ? (
+              <>
+                <Pause className="w-3 h-3 text-amber-300" />
+                <span className="hidden xs:inline">PAUSE PREVIEW</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3 h-3 text-amber-300 fill-amber-300" />
+                <span className="hidden xs:inline">ORBIT PREVIEW</span>
+              </>
+            )}
+          </button>
+
+          {/* Quick Manual Step Arrows */}
+          <div className="hidden xs:flex items-center gap-1 bg-black/70 border border-white/15 rounded-xl p-0.5 backdrop-blur-md">
+            <button
+              onClick={() => stepCarousel('prev')}
+              className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              title="Rotate Left (or use Left Arrow key)"
+              aria-label="Previous showcase card"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => stepCarousel('next')}
+              className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              title="Rotate Right (or use Right Arrow key)"
+              aria-label="Next showcase card"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Active Card Indicator */}
+          <div className="hidden md:flex items-center gap-1 text-[9px] font-hud text-zinc-400 bg-black/60 px-2.5 py-1.5 rounded-xl border border-white/10 backdrop-blur-md">
+            <Compass className="w-3 h-3 text-amber-400" />
+            <span className="text-zinc-200 uppercase font-semibold">
+              {SHOWCASE_CARDS[activeCardIndex]?.title || 'Game Showcase'}
+            </span>
+          </div>
+        </div>
+
+        {/* Drag to Explore Prompt (Bottom Right) */}
+        <div className="hidden sm:block absolute bottom-14 sm:bottom-16 right-3 sm:right-6 z-20 pointer-events-none">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 backdrop-blur-md text-[9px] sm:text-[10px] font-hud text-zinc-400 uppercase tracking-widest shadow-xl">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 animate-ping" />
+            <span>DRAG OR SWIPE TO ROTATE GAME PREVIEW</span>
+          </div>
         </div>
       </div>
 
-      {/* Free Look Indicator */}
-      <div className="hidden sm:block absolute bottom-3 right-4 sm:bottom-4 sm:right-6 z-20 pointer-events-none">
-        <span className="text-[9px] sm:text-[10px] font-hud text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-          <Eye className="w-3 h-3 text-zinc-400" /> DRAG TO LOOK AROUND CITY
-        </span>
-      </div>
+      {/* =====================================================================
+          TOP HEADER: Safe-Area Compliant Top Bar
+          Left: Golden Mosque Emblem + "BARAKA CITY"
+          Right: "FAITH • KNOWLEDGE • COMMUNITY • FUTURE" & Audio Toggle
+          ===================================================================== */}
+      <header className="relative z-30 pt-[max(env(safe-area-inset-top),0.75rem)] px-3 xs:px-5 sm:px-8 pb-2 flex items-center justify-between shrink-0 bg-black/60 md:bg-black/40 backdrop-blur-md border-b border-white/10 pointer-events-auto">
+        {/* Left: Golden Mosque Arch Icon + "BARAKA CITY" */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 text-amber-300 flex items-center justify-center shrink-0">
+            <svg
+              viewBox="0 0 40 40"
+              className="w-full h-full fill-none stroke-amber-300 stroke-[2.2] drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+            >
+              <path d="M 6 36 L 6 18 C 6 11 13 5 20 5 C 27 5 34 11 34 18 L 34 36" />
+              <path d="M 12 36 L 12 22 C 12 17 16 13 20 13 C 24 13 28 17 28 22 L 28 36" />
+              <circle cx="20" cy="5" r="1.5" className="fill-amber-300" />
+            </svg>
+          </div>
+          <span className="font-sora font-extrabold tracking-[0.2em] uppercase text-white text-[clamp(0.72rem,1.2vw,0.9rem)] leading-none drop-shadow">
+            BARAKA CITY
+          </span>
+        </div>
 
-      {/* World Transition Veil when entering game */}
+        {/* Right: "FAITH • KNOWLEDGE • COMMUNITY • FUTURE" & Audio Toggle */}
+        <div className="flex items-center gap-3 sm:gap-5">
+          <nav className="hidden sm:flex items-center gap-2.5 text-[clamp(0.65rem,1vw,0.78rem)] font-hud text-amber-200/90 font-medium tracking-[0.22em] uppercase">
+            <span>FAITH</span>
+            <span className="text-amber-400/50">•</span>
+            <span>KNOWLEDGE</span>
+            <span className="text-amber-400/50">•</span>
+            <span>COMMUNITY</span>
+            <span className="text-amber-400/50">•</span>
+            <span>FUTURE</span>
+          </nav>
+
+          {/* Audio Synthesizer Toggle */}
+          <button
+            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+            className="p-1 sm:p-1.5 rounded-lg bg-black/60 border border-white/10 hover:border-amber-400/50 text-zinc-300 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Toggle Audio"
+            aria-label="Toggle Audio"
+          >
+            {isAudioEnabled ? (
+              <Volume2 className="w-3.5 h-3.5 text-amber-300" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* =====================================================================
+          CENTERPIECE: 
+          1. Letter drop animation (B-A-R-A-K-A, then CITY, emblem & tagline)
+          3. Stepped Loader (15%, 45%, 75%, 100%)
+          4. Circular Enter Button with rolling gold ring in loader's spot
+          Boundaries: Above background layer, 100% clickable and visible
+          ===================================================================== */}
+      <main className="relative z-30 flex-1 flex flex-col items-center justify-center px-4 max-w-full my-auto pointer-events-none">
+        <div className="flex flex-col items-center text-center w-full max-w-2xl pointer-events-auto">
+          {/* THE MONUMENTAL BARAKA CITY LOGOTYPE CONTAINER */}
+          <div className="relative flex flex-col items-center select-none mb-3 sm:mb-5">
+            {/* The Golden Mosque Emblem (Sits behind the 'k' and 'a' of baraka) */}
+            <div
+              className="logo-emblem absolute pointer-events-none select-none z-0"
+              style={{
+                top: '-20%',
+                right: '5%',
+                width: 'clamp(58px, 14vw, 130px)',
+                height: 'clamp(58px, 14vw, 130px)',
+                animation: 'emblemFadeIn 0.8s ease-out forwards',
+                animationDelay: '900ms',
+                opacity: 0,
+              }}
+            >
+              <svg
+                viewBox="0 0 120 120"
+                className="w-full h-full fill-amber-400 drop-shadow-[0_0_16px_rgba(245,158,11,0.6)]"
+              >
+                {/* Central Grand Dome */}
+                <path
+                  d="M60 22 C60 16 60 12 60 8 C60 8 59 13 58 15 C52 24 40 38 40 54 C40 66 49 72 60 72 C71 72 80 66 80 54 C80 38 68 24 62 15 C61 13 60 8 60 8 Z"
+                  fill="#fbbf24"
+                  opacity="0.95"
+                />
+                <circle cx="60" cy="6" r="3.5" fill="#fef08a" />
+                <rect x="44" y="68" width="32" height="18" fill="#d97706" opacity="0.9" />
+                <path
+                  d="M48 86 A4 6 0 0 1 56 86 Z M56 86 A4 6 0 0 1 64 86 Z M64 86 A4 6 0 0 1 72 86 Z"
+                  fill="#92400e"
+                />
+                {/* Left Minaret */}
+                <rect x="30" y="38" width="6" height="48" fill="#f59e0b" />
+                <polygon points="33,26 29,38 37,38" fill="#fef08a" />
+                <rect x="28" y="48" width="10" height="2" fill="#d97706" />
+                <rect x="28" y="62" width="10" height="2" fill="#d97706" />
+                {/* Right Minaret */}
+                <rect x="84" y="38" width="6" height="48" fill="#f59e0b" />
+                <polygon points="87,26 83,38 91,38" fill="#fef08a" />
+                <rect x="82" y="48" width="10" height="2" fill="#d97706" />
+                <rect x="82" y="62" width="10" height="2" fill="#d97706" />
+              </svg>
+            </div>
+
+            {/* Row 1: Letters b-a-r-a-k-a (Letter drop bounce, 120ms between letters) */}
+            <div className="relative z-10 flex items-center justify-center font-pricedown font-black text-white leading-[0.88] tracking-[-0.04em] text-[clamp(3.1rem,9.2vw,7.4rem)]">
+              {['b', 'a', 'r', 'a', 'k', 'a'].map((letter, i) => (
+                <span
+                  key={i}
+                  className="logo-letter inline-block drop-shadow-[0_5px_0_#000] filter"
+                  style={{
+                    WebkitTextStroke: 'clamp(2.5px, 0.4vw, 5px) #000',
+                    paintOrder: 'stroke fill',
+                    animation: 'letterDropBounce 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                    animationDelay: `${i * 120}ms`,
+                    opacity: 0,
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+
+            {/* Row 2: city (Drops in below it the same way) */}
+            <div className="relative z-10 flex items-center justify-center font-pricedown font-black text-white leading-[0.88] tracking-[-0.04em] text-[clamp(3.1rem,9.2vw,7.4rem)] -mt-[0.16em]">
+              <div
+                className="logo-city inline-flex items-center drop-shadow-[0_5px_0_#000] filter"
+                style={{
+                  WebkitTextStroke: 'clamp(2.5px, 0.4vw, 5px) #000',
+                  paintOrder: 'stroke fill',
+                  animation: 'cityDropBounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                  animationDelay: '720ms',
+                  opacity: 0,
+                }}
+              >
+                {['c', 'i', 't', 'y'].map((char, idx) => (
+                  <span key={idx} className="inline-block">
+                    {char}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Tagline: "More Than a Game" (Fades in) */}
+            <div
+              className="logo-tagline relative z-10 font-yellowtail text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] -mt-1 sm:-mt-2 select-none tracking-wide text-[clamp(1.15rem,3.2vw,2.3rem)] italic"
+              style={{
+                animation: 'taglineFadeIn 0.8s ease-out forwards',
+                animationDelay: '1050ms',
+                opacity: 0,
+              }}
+            >
+              More Than a Game
+            </div>
+          </div>
+
+          {/* LOADER (15%, 45%, 75%, 100%) VS CIRCULAR ENTER BUTTON */}
+          <div className="w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[380px] min-h-[96px] sm:min-h-[110px] flex flex-col items-center justify-center">
+            {!isLoaded ? (
+              /* STEP 3: "Loading Baraka City…" Stepped Loader Bar */
+              <div className="w-full flex flex-col items-center animate-fadeIn">
+                <span className="text-[clamp(0.65rem,1.1vw,0.8rem)] font-hud tracking-[0.25em] text-zinc-300 uppercase font-semibold mb-2 block">
+                  LOADING BARAKA CITY...
+                </span>
+
+                {/* Progress Bar Track & Golden Stepped Fill */}
+                <div className="w-full h-2.5 sm:h-3 bg-black/75 border border-white/20 rounded-full overflow-hidden p-[1px] shadow-inner backdrop-blur-md">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.8)]"
+                    style={{ width: `${Math.min(100, Math.max(3, displayedProgress))}%` }}
+                  />
+                </div>
+
+                {/* Percentage Display */}
+                <span className="text-amber-300 font-hud text-xs sm:text-sm font-bold mt-1.5 tracking-wider">
+                  {Math.round(displayedProgress)}%
+                </span>
+              </div>
+            ) : (
+              /* STEP 4: Circular ENTER Button with rolling gold ring in loader's spot */
+              <div className="relative flex flex-col items-center justify-center animate-pop-scale-glow">
+                <button
+                  type="button"
+                  onClick={handleEnterClick}
+                  disabled={isEntering}
+                  className="relative group w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center cursor-pointer select-none transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.55),0_10px_30px_rgba(0,0,0,0.95)]"
+                  title="Enter Baraka City Dashboard"
+                  aria-label="Enter Baraka City Dashboard"
+                >
+                  {/* Rolling Gold Ring around Circular Button */}
+                  <div className="absolute -inset-1.5 rounded-full animate-roll-gold-ring pointer-events-none p-[2px]">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <defs>
+                        <linearGradient id="goldRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#f59e0b" />
+                          <stop offset="25%" stopColor="#fef08a" />
+                          <stop offset="50%" stopColor="#d97706" />
+                          <stop offset="75%" stopColor="#fef08a" />
+                          <stop offset="100%" stopColor="#f59e0b" />
+                        </linearGradient>
+                      </defs>
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="46"
+                        fill="none"
+                        stroke="url(#goldRingGradient)"
+                        strokeWidth="3.5"
+                        strokeDasharray="95 18 55 18"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* Inner Button Disc (Fixed, text does not rotate) */}
+                  <div className="relative w-full h-full rounded-full bg-gradient-to-b from-[#181c28] via-[#0d1018] to-[#08090e] border border-amber-400/40 flex flex-col items-center justify-center shadow-[inset_0_0_20px_rgba(245,158,11,0.25)] group-hover:border-amber-300 group-hover:shadow-[inset_0_0_25px_rgba(245,158,11,0.4)] transition-all">
+                    {/* Top gloss highlight */}
+                    <div className="absolute top-1 inset-x-3 h-5 rounded-full bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+
+                    {/* Tiny gold pulse dot */}
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24] mb-0.5 animate-pulse" />
+
+                    {/* FIXED ENTER TEXT (DOES NOT ROTATE) */}
+                    <span className="font-sora font-black text-sm sm:text-base tracking-[0.22em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] select-none">
+                      {isEntering ? 'ENTERING' : 'ENTER'}
+                    </span>
+
+                    <span className="text-[7.5px] sm:text-[8.5px] font-hud text-amber-300/90 tracking-widest uppercase">
+                      CITY
+                    </span>
+                  </div>
+                </button>
+
+                {/* Keyboard & Tap Helper */}
+                <span className="mt-2 text-[9px] sm:text-[10px] font-hud text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 opacity-90 drop-shadow">
+                  <span className="bg-white/10 px-1.5 py-0.5 rounded text-amber-300 font-mono text-[9px] border border-white/10">
+                    ENTER ↵
+                  </span>
+                  <span className="bg-white/10 px-1.5 py-0.5 rounded text-amber-300 font-mono text-[9px] border border-white/10">
+                    SPACE
+                  </span>
+                  <span>OR TAP</span>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* =====================================================================
+          BOTTOM FOOTER: "EXPLORE • LEARN • BUILD • BELONG"
+          Safe-area compliant, clean & non-obstructive
+          ===================================================================== */}
+      <footer className="relative z-30 pb-[max(env(safe-area-inset-bottom),0.75rem)] px-4 sm:px-8 pt-2 flex items-center justify-center shrink-0 bg-black/60 md:bg-black/40 backdrop-blur-md border-t border-white/10 pointer-events-auto">
+        <span className="text-[clamp(0.65rem,1.1vw,0.85rem)] font-hud text-zinc-400 tracking-[0.3em] uppercase text-center font-medium drop-shadow">
+          EXPLORE &nbsp;•&nbsp; LEARN &nbsp;•&nbsp; BUILD &nbsp;•&nbsp; BELONG
+        </span>
+      </footer>
+
+      {/* Smooth Cinematic World Transition Veil */}
       <div
-        className={`fixed inset-0 z-50 bg-[#090a0f] pointer-events-none transition-opacity duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed inset-0 z-50 bg-black pointer-events-none transition-opacity duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isEntering ? 'opacity-100' : 'opacity-0'
         }`}
       />

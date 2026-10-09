@@ -16,6 +16,26 @@ interface ExpandedWorldMapModalProps {
 }
 
 const DISTRICT_ZONES = [
+  // Global Cities & Historic Metropolises
+  { name: 'Abuja Metropolis Central Capital', x: 0, z: 0, color: '#10b981', desc: 'Federal capital center, broad avenues, civic plazas, and central boulevard.' },
+  { name: 'Lagos Coastal City & Eko Haven', x: -175, z: 65, color: '#38bdf8', desc: 'Atlantic maritime trade gateway, Lekki coastal esplanade, and ocean breeze.' },
+  { name: 'Kwara Cultural City & Ilorin Citadel', x: 55, z: 85, color: '#f59e0b', desc: 'Emirate heritage citadel, traditional pottery souq, and artisan weaving quarter.' },
+  { name: 'Makkah Al-Mukarramah Sanctuary', x: 0, z: -85, color: '#fbbf24', desc: 'Spiritual sanctuary, grand congregational prayer terrace, and marble mihrab.' },
+  { name: 'Al-Madinah Oasis & Palm Grove', x: -130, z: 90, color: '#10b981', desc: 'Serene date palm groves, green dome tranquility, and oasis fountains.' },
+  { name: 'Cairo Historic Citadel & Nile Esplanade', x: 110, z: 120, color: '#eab308', desc: 'Sultan fortress minarets, Nile riverside promenade, and ancient trade gates.' },
+  { name: 'Istanbul Bosphorus Imperial City', x: 120, z: -125, color: '#ec4899', desc: 'Ottoman dome skyline, Bosphorus shipping harbor, and historic Spice Souq.' },
+  { name: 'Samarkand Silk Road Registan Citadel', x: -150, z: -85, color: '#06b6d4', desc: 'Turquoise majolica portals, celestial observatory, and Silk Road trade station.' },
+  { name: 'Zanzibar Stone Town Ocean Haven', x: -175, z: -60, color: '#14b8a6', desc: 'Coral stone carved doors, Indian Ocean dhow piers, and tropical spice souq.' },
+  { name: 'Muscat Gulf Citadel & Corniche', x: 150, z: 80, color: '#8b5cf6', desc: 'White fortress watchtowers, Gulf of Oman corniche, and frankincense bazaar.' },
+  { name: 'Fez Ancient Medina & Qarawiyyin', x: -75, z: -150, color: '#047857', desc: 'Moroccan cedar courtyards, fountain mosaic zellige, and world oldest university district.' },
+  { name: 'Cordoba Great Mosque & Guadalquivir', x: 75, z: -55, color: '#10b981', desc: 'Andalusian horseshoe arches, fragrant orange tree patios, and Roman stone bridge.' },
+  { name: 'Baghdad Round City & Tigris Haven', x: -135, z: -35, color: '#0284c7', desc: 'Abbasid scientific center, Tigris riverfront promenade, and celestial observatories.' },
+  { name: 'Kano Ancient Walls & Kurmi Souq', x: 2, z: 22, color: '#f59e0b', desc: 'Centuries-old indigo dye pits, Emirate royal palace gate, and Sahelian trade crossroads.' },
+  { name: 'Dakar Atlantic Corniche & Teranga', x: 25, z: -165, color: '#06b6d4', desc: 'West African ocean bluff views, Grand Mosque of Dakar, and coastal sunset breeze.' },
+  { name: 'Bukhara Silk Oasis & Kalyan Citadel', x: 135, z: 35, color: '#d97706', desc: 'Central Asian mud-brick madrassas, Kalyan minaret beacon, and turquoise domes.' },
+  { name: 'Jerusalem Al-Quds Historic Haven', x: -80, z: 0, color: '#eab308', desc: 'Ancient stone alleys, olive tree courtyards, and golden dome vista.' },
+  { name: 'Kuala Lumpur Minaret Towers City', x: -80, z: -65, color: '#a855f7', desc: 'Lush tropical greenery, modern Islamic architecture, and tranquil garden lakes.' },
+
   // Masajids (Mosques)
   { name: 'Grand Mosque & Mihrab Sanctuary', x: 0, z: -58, color: '#10b981', desc: 'Central congregational prayer hall, four towering minarets, and courtyard terrace.' },
   { name: 'Al-Andalus East Grand Masjid', x: 130, z: -60, color: '#059669', desc: 'Historic Andalusian arched colonnades, turquoise tiled domes, and reflection pool.' },

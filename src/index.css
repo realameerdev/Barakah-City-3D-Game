@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Pricedown';
+  src: url('/fonts/pricedown.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Yellowtail';
+  src: url('/fonts/yellowtail.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --font-sora: 'Sora', sans-serif;
@@ -16,6 +32,15 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: #090a0f;
   }
+}
+
+/* Typography Classes */
+.font-pricedown {
+  font-family: 'Pricedown', 'Impact', sans-serif;
+}
+
+.font-yellowtail {
+  font-family: 'Yellowtail', cursive, sans-serif;
 }
 
 /* Primary Font System - Sora */
@@ -94,5 +119,249 @@
 
 .animate-shake {
   animation: microShake 0.35s ease-in-out;
+}
+
+/* =========================================================================
+   BARAKA CITY CINEMATIC FIRST PAGE MOTION SYSTEM
+   Animates strictly using transform and opacity for 60fps GPU performance
+   ========================================================================= */
+
+/* 1. Letter Drop Animation with Quick Bounce */
+@keyframes letterDropBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(-80px) scaleY(1.12);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(6px) scaleY(0.92);
+  }
+  80% {
+    transform: translateY(-3px) scaleY(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scaleY(1);
+  }
+}
+
+@keyframes cityDropBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px) scaleY(1.1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(5px) scaleY(0.93);
+  }
+  80% {
+    transform: translateY(-2px) scaleY(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scaleY(1);
+  }
+}
+
+@keyframes emblemFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes taglineFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 2. Ken Burns Subtle Drift & Zoom for Collage Panels (Different Directions) */
+@keyframes kenBurnsPanel1 {
+  0% { transform: scale(1.0) translate(0%, 0%); }
+  50% { transform: scale(1.08) translate(-1.5%, -1.2%); }
+  100% { transform: scale(1.03) translate(-0.8%, -2%); }
+}
+
+@keyframes kenBurnsPanel2 {
+  0% { transform: scale(1.05) translate(0%, 0%); }
+  50% { transform: scale(1.0) translate(1.2%, -1%); }
+  100% { transform: scale(1.07) translate(1.5%, 1%); }
+}
+
+@keyframes kenBurnsPanel3 {
+  0% { transform: scale(1.0) translate(0%, 0%); }
+  50% { transform: scale(1.06) translate(-1%, 1.4%); }
+  100% { transform: scale(1.02) translate(1%, 0.6%); }
+}
+
+@keyframes kenBurnsPanel4 {
+  0% { transform: scale(1.03) translate(0%, 0%); }
+  50% { transform: scale(1.08) translate(1.2%, -1.5%); }
+  100% { transform: scale(1.0) translate(-1%, -0.8%); }
+}
+
+@keyframes kenBurnsPanel5 {
+  0% { transform: scale(1.0) translate(0%, 0%); }
+  50% { transform: scale(1.07) translate(-1.5%, 1.2%); }
+  100% { transform: scale(1.04) translate(-0.6%, -1%); }
+}
+
+@keyframes kenBurnsPanel6 {
+  0% { transform: scale(1.06) translate(0%, 0%); }
+  50% { transform: scale(1.01) translate(1.4%, 1.5%); }
+  100% { transform: scale(1.05) translate(-1.2%, 0.5%); }
+}
+
+@keyframes kenBurnsPanel7 {
+  0% { transform: scale(1.0) translate(0%, 0%); }
+  50% { transform: scale(1.08) translate(-1.2%, -1.4%); }
+  100% { transform: scale(1.03) translate(1.2%, -0.6%); }
+}
+
+@keyframes kenBurnsPanel8 {
+  0% { transform: scale(1.04) translate(0%, 0%); }
+  50% { transform: scale(1.0) translate(-1.5%, 1%); }
+  100% { transform: scale(1.07) translate(1.2%, -1.2%); }
+}
+
+.animate-ken-burns-1 { animation: kenBurnsPanel1 22s ease-in-out infinite alternate; }
+.animate-ken-burns-2 { animation: kenBurnsPanel2 24s ease-in-out infinite alternate; }
+.animate-ken-burns-3 { animation: kenBurnsPanel3 26s ease-in-out infinite alternate; }
+.animate-ken-burns-4 { animation: kenBurnsPanel4 20s ease-in-out infinite alternate; }
+.animate-ken-burns-5 { animation: kenBurnsPanel5 25s ease-in-out infinite alternate; }
+.animate-ken-burns-6 { animation: kenBurnsPanel6 23s ease-in-out infinite alternate; }
+.animate-ken-burns-7 { animation: kenBurnsPanel7 27s ease-in-out infinite alternate; }
+.animate-ken-burns-8 { animation: kenBurnsPanel8 21s ease-in-out infinite alternate; }
+
+/* Golden Light Sweep Across Scene */
+@keyframes goldenLightSweep {
+  0% {
+    transform: translateX(-130%) skewX(-25deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(30%) skewX(-25deg);
+    opacity: 0.45;
+  }
+  80% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateX(180%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+.animate-gold-sweep {
+  animation: goldenLightSweep 12s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Floating Golden Light Particles */
+@keyframes floatParticle1 {
+  0% { transform: translateY(105vh) translateX(0px) scale(0.6); opacity: 0; }
+  25% { opacity: 0.8; transform: translateY(75vh) translateX(15px) scale(1); }
+  50% { opacity: 0.9; transform: translateY(50vh) translateX(-10px) scale(1.1); }
+  75% { opacity: 0.6; transform: translateY(25vh) translateX(18px) scale(0.9); }
+  100% { transform: translateY(-10vh) translateX(5px) scale(0.5); opacity: 0; }
+}
+
+@keyframes floatParticle2 {
+  0% { transform: translateY(105vh) translateX(0px) scale(0.5); opacity: 0; }
+  25% { opacity: 0.7; transform: translateY(80vh) translateX(-20px) scale(0.9); }
+  50% { opacity: 0.85; transform: translateY(55vh) translateX(12px) scale(1); }
+  75% { opacity: 0.5; transform: translateY(30vh) translateX(-15px) scale(0.8); }
+  100% { transform: translateY(-10vh) translateX(0px) scale(0.4); opacity: 0; }
+}
+
+.animate-particle-1 { animation: floatParticle1 14s linear infinite; }
+.animate-particle-2 { animation: floatParticle2 18s linear infinite; }
+
+/* Circular Button Pop-out with Scale and Glow */
+@keyframes popScaleGlow {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop-scale-glow {
+  animation: popScaleGlow 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Rolling Gold Ring around Circular Button */
+@keyframes rollGoldRing {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-roll-gold-ring {
+  animation: rollGoldRing 4.5s linear infinite;
+}
+
+/* Camera Shutter Flash Animation */
+@keyframes shutterFlash {
+  0% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-shutter-flash {
+  animation: shutterFlash 0.35s ease-out forwards;
+}
+
+/* Strict prefers-reduced-motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  .logo-letter,
+  .logo-city,
+  .logo-emblem,
+  .logo-tagline,
+  .animate-ken-burns-1,
+  .animate-ken-burns-2,
+  .animate-ken-burns-3,
+  .animate-ken-burns-4,
+  .animate-ken-burns-5,
+  .animate-ken-burns-6,
+  .animate-ken-burns-7,
+  .animate-ken-burns-8,
+  .animate-gold-sweep,
+  .animate-particle-1,
+  .animate-particle-2,
+  .animate-pop-scale-glow,
+  .animate-roll-gold-ring {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
